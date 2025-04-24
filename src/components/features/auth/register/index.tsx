@@ -1,0 +1,180 @@
+"use client";
+import BasicAlert from "@/components/base/MaterialUI-Basic/Alert";
+import BasicButton from "@/components/base/MaterialUI-Basic/Button";
+import BasicGrid from "@/components/base/MaterialUI-Basic/Grid";
+import BasicMaterialLink from "@/components/base/MaterialUI-Basic/Link/BasicMaterialLink";
+import BasicNextLink from "@/components/base/MaterialUI-Basic/Link/BasicNextLink";
+import BasicTypography from "@/components/base/MaterialUI-Basic/Typography";
+import HookForm from "@/components/base/MaterialUI-HookForm/HookForm";
+import TextFieldHookForm from "@/components/base/MaterialUI-HookForm/TextFieldHookForm/Index";
+import DarkNightChange from "@/components/common/DarkNightChange";
+import { APP_ROUTE } from "@/consts/app-route";
+import useNotification from "@/contexts/NotificationContext";
+import { useRegisterMutation } from "@/services/apis/auth";
+import { RegisterRequest } from "@/services/types/auth";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { registerValidate } from "./utils/schema";
+
+type RegisterPageProps = {};
+
+const RegisterPage = (_: RegisterPageProps) => {
+  const { push } = useRouter();
+  const registerMutation = useRegisterMutation();
+  const setNotification = useNotification();
+  const form = useForm<RegisterRequest>({
+    mode: "onChange",
+    resolver: yupResolver(registerValidate()),
+    defaultValues: registerValidate().getDefault(),
+  });
+
+  const onFinish = (data: RegisterRequest) => {
+    registerMutation.mutate(data, {
+      onSuccess: (response) => {
+        if (response.code === 200) {
+          setNotification({
+            message: "Đăng ký thành công",
+            severity: "success",
+          });
+          push(APP_ROUTE.LOGIN);
+          return;
+        }
+
+        setNotification({
+          message: "Đăng ký thất bại",
+          severity: "error",
+        });
+      },
+      onError: () =>
+        setNotification({
+          message: "Đăng ký thất bại",
+          severity: "error",
+        }),
+    });
+  };
+
+  return (
+    <HookForm<RegisterRequest>
+      form={form}
+      onFinish={onFinish}
+      onError={() => {}}
+    >
+      <BasicGrid container spacing={4} sx={{ width: 450 }}>
+        <BasicGrid
+          container
+          size={{ xs: 12 }}
+          sx={{ justifyContent: "center" }}
+        >
+          <BasicTypography variant="h2">Đăng ký hệ thống thi</BasicTypography>
+        </BasicGrid>
+        <BasicGrid
+          container
+          size={{ xs: 12 }}
+          sx={{ justifyContent: "center" }}
+        >
+          <BasicAlert severity="warning" sx={{ width: 1 }}>
+            Hãy điền đầy đủ thông tin nhé
+          </BasicAlert>
+        </BasicGrid>
+        <BasicGrid container size={{ xs: 12 }} spacing={1}>
+          <BasicGrid size={{ xs: 12 }}>
+            <BasicTypography>Tên người dùng</BasicTypography>
+          </BasicGrid>
+          <BasicGrid size={{ xs: 12 }}>
+            <TextFieldHookForm
+              id="register-form-fullname"
+              name="fullname"
+              placeholder="Nhập tên người dùng"
+            />
+          </BasicGrid>
+        </BasicGrid>
+        <BasicGrid container size={{ xs: 12 }} spacing={1}>
+          <BasicGrid size={{ xs: 12 }}>
+            <BasicTypography>Tài khoản</BasicTypography>
+          </BasicGrid>
+          <BasicGrid size={{ xs: 12 }}>
+            <TextFieldHookForm
+              id="register-form-username"
+              name="username"
+              placeholder="Nhập tài khoản"
+            />
+          </BasicGrid>
+        </BasicGrid>
+        <BasicGrid container size={{ xs: 12 }} spacing={1}>
+          <BasicGrid size={{ xs: 12 }}>
+            <BasicTypography>Email</BasicTypography>
+          </BasicGrid>
+          <BasicGrid size={{ xs: 12 }}>
+            <TextFieldHookForm
+              id="register-form-email"
+              name="email"
+              placeholder="Nhập địa chỉ Email"
+            />
+          </BasicGrid>
+        </BasicGrid>
+        <BasicGrid container size={{ xs: 12 }} spacing={1}>
+          <BasicGrid size={{ xs: 12 }}>
+            <BasicTypography>Số điện thoại</BasicTypography>
+          </BasicGrid>
+          <BasicGrid size={{ xs: 12 }}>
+            <TextFieldHookForm
+              id="register-form-phone-number"
+              name="phoneNumber"
+              placeholder="Nhập số điện thoại"
+            />
+          </BasicGrid>
+        </BasicGrid>
+        <BasicGrid container size={{ xs: 12 }} spacing={1}>
+          <BasicGrid size={{ xs: 12 }}>
+            <BasicTypography>Mật khẩu</BasicTypography>
+          </BasicGrid>
+          <BasicGrid size={{ xs: 12 }}>
+            <TextFieldHookForm
+              id="register-form-password"
+              name="password"
+              placeholder="Nhập mật khẩu"
+            />
+          </BasicGrid>
+        </BasicGrid>
+        <BasicGrid
+          container
+          size={{ xs: 12 }}
+          sx={{ justifyContent: "center" }}
+        >
+          <BasicButton
+            id="register-submit-button"
+            type="submit"
+            variant="contained"
+            fullWidth
+            size="large"
+          >
+            Đăng ký
+          </BasicButton>
+        </BasicGrid>
+        <BasicGrid size={{ xs: 12 }}>
+          <BasicTypography variant="body2" align="center">
+            Nếu bạn đã có tài khoản, vui lòng
+            <BasicMaterialLink href={APP_ROUTE.LOGIN}>
+              {" "}
+              đăng nhập tại đây
+            </BasicMaterialLink>
+            ,
+          </BasicTypography>
+          <BasicTypography variant="body2" align="center">
+            hoặc
+            <BasicNextLink href={APP_ROUTE.HOME}>
+              {" "}
+              quay lại trang chủ tại đây.
+            </BasicNextLink>
+          </BasicTypography>
+        </BasicGrid>
+        <BasicGrid size={12} container sx={{ justifyContent: "center" }}>
+          <DarkNightChange />
+        </BasicGrid>
+      </BasicGrid>
+    </HookForm>
+  );
+};
+
+export default RegisterPage;

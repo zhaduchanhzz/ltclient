@@ -1,0 +1,21 @@
+version: "3.8"
+# run command like this to switch env to use correct mode docker-compose --env-file .env.development up --build --remove-orphans
+services:
+  app:
+    # image: your-docker-registry/your-image-name:${IMAGE_TAG}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: luyen-thi-client
+    ports:
+      - "${PORT}:${PORT}"
+      # - 3000:3000
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - API_URL=${NEXT_PUBLIC_BASE_URL}
+    networks:
+      - nextjs-network
+
+networks:
+  nextjs-network:
+    driver: bridge
