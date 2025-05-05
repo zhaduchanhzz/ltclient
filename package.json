@@ -36,6 +36,7 @@
     "react-virtualized-auto-sizer": "^1.0.25",
     "react-webcam": "^7.2.0",
     "sass": "^1.85.0",
+    "swiper": "^11.2.6",
     "wavesurfer.js": "^7.9.1",
     "yarn": "^1.22.22",
     "yup": "^1.6.1"

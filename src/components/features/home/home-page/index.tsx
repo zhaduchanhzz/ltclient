@@ -5,6 +5,8 @@ import { Container } from "@mui/material";
 import Hero from "./components/Hero";
 import OurServices from "./components/OurServices";
 import SolvedProduct from "./components/SolvedProduct";
+import WhoNeedUs from "./components/WhoNeedUs";
+import FeedBack from "./components/FeedBack";
 
 const Home = () => {
   return (
@@ -24,12 +26,11 @@ const Home = () => {
           alignItems: "center",
           backgroundImage: {
             md: "none",
-            xl: `url('https://luyenthivstep.vn/assets/image/banner/luyen-thi-vstep-banner-index-1-fef4ea.png'),
-          url('https://luyenthivstep.vn/assets/image/banner/luyen-thi-vstep-banner-index-2-fef4ea.png')`,
+            xl: `url('/images/left-side-hero-banner.png'), url('/images/right-side-hero-banner.png')`,
           },
-          backgroundRepeat: "no-repeat",
-          backgroundSize: "40%, 40%",
-          backgroundPosition: "top left, bottom right",
+          backgroundRepeat: "no-repeat, no-repeat",
+          backgroundSize: "35%, 35%", // adjust as needed
+          backgroundPosition: "center left, bottom right", // adjust as needed
         }}
       >
         <Hero />
@@ -43,6 +44,10 @@ const Home = () => {
         <OurServices />
 
         <SolvedProduct />
+
+        <WhoNeedUs />
+
+        <FeedBack />
       </Container>
     </BasicBox>
   );

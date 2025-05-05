@@ -40,7 +40,11 @@ const SolvedProduct = () => {
         >
           <Typography
             variant="h5"
-            sx={{ color: "#fff", fontWeight: 700, mb: 2 }}
+            sx={{
+              color: "#cda274",
+              fontWeight: 700,
+              mb: 2,
+            }}
           >
             Phần mềm thi thử mô phỏng 100% phần mềm thi chính thức
           </Typography>
@@ -55,7 +59,10 @@ const SolvedProduct = () => {
             sx={{ color: "#bfc9da", pl: 3, mb: 0, textAlign: "left" }}
           >
             {SOLVED_STEPS.map((step, idx) => (
-              <li key={idx} style={{ color: "rgb(110, 132, 163)" }}>
+              <li
+                key={idx}
+                style={{ color: "rgb(110, 132, 163)", fontSize: 14 }}
+              >
                 {step.text}
               </li>
             ))}

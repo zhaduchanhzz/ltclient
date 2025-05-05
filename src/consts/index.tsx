@@ -85,7 +85,11 @@ export const SOLVED_STEPS = [
       <>
         <Link
           href="/register"
-          style={{ color: "#4f8cff", fontWeight: 700, textDecoration: "none" }}
+          style={{
+            color: "#cda274",
+            fontWeight: 700,
+            textDecoration: "none",
+          }}
         >
           Đăng ký
         </Link>{" "}
@@ -112,5 +116,42 @@ export const SOLVED_STEPS = [
   },
   {
     text: "Nhận ngay điểm thi và kết quả chi tiết phần thi trắc nghiệm, có thể đăng ký chấm thi tự luận",
+  },
+];
+
+export const LEVELS = [
+  {
+    level: "Bậc 2",
+    items: [
+      "Giáo viên Mầm non",
+      "Giáo viên Tiểu học",
+      "Giáo viên THCS",
+      "Thi tuyển công chức, viên chức",
+    ],
+  },
+  {
+    level: "Bậc 3",
+    items: [
+      "Đầu vào, đầu ra Thạc sỹ, Nghiên cứu sinh",
+      "Đầu vào, đầu ra Sinh viên các trường ĐH, CĐ",
+      "Thi tuyển công chức, viên chức",
+    ],
+  },
+  {
+    level: "Bậc 4",
+    items: [
+      "Giáo viên tiếng Anh Tiểu học",
+      "Giáo viên tiếng Anh THCS",
+      "Đầu vào, đầu ra Thạc sỹ, Nghiên cứu sinh",
+      "Thi tuyển chuyên viên cao cấp",
+    ],
+  },
+  {
+    level: "Bậc 5",
+    items: [
+      "Giáo viên tiếng Anh THPT",
+      "Giảng viên tiếng Anh các trường ĐH, CĐ",
+      "Cán bộ chấm thi VSTEP",
+    ],
   },
 ];

@@ -34,7 +34,7 @@ const OurServices = () => {
           <Typography
             variant="h5"
             sx={{
-              color: "#fff",
+              color: "#cda274",
               fontWeight: 700,
               mb: 1,
               textAlign: { xs: "left", md: "left" },
@@ -91,13 +91,13 @@ const OurServices = () => {
               sx={{
                 bgcolor: "#152e4d",
                 borderRadius: 2,
-                border: "1px solid #4f8cff",
+                border: "1px solid #cda274",
                 p: 3,
                 height: "100%",
               }}
             >
               <Typography
-                sx={{ color: "#4f8cff", fontWeight: 600, fontSize: 14, mb: 2 }}
+                sx={{ color: "#cda274", fontWeight: 600, fontSize: 14, mb: 2 }}
               >
                 {service.title}
               </Typography>
@@ -107,11 +107,8 @@ const OurServices = () => {
                     key={itemIdx}
                     sx={{ color: "#bfc9da", pl: 0, py: 0.2 }}
                   >
-                    <ListItemIcon sx={{ color: "#4f8cff", minWidth: 32, p: 0 }}>
-                      <CheckCircleOutlineIcon
-                        sx={{ fontSize: 18 }}
-                        fill="currentColor"
-                      />
+                    <ListItemIcon sx={{ color: "#cda274", minWidth: 32, p: 0 }}>
+                      <CheckCircleOutlineIcon sx={{ fontSize: 18 }} />
                     </ListItemIcon>
                     <BasicTypography
                       variant="body2"
@@ -134,7 +131,7 @@ const OurServices = () => {
             variant="contained"
             fullWidth
             sx={{
-              bgcolor: "#2196f3",
+              bgcolor: "#cda274",
               color: "#fff",
               fontWeight: 600,
               fontSize: 12,

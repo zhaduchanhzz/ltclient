@@ -10,7 +10,12 @@ const Rewards = () => {
       <Box sx={{ mx: "auto", mb: 3 }}>
         <Typography
           variant="h6"
-          sx={{ color: "#fff", fontWeight: 700, mb: 2, textAlign: "left" }}
+          sx={{
+            color: "#cda274",
+            fontWeight: 700,
+            mb: 2,
+            textAlign: { xs: "left", md: "center" },
+          }}
         >
           Thành tựu của chúng tôi
         </Typography>
@@ -100,9 +105,9 @@ const Rewards = () => {
                   <>
                     <Typography
                       sx={{
-                        color: "#6e84a3",
-                        fontSize: 12,
-                        fontWeight: 500,
+                        color: "white",
+                        fontSize: 14,
+                        fontWeight: 700,
                         mb: 0.5,
                         display: "flex",
                         alignItems: "center",
@@ -118,13 +123,14 @@ const Rewards = () => {
                           ml: 1,
                           display: "inline-flex",
                           alignItems: "center",
+                          color: "#cda274",
                         }}
                       >
                         <item.icon />
                       </Box>
                     </Typography>
                     <Typography
-                      sx={{ color: "#fff", fontWeight: 700, fontSize: 18 }}
+                      sx={{ color: "#cda274", fontWeight: 700, fontSize: 18 }}
                     >
                       {item.value}
                     </Typography>
