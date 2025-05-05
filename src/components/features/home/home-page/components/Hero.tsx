@@ -20,7 +20,7 @@ const Hero = () => {
     <BasicBox
       sx={{
         height: "100%",
-        width: isMobile ? "100vw" : "80%",
+        width: isMobile ? "100%" : "100%",
       }}
     >
       <BasicContainer
