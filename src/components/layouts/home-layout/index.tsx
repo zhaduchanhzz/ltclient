@@ -16,11 +16,16 @@ const HomeLayout = ({ children }: HomeLayoutProps) => {
       <BasicBox
         sx={{
           pt: 8.5,
-          minHeight: "calc(100vh - 100px - 200px)",
-          backgroundColor: theme.palette.background.default,
+          // minHeight: "calc(100vh - 100px - 200px)",
+          height: "100vh",
+          backgroundImage: `url('https://luyenthivstep.vn/assets/image/banner/luyen-thi-vstep-banner-index-1-fef4ea.png'),
+                    url('https://luyenthivstep.vn/assets/image/banner/luyen-thi-vstep-banner-index-2-fef4ea.png')`,
+          backgroundRepeat: "no-repeat",
+          backgroundSize: "40%, 40%",
+          backgroundPosition: "top left, bottom right",
         }}
       >
-        <BasicBox sx={{ maxWidth: 1200, margin: "0 auto" }}>
+        <BasicBox sx={{ maxWidth: 1200, margin: "0 auto", height: "100%" }}>
           {children}
         </BasicBox>
       </BasicBox>

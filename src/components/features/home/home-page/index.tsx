@@ -6,7 +6,14 @@ import Hero from "./components/Hero";
 
 const Home = () => {
   return (
-    <BasicBox>
+    <BasicBox
+      sx={{
+        width: "100%  ",
+        display: "flex",
+        justifyContent: "center",
+        height: "100%",
+      }}
+    >
       <Hero />
     </BasicBox>
   );

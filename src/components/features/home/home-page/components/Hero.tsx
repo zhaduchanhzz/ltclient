@@ -19,8 +19,8 @@ const Hero = () => {
   return (
     <BasicBox
       sx={{
-        height: "100vh",
-        width: isMobile ? "100vw" : "100%",
+        height: "100%",
+        width: isMobile ? "100vw" : "80%",
       }}
     >
       <BasicContainer
