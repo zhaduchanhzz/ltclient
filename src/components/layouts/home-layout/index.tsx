@@ -15,12 +15,12 @@ const HomeLayout = ({ children }: HomeLayoutProps) => {
       <Header />
       <BasicBox
         sx={{
-          pt: 12,
+          pt: 8.5,
           minHeight: "calc(100vh - 100px - 200px)",
           backgroundColor: theme.palette.background.default,
         }}
       >
-        <BasicBox sx={{ maxWidth: 1200, margin: "0 auto", p: 2 }}>
+        <BasicBox sx={{ maxWidth: 1200, margin: "0 auto" }}>
           {children}
         </BasicBox>
       </BasicBox>
