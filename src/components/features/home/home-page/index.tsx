@@ -12,7 +12,7 @@ const Home = () => {
   return (
     <BasicBox
       sx={{
-        width: { xs: "100%", md: "100vw" },
+        width: { xs: "100%", md: "100%" },
         height: "100%",
         backgroundColor: "#12263f",
       }}
@@ -26,7 +26,7 @@ const Home = () => {
           alignItems: "center",
           backgroundImage: {
             md: "none",
-            xl: `url('/images/left-side-hero-banner.png'), url('/images/right-side-hero-banner.png')`,
+            xl: "url('/images/left-side-hero-banner.png'), url('/images/right-side-hero-banner.png')",
           },
           backgroundRepeat: "no-repeat, no-repeat",
           backgroundSize: "35%, 35%", // adjust as needed

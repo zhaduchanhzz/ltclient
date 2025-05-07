@@ -13,7 +13,7 @@ type ExamScheduleProps = {};
 
 const ExamSchedule = (_: ExamScheduleProps) => {
   return (
-    <BasicBox>
+    <BasicBox sx={{ maxWidth: 1200, mx: "auto" }}>
       <BasicStack spacing={8} sx={{ my: 5 }}>
         <BasicStack
           sx={{ justifyContent: "center", alignItems: "center" }}

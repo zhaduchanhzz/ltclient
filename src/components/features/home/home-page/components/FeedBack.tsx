@@ -83,7 +83,7 @@ const FeedBack = () => {
           ))}
         </Swiper>
       </Box>
-      <style jsx global>{`
+      <style>{`
         .swiper-button-next,
         .swiper-button-prev {
           color: #222;
