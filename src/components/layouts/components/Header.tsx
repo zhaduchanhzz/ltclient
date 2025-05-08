@@ -47,7 +47,7 @@ const Header = () => {
             sx={{
               justifyContent: "space-between",
               alignItems: "center",
-              width: 1,
+              width: "100%",
             }}
           >
             <BasicStack spacing={1} direction="row">

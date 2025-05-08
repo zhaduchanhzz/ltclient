@@ -1,10 +1,12 @@
 import Image, { ImageProps } from "next/image";
 
-type BasicNextImageProps = ImageProps & {};
+type BasicNextImageProps = ImageProps & {
+  alt: string;
+};
 
 const BasicNextImage = (props: BasicNextImageProps) => {
-  const { id, ...otherProps } = props;
-  return <Image id={id} data-cy={id} {...otherProps} />;
+  const { alt, id, ...otherProps } = props;
+  return <Image alt={alt} id={id} data-cy={id} {...otherProps} />;
 };
 
 export default BasicNextImage;
