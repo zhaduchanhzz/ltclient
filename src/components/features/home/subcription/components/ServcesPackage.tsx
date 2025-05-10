@@ -1,3 +1,5 @@
+"use client";
+
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 import {
@@ -12,7 +14,6 @@ import {
   Typography,
 } from "@mui/material";
 import { subscriptionPackages } from "../utils/serv";
-import Link from "next/link";
 
 type ServcesPackageProps = {
   id: string;
@@ -58,14 +59,16 @@ const ServcesPackage = ({ id }: ServcesPackageProps) => {
               color: "black",
               border: "2px solid #2c7be5",
               flex: "1 1",
+              p: 2,
               boxShadow: 3,
               borderRadius: 3,
               display: "flex",
               flexDirection: "column",
               alignItems: "stretch",
+              // height: "100%",
             }}
           >
-            <CardContent>
+            <CardContent sx={{ p: 0 }}>
               <Typography
                 variant="h6"
                 align="center"
@@ -111,27 +114,27 @@ const ServcesPackage = ({ id }: ServcesPackageProps) => {
                   ))}
                 </List>
               </Box>
-              <Button
-                fullWidth
-                variant={idx === 2 ? "contained" : "outlined"}
-                sx={{
-                  mt: 2,
-                  background: idx === 2 ? "#2979ff" : "transparent",
-                  color: idx === 2 ? "#fff" : "#ff9100",
-                  borderColor: "#ff9100",
-                  fontWeight: 700,
-                  borderRadius: 2,
-                  py: 1,
-                  fontSize: 14,
-                  "&:hover": {
-                    background: idx === 2 ? "#1565c0" : "#ff9100",
-                    color: "#fff",
-                  },
-                }}
-              >
-                {pkg.button}
-              </Button>
             </CardContent>
+            <Button
+              fullWidth
+              variant={idx === 2 ? "contained" : "outlined"}
+              sx={{
+                mt: "auto",
+                background: idx === 2 ? "#2979ff" : "transparent",
+                color: idx === 2 ? "#fff" : "#ff9100",
+                borderColor: "#ff9100",
+                fontWeight: 700,
+                borderRadius: 2,
+                py: 1,
+                fontSize: 14,
+                "&:hover": {
+                  background: idx === 2 ? "#1565c0" : "#ff9100",
+                  color: "#fff",
+                },
+              }}
+            >
+              {pkg.button}
+            </Button>
           </Card>
         ))}
       </Box>
@@ -154,18 +157,16 @@ const ServcesPackage = ({ id }: ServcesPackageProps) => {
         </Typography>
         <Button
           variant="outlined"
-          sx={{ color: "#2c7be5", borderColor: "#2c7be5" }}
+          sx={{
+            color: "#2c7be5",
+            borderColor: "#2c7be5",
+            "&:hover": { bgcolor: "#2c7be5", color: "white" },
+          }}
+          onClick={() => {
+            window.open("https://zalo.me/0902710030", "_blank");
+          }}
         >
-          <Link
-            href="https://zalo.me/0902710030"
-            target="_blank"
-            style={{
-              textDecoration: "none",
-              color: "#2c7be5",
-            }}
-          >
-            Nhắn tin cho chúng tôi
-          </Link>
+          Nhắn tin cho chúng tôi
         </Button>
       </Box>
     </Box>

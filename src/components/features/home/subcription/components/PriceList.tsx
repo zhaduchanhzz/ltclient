@@ -2,7 +2,7 @@
 
 import { useAuthContext } from "@/contexts/AuthContext";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { Box, Typography, Card, CardContent, Button } from "@mui/material";
+import { Box, Button, Card, Typography } from "@mui/material";
 import Link from "next/link";
 import { COMBO_SUBSCRIPTIONS } from "../utils/subs";
 
@@ -45,16 +45,7 @@ const PriceList = ({
         Hệ thống cung cấp các gói đề thi VIP, gói chấm bài tự luận & gói combo
         tiết kiệm, giúp bạn đạt <b>B1 - B2 - C1</b> dễ dàng.
       </Typography>
-      <Typography
-        variant="subtitle1"
-        sx={{ color: "#2c7be5", fontWeight: 700, mb: 1, mt: 4 }}
-      >
-        GÓI ĐỀ THI VIP
-      </Typography>
-      <Typography sx={{ color: "black", mb: 4 }}>
-        Thí sinh được truy cập <b>toàn bộ kho đề thi</b> cập nhật mới nhất,
-        chính xác nhất.
-      </Typography>
+
       <VipSubscription
         VIP_SUBSCRIPTIONS={VIP_SUBSCRIPTIONS}
         isAuthenticated={isAuthenticated}
@@ -81,109 +72,142 @@ const VipSubscription = ({
   isAuthenticated: boolean;
 }) => {
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: { xs: "column", lg: "row" },
-        gap: 4,
-        justifyContent: "center",
-        alignItems: "stretch",
-        width: "100%",
-        mx: "auto",
-      }}
-    >
-      {VIP_SUBSCRIPTIONS.map((pkg: any) => (
-        <Card
-          key={pkg.id}
-          sx={{
-            border: "1px solid #2c7be5",
-            borderRadius: 3,
-            boxShadow: 3,
-            minWidth: 280,
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "stretch",
-          }}
-        >
-          <CardContent
-            sx={{ p: 0, display: "flex", flexDirection: "column", gap: 1.2 }}
+    <>
+      <Typography
+        variant="subtitle1"
+        sx={{ color: "#2c7be5", fontWeight: 700, mb: 1, mt: 4 }}
+      >
+        GÓI ĐỀ THI VIP
+      </Typography>
+      <Typography sx={{ color: "black", mb: 4 }}>
+        Thí sinh được truy cập <b>toàn bộ kho đề thi</b> cập nhật mới nhất,
+        chính xác nhất.
+      </Typography>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "column", lg: "row" },
+          gap: 4,
+          justifyContent: "center",
+          alignItems: "stretch",
+          width: "100%",
+          mx: "auto",
+          py: 2,
+        }}
+      >
+        {VIP_SUBSCRIPTIONS.map((pkg: any) => (
+          <Card
+            key={pkg.id}
+            sx={{
+              border: "1px solid #2c7be5",
+              borderRadius: 3,
+              boxShadow: 3,
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "stretch",
+            }}
           >
-            <Box sx={{ px: 2, pt: 2 }}>
-              <Typography
-                align="center"
-                sx={{ fontWeight: 700, fontSize: 18, mb: 0 }}
-              >
-                <span style={{ fontSize: 22, marginRight: 6 }}>{pkg.icon}</span>{" "}
-                {pkg.title}
-              </Typography>
-              <Typography
-                align="center"
-                sx={{ fontWeight: 700, fontSize: 28, mb: 0 }}
-              >
-                {pkg.price.toLocaleString()}{" "}
-                <span style={{ fontSize: 18, fontWeight: 400 }}>
-                  {pkg.priceUnit}
-                </span>
-              </Typography>
-            </Box>
             <Box
               sx={{
-                px: 2,
                 display: "flex",
                 flexDirection: "column",
-                gap: 0.5,
-                mt: 1,
+                justifyContent: "space-between",
+                height: "100%",
+                gap: 4,
               }}
             >
-              {pkg.features.map((feature: any, idx: any) => (
+              <Box>
+                <Box sx={{ px: 2, pt: 2 }}>
+                  <Typography
+                    align="center"
+                    sx={{ fontWeight: 700, fontSize: 18, mb: 2 }}
+                  >
+                    <span style={{ fontSize: 22, marginRight: 6 }}>
+                      {pkg.icon}
+                    </span>{" "}
+                    {pkg.title}
+                  </Typography>
+                  <Typography
+                    align="center"
+                    sx={{ fontWeight: 700, fontSize: 28, mb: 2 }}
+                  >
+                    {pkg.price.toLocaleString()}{" "}
+                    <span style={{ fontSize: 18, fontWeight: 400 }}>
+                      {pkg.priceUnit}
+                    </span>
+                  </Typography>
+                </Box>
                 <Box
-                  key={idx}
                   sx={{
+                    px: 2,
                     display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
+                    flexDirection: "column",
+                    gap: 0.5,
+                    mt: 1,
                   }}
                 >
-                  <Typography sx={{ fontSize: 16 }}>{feature.label}</Typography>
-                  {feature.checked && (
-                    <CheckCircleIcon sx={{ color: "#00e676", fontSize: 20 }} />
-                  )}
-                  {feature.value && (
-                    <Typography sx={{ color: "#2c7be5", fontWeight: 700 }}>
-                      {feature.value}
-                    </Typography>
-                  )}
+                  {pkg.features.map((feature: any, idx: any) => (
+                    <Box
+                      key={idx}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <Typography sx={{ fontSize: 16 }}>
+                        {feature.label}
+                      </Typography>
+                      {feature.checked && (
+                        <CheckCircleIcon
+                          sx={{ color: "#00e676", fontSize: 20 }}
+                        />
+                      )}
+                      {feature.value && (
+                        <Typography sx={{ color: "#2c7be5", fontWeight: 700 }}>
+                          {feature.value}
+                        </Typography>
+                      )}
+                    </Box>
+                  ))}
                 </Box>
-              ))}
-            </Box>
-            <Box sx={{ px: 2, pb: 2, pt: 1 }}>
-              <Button
-                fullWidth
-                variant="contained"
-                sx={{
-                  background: "#2c7be5",
-                  color: "#fff",
-                  fontWeight: 700,
-                  borderRadius: 2,
-                  fontSize: 16,
-                  py: 1,
-                  boxShadow: "none",
-                  "&:hover": { background: "#2c7be5" },
-                }}
-              >
-                <Link
-                  href={isAuthenticated ? "/dang-ky" : "/dang-ky"}
-                  style={{ textDecoration: "none", color: "inherit" }}
+              </Box>
+              <Box sx={{ px: 2, pb: 2, pt: 1 }}>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  sx={{
+                    background: "#2c7be5",
+                    color: "#fff",
+                    fontWeight: 700,
+                    borderRadius: 2,
+                    fontSize: 16,
+                    py: 1.2,
+                    boxShadow: "none",
+                    border: "none",
+                    mt: 2,
+                    "&:hover": {
+                      background: "#1565c0",
+                      color: "#fff",
+                      boxShadow: "none",
+                    },
+                    transition: "background 0.2s, color 0.2s",
+                  }}
                 >
-                  {pkg.button}
-                </Link>
-              </Button>
+                  <Link
+                    href={isAuthenticated ? "/dang-ky" : "/dang-ky"}
+                    style={{ textDecoration: "none", color: "inherit" }}
+                  >
+                    {pkg.button}
+                  </Link>
+                </Button>
+              </Box>
             </Box>
-          </CardContent>
-        </Card>
-      ))}
-    </Box>
+          </Card>
+        ))}
+      </Box>
+    </>
   );
 };
 
@@ -215,6 +239,7 @@ const MarkSubscription = ({
           alignItems: "stretch",
           width: "100%",
           mx: "auto",
+          py: 2,
         }}
       >
         {MARK_SUBSCRIPTIONS.map((pkg: any) => (
@@ -230,62 +255,70 @@ const MarkSubscription = ({
               alignItems: "stretch",
             }}
           >
-            <CardContent
-              sx={{ p: 0, display: "flex", flexDirection: "column", gap: 1.2 }}
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                height: "100%",
+                gap: 2,
+              }}
             >
-              <Box sx={{ px: 2, pt: 2 }}>
-                <Typography
-                  align="center"
-                  sx={{ fontWeight: 700, fontSize: 18, mb: 0 }}
-                >
-                  <span style={{ fontSize: 22, marginRight: 6 }}>
-                    {pkg.icon}
-                  </span>{" "}
-                  {pkg.title}
-                </Typography>
-                <Typography
-                  align="center"
-                  sx={{ fontWeight: 700, fontSize: 28, mb: 0 }}
-                >
-                  {pkg.price.toLocaleString()}{" "}
-                  <span style={{ fontSize: 18, fontWeight: 400 }}>
-                    {pkg.priceUnit}
-                  </span>
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  px: 2,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 0.5,
-                  mt: 1,
-                }}
-              >
-                {pkg.features.map((feature: any, idx: any) => (
-                  <Box
-                    key={idx}
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
+              <Box>
+                <Box sx={{ px: 2, pt: 2 }}>
+                  <Typography
+                    align="center"
+                    sx={{ fontWeight: 700, fontSize: 18, mb: 2 }}
                   >
-                    <Typography sx={{ color: "black", fontSize: 16 }}>
-                      {feature.label}
-                    </Typography>
-                    {feature.checked && (
-                      <CheckCircleIcon
-                        sx={{ color: "#00e676", fontSize: 20 }}
-                      />
-                    )}
-                    {feature.value && (
-                      <Typography sx={{ color: "#2c7be5", fontWeight: 700 }}>
-                        {feature.value}
+                    <span style={{ fontSize: 22, marginRight: 6 }}>
+                      {pkg.icon}
+                    </span>{" "}
+                    {pkg.title}
+                  </Typography>
+                  <Typography
+                    align="center"
+                    sx={{ fontWeight: 700, fontSize: 28, mb: 2 }}
+                  >
+                    {pkg.price.toLocaleString()}{" "}
+                    <span style={{ fontSize: 18, fontWeight: 400 }}>
+                      {pkg.priceUnit}
+                    </span>
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    px: 2,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 0.5,
+                    mt: 1,
+                  }}
+                >
+                  {pkg.features.map((feature: any, idx: any) => (
+                    <Box
+                      key={idx}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <Typography sx={{ color: "black", fontSize: 16 }}>
+                        {feature.label}
                       </Typography>
-                    )}
-                  </Box>
-                ))}
+                      {feature.checked && (
+                        <CheckCircleIcon
+                          sx={{ color: "#00e676", fontSize: 20 }}
+                        />
+                      )}
+                      {feature.value && (
+                        <Typography sx={{ color: "#2c7be5", fontWeight: 700 }}>
+                          {feature.value}
+                        </Typography>
+                      )}
+                    </Box>
+                  ))}
+                </Box>
               </Box>
               <Box sx={{ px: 2, pb: 2, pt: 1 }}>
                 <Button
@@ -297,9 +330,16 @@ const MarkSubscription = ({
                     fontWeight: 700,
                     borderRadius: 2,
                     fontSize: 16,
-                    py: 1,
+                    py: 1.2,
                     boxShadow: "none",
-                    "&:hover": { background: "#2c7be5" },
+                    border: "none",
+                    mt: 2,
+                    "&:hover": {
+                      background: "#1565c0",
+                      color: "#fff",
+                      boxShadow: "none",
+                    },
+                    transition: "background 0.2s, color 0.2s",
                   }}
                 >
                   <Link
@@ -310,7 +350,7 @@ const MarkSubscription = ({
                   </Link>
                 </Button>
               </Box>
-            </CardContent>
+            </Box>
           </Card>
         ))}
       </Box>
@@ -363,68 +403,76 @@ const ComboSubscription = ({
               display: "flex",
               flexDirection: "column",
               alignItems: "stretch",
+              height: "100%",
             }}
           >
-            <CardContent
-              sx={{ p: 0, display: "flex", flexDirection: "column", gap: 1.2 }}
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                height: "100%",
+              }}
             >
-              <Box sx={{ px: 4, pt: 4 }}>
-                <Typography
-                  align="center"
-                  sx={{
-                    fontWeight: 700,
-                    fontSize: 20,
-                    mb: 0,
-                    textTransform: "uppercase",
-                  }}
-                >
-                  <span style={{ fontSize: 22, marginRight: 6 }}>
-                    {pkg.icon}
-                  </span>{" "}
-                  {pkg.title}
-                </Typography>
-                <Typography
-                  align="center"
-                  sx={{ fontWeight: 700, fontSize: 32, mb: 0 }}
-                >
-                  {pkg.price.toLocaleString()}{" "}
-                  <span style={{ fontSize: 20, fontWeight: 400 }}>VNĐ</span>
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  px: 4,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 1,
-                  mt: 2,
-                }}
-              >
-                {pkg.features.map((feature: any, idx: any) => (
-                  <Box
-                    key={idx}
+              <Box>
+                <Box sx={{ px: 4, pt: 4 }}>
+                  <Typography
+                    align="center"
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      minHeight: 32,
+                      fontWeight: 700,
+                      fontSize: 20,
+                      mb: 2,
+                      textTransform: "uppercase",
                     }}
                   >
-                    <Typography sx={{ color: "black", fontSize: 16 }}>
-                      {feature.label}
-                    </Typography>
-                    {feature.checked && (
-                      <CheckCircleIcon
-                        sx={{ color: "#00e676", fontSize: 20 }}
-                      />
-                    )}
-                    {feature.value && (
-                      <Typography sx={{ color: "#2c7be5", fontWeight: 700 }}>
-                        {feature.value}
+                    <span style={{ fontSize: 22, marginRight: 6 }}>
+                      {pkg.icon}
+                    </span>{" "}
+                    {pkg.title}
+                  </Typography>
+                  <Typography
+                    align="center"
+                    sx={{ fontWeight: 700, fontSize: 32, mb: 2 }}
+                  >
+                    {pkg.price.toLocaleString()}{" "}
+                    <span style={{ fontSize: 20, fontWeight: 400 }}>VNĐ</span>
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    px: 4,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1,
+                    mt: 2,
+                  }}
+                >
+                  {pkg.features.map((feature: any, idx: any) => (
+                    <Box
+                      key={idx}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        minHeight: 32,
+                      }}
+                    >
+                      <Typography sx={{ color: "black", fontSize: 16 }}>
+                        {feature.label}
                       </Typography>
-                    )}
-                  </Box>
-                ))}
+                      {feature.checked && (
+                        <CheckCircleIcon
+                          sx={{ color: "#00e676", fontSize: 20 }}
+                        />
+                      )}
+                      {feature.value && (
+                        <Typography sx={{ color: "#2c7be5", fontWeight: 700 }}>
+                          {feature.value}
+                        </Typography>
+                      )}
+                    </Box>
+                  ))}
+                </Box>
               </Box>
               <Box sx={{ px: 4, pt: 2, pb: 3, mt: 2 }}>
                 <Button
@@ -438,7 +486,14 @@ const ComboSubscription = ({
                     fontSize: 16,
                     py: 1.2,
                     boxShadow: "none",
-                    "&:hover": { background: "#2979ff" },
+                    border: "none",
+                    mt: 2,
+                    "&:hover": {
+                      background: "#1565c0",
+                      color: "#fff",
+                      boxShadow: "none",
+                    },
+                    transition: "background 0.2s, color 0.2s",
                   }}
                 >
                   <Link
@@ -449,7 +504,7 @@ const ComboSubscription = ({
                   </Link>
                 </Button>
               </Box>
-            </CardContent>
+            </Box>
           </Card>
         ))}
       </Box>
