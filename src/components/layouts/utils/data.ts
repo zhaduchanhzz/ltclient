@@ -22,6 +22,11 @@ export const userMenuLinks: { href: string; name: string }[] = [
   { name: "Danh sách bài nói", href: APP_ROUTE.USER_WRITING },
 ];
 
+export const guestMenuLinks = [
+  { name: "Đăng nhập", href: APP_ROUTE.LOGIN },
+  { name: "Đăng ký", href: APP_ROUTE.REGISTER },
+];
+
 export const practicePageName: { href: string; name: string }[] = [
   { name: "Hệ thống ôn luyện VSTEP", href: APP_ROUTE.PRACTICE_DASHBOARD },
   // Practice

@@ -1,5 +1,4 @@
 "use client";
-import BasicAlert from "@/components/base/MaterialUI-Basic/Alert";
 import BasicButton from "@/components/base/MaterialUI-Basic/Button";
 import BasicGrid from "@/components/base/MaterialUI-Basic/Grid";
 import BasicNextLink from "@/components/base/MaterialUI-Basic/Link/BasicNextLink";
@@ -15,11 +14,13 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { loginValidate } from "./utils/schema";
+import { useAppContextHandle } from "@/contexts/AppContext";
 
 const LoginPage = () => {
   const { push } = useRouter();
   const loginMutation = useLoginMutation();
   const profileQuery = useProfileQuery();
+  const { updateAppState } = useAppContextHandle();
   const form = useForm<LoginRequest>({
     mode: "onChange",
     resolver: yupResolver(loginValidate()),
@@ -30,15 +31,38 @@ const LoginPage = () => {
     loginMutation.mutate(data, {
       onSuccess: (response) => {
         if (response.code === 200) {
+          updateAppState({
+            appAlertInfo: {
+              message: "Đăng nhập thành công",
+              severity: "success",
+            },
+          });
           localStorage.setItem(
             APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN,
-            JSON.stringify(response.data.accessToken),
+            response.data.accessToken,
           );
           profileQuery.refetch();
           push(APP_ROUTE.HOME);
+          return;
         }
+
+        updateAppState({
+          appAlertInfo: {
+            message: "Đăng nhập thất bại",
+            severity: "error",
+          },
+        });
       },
-      onError: (error) => console.error(error),
+      onError: (error: any) => {
+        const errorMessage =
+          error.response?.data?.message || "Đăng nhập thất bại";
+        updateAppState({
+          appAlertInfo: {
+            message: errorMessage,
+            severity: "error",
+          },
+        });
+      },
     });
   };
 
@@ -52,7 +76,7 @@ const LoginPage = () => {
         >
           <BasicTypography variant="h2">Đăng nhập hệ thống thi</BasicTypography>
         </BasicGrid>
-        <BasicGrid
+        {/* <BasicGrid
           container
           size={{ xs: 12 }}
           sx={{ justifyContent: "center" }}
@@ -60,7 +84,7 @@ const LoginPage = () => {
           <BasicAlert severity="error" sx={{ width: 1 }}>
             Bạn đã đăng xuất khỏi hệ thống
           </BasicAlert>
-        </BasicGrid>
+        </BasicGrid> */}
 
         <BasicGrid container size={{ xs: 12 }} spacing={1}>
           <BasicGrid size={{ xs: 12 }}>
@@ -80,6 +104,7 @@ const LoginPage = () => {
           </BasicGrid>
           <BasicGrid size={{ xs: 12 }}>
             <TextFieldHookForm
+              type="password"
               id="login-form-password"
               name="password"
               placeholder="Enter Password"

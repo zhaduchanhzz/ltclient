@@ -13,8 +13,12 @@ type UserGeneralProps = {};
 const UserGeneral = (_: UserGeneralProps) => {
   const form = useForm();
 
+  const onFinish = (data: any) => {
+    console.log(data);
+  };
+
   return (
-    <HookForm form={form}>
+    <HookForm form={form} onFinish={onFinish}>
       <BasicGrid container spacing={2}>
         <BasicGrid container size={{ xs: 6 }} spacing={2}>
           <BasicGrid container spacing={1} size={{ xs: 12 }}>

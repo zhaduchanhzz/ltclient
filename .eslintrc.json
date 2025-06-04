@@ -1,11 +1,6 @@
 {
   "root": true,
-  "extends": [
-    "next",
-    "next/core-web-vitals",
-    "plugin:react/jsx-runtime",
-    "plugin:react/recommended"
-  ],
+  "extends": ["next", "next/core-web-vitals", "plugin:react/jsx-runtime", "plugin:react/recommended"],
   "ignorePatterns": ["node_modules", ".next", "out"],
   "plugins": ["react", "@typescript-eslint"],
   "parserOptions": {
@@ -17,10 +12,7 @@
   },
   "rules": {
     "no-unused-vars": "off",
-    "@typescript-eslint/no-unused-vars": [
-      "error",
-      { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }
-    ],
+    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
     "react-native/no-inline-styles": "off",
     "react/react-in-jsx-scope": "off",
     "react/jsx-uses-react": "off",
@@ -35,7 +27,7 @@
     "jsx-quotes": ["error", "prefer-double"],
     "quote-props": ["error", "as-needed"],
     "comma-dangle": ["error", "always-multiline"],
-    "react/jsx-indent": ["error", 2],
+    "react/jsx-indent": ["off", 2],
     "react/jsx-indent-props": ["error", 2],
     "padding-line-between-statements": [
       "error",

@@ -5,10 +5,17 @@ import BasicPopper from "@/components/base/MaterialUI-Basic/Popper";
 import { APP_ROUTE } from "@/consts/app-route";
 import LogoutIcon from "@mui/icons-material/Logout";
 import PersonIcon from "@mui/icons-material/Person";
-import { ClickAwayListener, Grow, IconButton, useTheme } from "@mui/material";
+import {
+  ClickAwayListener,
+  Grow,
+  IconButton,
+  useTheme,
+  Alert,
+  Snackbar,
+} from "@mui/material";
 import { useRouter } from "next/navigation";
 import { Fragment, SyntheticEvent, useEffect, useRef, useState } from "react";
-import { userMenuLinks } from "../utils/data";
+import { guestMenuLinks, userMenuLinks } from "../utils/data";
 import BasicTypography from "@/components/base/MaterialUI-Basic/Typography";
 import { APP_LOCAL_STORAGE_KEY } from "@/consts";
 import { useProfileQuery } from "@/services/apis/auth";
@@ -17,12 +24,17 @@ type UserMenuPopperProps = {};
 
 const UserMenuPopper = (_: UserMenuPopperProps) => {
   const [openUserMenu, setOpenUserMenu] = useState<boolean>(false);
+  const [openAlert, setOpenAlert] = useState(false);
   const prevOpenUserMenu = useRef(openUserMenu);
   const anchorUserMenuRef = useRef<HTMLButtonElement>(null);
   const profileQuery = useProfileQuery();
 
   const theme = useTheme();
   const router = useRouter();
+
+  const isAuthenticated = Boolean(
+    localStorage.getItem(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN),
+  );
 
   useEffect(() => {
     if (prevOpenUserMenu.current === true && openUserMenu === false) {
@@ -51,10 +63,27 @@ const UserMenuPopper = (_: UserMenuPopperProps) => {
     setOpenUserMenu((prevOpen) => !prevOpen);
   };
 
-  const handleLogout = () => {
+  const handleLogout = (event: SyntheticEvent) => {
+    handleCloseUserMenu(event);
+
     localStorage.removeItem(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN);
     profileQuery.refetch();
-    router.push(APP_ROUTE.LOGIN);
+    setOpenAlert(true);
+
+    setTimeout(() => {
+      router.push(APP_ROUTE.LOGIN);
+    }, 1500);
+  };
+
+  const handleCloseAlert = (
+    event?: SyntheticEvent | Event,
+    reason?: string,
+  ) => {
+    if (reason === "clickaway") {
+      return;
+    }
+
+    setOpenAlert(false);
   };
 
   function handleUserListKeyDown(event: React.KeyboardEvent) {
@@ -68,6 +97,20 @@ const UserMenuPopper = (_: UserMenuPopperProps) => {
 
   return (
     <Fragment>
+      <Snackbar
+        open={openAlert}
+        autoHideDuration={1500}
+        onClose={handleCloseAlert}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert
+          onClose={handleCloseAlert}
+          severity="info"
+          sx={{ width: "100%" }}
+        >
+          Đăng xuất thành công!
+        </Alert>
+      </Snackbar>
       <IconButton
         ref={anchorUserMenuRef}
         size="large"
@@ -105,13 +148,48 @@ const UserMenuPopper = (_: UserMenuPopperProps) => {
                   autoFocusItem={openUserMenu}
                   onKeyDown={handleUserListKeyDown}
                 >
-                  {userMenuLinks.map((item) => (
+                  {isAuthenticated
+                    ? userMenuLinks.map((item) => (
+                        <BasicMenuItem
+                          key={item.href}
+                          onClick={(event: SyntheticEvent) => {
+                            navigateTo(item.href);
+                            handleCloseUserMenu(event);
+                          }}
+                          sx={{
+                            ":hover": {
+                              bgcolor: theme.palette.background.paper,
+                              color: theme.palette.customStyle.link.primary,
+                            },
+                          }}
+                        >
+                          <BasicTypography variant="body2">
+                            {item.name}
+                          </BasicTypography>
+                        </BasicMenuItem>
+                      ))
+                    : guestMenuLinks.map((item) => (
+                        <BasicMenuItem
+                          key={item.href}
+                          onClick={(event: SyntheticEvent) => {
+                            navigateTo(item.href);
+                            handleCloseUserMenu(event);
+                          }}
+                          sx={{
+                            ":hover": {
+                              bgcolor: theme.palette.background.paper,
+                              color: theme.palette.customStyle.link.primary,
+                            },
+                          }}
+                        >
+                          <BasicTypography variant="body2">
+                            {item.name}
+                          </BasicTypography>
+                        </BasicMenuItem>
+                      ))}
+                  {isAuthenticated && (
                     <BasicMenuItem
-                      key={item.href}
-                      onClick={(event: SyntheticEvent) => {
-                        navigateTo(item.href);
-                        handleCloseUserMenu(event);
-                      }}
+                      onClick={handleLogout}
                       sx={{
                         ":hover": {
                           bgcolor: theme.palette.background.paper,
@@ -120,23 +198,11 @@ const UserMenuPopper = (_: UserMenuPopperProps) => {
                       }}
                     >
                       <BasicTypography variant="body2">
-                        {item.name}
+                        Đăng xuất
                       </BasicTypography>
+                      <LogoutIcon sx={{ fontSize: 18, ml: 1 }} />
                     </BasicMenuItem>
-                  ))}
-
-                  <BasicMenuItem
-                    onClick={handleLogout}
-                    sx={{
-                      ":hover": {
-                        bgcolor: theme.palette.background.paper,
-                        color: theme.palette.customStyle.link.primary,
-                      },
-                    }}
-                  >
-                    <BasicTypography variant="body2">Đăng xuất</BasicTypography>
-                    <LogoutIcon sx={{ fontSize: 18, ml: 1 }} />
-                  </BasicMenuItem>
+                  )}
                 </BasicMenuList>
               </ClickAwayListener>
             </BasicPaper>

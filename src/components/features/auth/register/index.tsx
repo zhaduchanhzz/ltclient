@@ -2,14 +2,13 @@
 import BasicAlert from "@/components/base/MaterialUI-Basic/Alert";
 import BasicButton from "@/components/base/MaterialUI-Basic/Button";
 import BasicGrid from "@/components/base/MaterialUI-Basic/Grid";
-import BasicMaterialLink from "@/components/base/MaterialUI-Basic/Link/BasicMaterialLink";
 import BasicNextLink from "@/components/base/MaterialUI-Basic/Link/BasicNextLink";
 import BasicTypography from "@/components/base/MaterialUI-Basic/Typography";
 import HookForm from "@/components/base/MaterialUI-HookForm/HookForm";
 import TextFieldHookForm from "@/components/base/MaterialUI-HookForm/TextFieldHookForm/Index";
 import DarkNightChange from "@/components/common/DarkNightChange";
 import { APP_ROUTE } from "@/consts/app-route";
-import useNotification from "@/contexts/NotificationContext";
+import { useAppContextHandle } from "@/contexts/AppContext";
 import { useRegisterMutation } from "@/services/apis/auth";
 import { RegisterRequest } from "@/services/types/auth";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -22,7 +21,7 @@ type RegisterPageProps = {};
 const RegisterPage = (_: RegisterPageProps) => {
   const { push } = useRouter();
   const registerMutation = useRegisterMutation();
-  const setNotification = useNotification();
+  const { updateAppState } = useAppContextHandle();
   const form = useForm<RegisterRequest>({
     mode: "onChange",
     resolver: yupResolver(registerValidate()),
@@ -33,24 +32,35 @@ const RegisterPage = (_: RegisterPageProps) => {
     registerMutation.mutate(data, {
       onSuccess: (response) => {
         if (response.code === 200) {
-          setNotification({
-            message: "Đăng ký thành công",
-            severity: "success",
+          updateAppState({
+            appAlertInfo: {
+              message: "Đăng ký thành công, đợi 3 giây để chuyển trang",
+              severity: "success",
+            },
           });
-          push(APP_ROUTE.LOGIN);
+          setTimeout(() => {
+            push(APP_ROUTE.LOGIN);
+          }, 3000);
           return;
         }
 
-        setNotification({
-          message: "Đăng ký thất bại",
-          severity: "error",
+        updateAppState({
+          appAlertInfo: {
+            message: "Đăng ký thất bại",
+            severity: "error",
+          },
         });
       },
-      onError: () =>
-        setNotification({
-          message: "Đăng ký thất bại",
-          severity: "error",
-        }),
+      onError: (error: any) => {
+        const errorMessage =
+          error.response?.data?.message || "Đăng nhập thất bại";
+        updateAppState({
+          appAlertInfo: {
+            message: errorMessage,
+            severity: "error",
+          },
+        });
+      },
     });
   };
 
@@ -84,7 +94,7 @@ const RegisterPage = (_: RegisterPageProps) => {
           <BasicGrid size={{ xs: 12 }}>
             <TextFieldHookForm
               id="register-form-fullname"
-              name="fullname"
+              name="fullName"
               placeholder="Nhập tên người dùng"
             />
           </BasicGrid>
@@ -133,6 +143,7 @@ const RegisterPage = (_: RegisterPageProps) => {
             <TextFieldHookForm
               id="register-form-password"
               name="password"
+              type="password"
               placeholder="Nhập mật khẩu"
             />
           </BasicGrid>
@@ -155,10 +166,10 @@ const RegisterPage = (_: RegisterPageProps) => {
         <BasicGrid size={{ xs: 12 }}>
           <BasicTypography variant="body2" align="center">
             Nếu bạn đã có tài khoản, vui lòng
-            <BasicMaterialLink href={APP_ROUTE.LOGIN}>
+            <BasicNextLink href={APP_ROUTE.LOGIN} className="loginLink">
               {" "}
               đăng nhập tại đây
-            </BasicMaterialLink>
+            </BasicNextLink>
             ,
           </BasicTypography>
           <BasicTypography variant="body2" align="center">
