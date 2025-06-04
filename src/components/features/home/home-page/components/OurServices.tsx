@@ -1,7 +1,8 @@
 import BasicBox from "@/components/base/MaterialUI-Basic/Box";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
+import BasicTypography from "@/components/base/MaterialUI-Basic/Typography";
 import { SERVICES } from "@/consts";
+import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import {
   Box,
   Button,
@@ -9,14 +10,12 @@ import {
   List,
   ListItem,
   ListItemIcon,
-  ListItemText,
   Paper,
   Typography,
 } from "@mui/material";
-import Link from "next/link";
-import BasicTypography from "@/components/base/MaterialUI-Basic/Typography";
-import Rewards from "./Rewards";
 import Image from "next/image";
+import Link from "next/link";
+import Rewards from "./Rewards";
 
 const OurServices = () => {
   return (

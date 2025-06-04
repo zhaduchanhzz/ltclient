@@ -1,6 +1,6 @@
 import BasicBox from "@/components/base/MaterialUI-Basic/Box";
 import { REWARDS } from "@/consts";
-import { Box, Grid, Paper, Typography, useMediaQuery } from "@mui/material";
+import { Box, Paper, Typography, useMediaQuery } from "@mui/material";
 
 const Rewards = () => {
   const isMobile = useMediaQuery("(max-width: 1024px)");
