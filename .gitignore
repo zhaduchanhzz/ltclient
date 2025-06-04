@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# postman collection
+chinhphucvstep.postman_collection.json
+
+# cursor-rules
+.cursor/*
