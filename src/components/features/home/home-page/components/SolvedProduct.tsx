@@ -1,6 +1,6 @@
-import { Box, Typography, Link as MuiLink } from "@mui/material";
-import Image from "next/image";
 import { SOLVED_STEPS } from "@/consts";
+import { Box, Typography } from "@mui/material";
+import Image from "next/image";
 
 const SolvedProduct = () => {
   return (
