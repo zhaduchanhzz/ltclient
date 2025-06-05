@@ -19,6 +19,7 @@ import { guestMenuLinks, userMenuLinks } from "../utils/data";
 import BasicTypography from "@/components/base/MaterialUI-Basic/Typography";
 import { APP_LOCAL_STORAGE_KEY } from "@/consts";
 import { useProfileQuery } from "@/services/apis/auth";
+import LocalStorage from "@/utils/local-storage";
 
 type UserMenuPopperProps = {};
 
@@ -33,7 +34,7 @@ const UserMenuPopper = (_: UserMenuPopperProps) => {
   const router = useRouter();
 
   const isAuthenticated = Boolean(
-    localStorage.getItem(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN),
+    LocalStorage.get(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN),
   );
 
   useEffect(() => {
@@ -66,7 +67,7 @@ const UserMenuPopper = (_: UserMenuPopperProps) => {
   const handleLogout = (event: SyntheticEvent) => {
     handleCloseUserMenu(event);
 
-    localStorage.removeItem(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN);
+    LocalStorage.remove(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN);
     profileQuery.refetch();
     setOpenAlert(true);
 
