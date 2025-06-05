@@ -1,16 +1,17 @@
+"use client";
+
 import BasicBox from "@/components/base/MaterialUI-Basic/Box";
 import BasicStack from "@/components/base/MaterialUI-Basic/Stack";
 import { Divider } from "@mui/material";
 import ComparePackage from "./components/ComparePackage";
+import FAQs from "./components/FAQs";
+import Feedback from "./components/Feedback";
 import IntroducePack from "./components/IntroducePack";
 import PriceList from "./components/PriceList";
-import SystemFunction from "./components/SystemFunction";
-import VstepBenefits from "./components/VstepBenefits";
-import { MARK_SUBSCRIPTIONS, VIP_SUBSCRIPTIONS } from "./utils/subs";
-import Feedback from "./components/Feedback";
 import PurchaseGuide from "./components/PurchaseGuide";
 import ServcesPackage from "./components/ServcesPackage";
-import FAQs from "./components/FAQs";
+import SystemFunction from "./components/SystemFunction";
+import VstepBenefits from "./components/VstepBenefits";
 
 type SubcriptionProps = {};
 
@@ -42,11 +43,7 @@ const Subcription = (_: SubcriptionProps) => {
         </BasicStack>
 
         <BasicStack>
-          <PriceList
-            id="gia-goi-dich-vu-vstep"
-            VIP_SUBSCRIPTIONS={VIP_SUBSCRIPTIONS}
-            MARK_SUBSCRIPTIONS={MARK_SUBSCRIPTIONS}
-          />
+          <PriceList id="gia-goi-dich-vu-vstep" />
         </BasicStack>
         <Divider sx={{ my: 4, p: 2 }} />
 

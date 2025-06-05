@@ -63,7 +63,7 @@ const IntroducePack = ({ id }: IntroducePackProps) => {
               textAlign: "left",
             }}
           >
-            Gói đề thi VIP & chấm bài VSTEP – Được tin tưởng bởi hàng ngàn thí
+            Gói đề thi VIP & chấm bài VSTEP - Được tin tưởng bởi hàng ngàn thí
             sinh. Đề thi sát thực tế, chấm điểm chi tiết, giúp bạn đạt{" "}
             <span style={{ color: "#2c7be5", fontWeight: 600 }}>B1-B2-C1</span>{" "}
             dễ dàng. Học mọi lúc, mọi nơi.
@@ -91,6 +91,7 @@ const IntroducePack = ({ id }: IntroducePackProps) => {
               maxWidth: "90%",
               height: "auto",
             }}
+            priority
           />
         </BasicBox>
       </BasicStack>

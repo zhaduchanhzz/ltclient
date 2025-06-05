@@ -4,19 +4,21 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { Box, Button, Card, Typography } from "@mui/material";
 import Link from "next/link";
-import { COMBO_SUBSCRIPTIONS } from "../utils/subs";
+import { Subscription, useSubscriptions } from "../utils/subs";
 
-const PriceList = ({
-  id,
-  VIP_SUBSCRIPTIONS,
-  MARK_SUBSCRIPTIONS,
-}: {
-  id: string;
-  VIP_SUBSCRIPTIONS: any;
-  MARK_SUBSCRIPTIONS: any;
-}) => {
+type Feature = {
+  label: string;
+  checked?: boolean;
+  value?: string;
+};
+
+const PriceList = ({ id }: { id: string }) => {
   const { isAuthenticated } = useAuthContext();
-
+  const { VIP_SUBSCRIPTIONS, MARK_SUBSCRIPTIONS, COMBO_SUBSCRIPTIONS } =
+    useSubscriptions();
+  console.log(VIP_SUBSCRIPTIONS);
+  console.log(MARK_SUBSCRIPTIONS);
+  console.log(COMBO_SUBSCRIPTIONS);
   return (
     <Box sx={{ py: 6, px: 2 }} id={id}>
       <Typography
@@ -68,7 +70,7 @@ const VipSubscription = ({
   VIP_SUBSCRIPTIONS,
   isAuthenticated,
 }: {
-  VIP_SUBSCRIPTIONS: any;
+  VIP_SUBSCRIPTIONS: Subscription[];
   isAuthenticated: boolean;
 }) => {
   return (
@@ -95,7 +97,7 @@ const VipSubscription = ({
           py: 2,
         }}
       >
-        {VIP_SUBSCRIPTIONS.map((pkg: any) => (
+        {VIP_SUBSCRIPTIONS.map((pkg) => (
           <Card
             key={pkg.id}
             sx={{
@@ -147,7 +149,7 @@ const VipSubscription = ({
                     mt: 1,
                   }}
                 >
-                  {pkg.features.map((feature: any, idx: any) => (
+                  {pkg.features.map((feature: Feature, idx: number) => (
                     <Box
                       key={idx}
                       sx={{
@@ -173,7 +175,7 @@ const VipSubscription = ({
                   ))}
                 </Box>
               </Box>
-              <Box sx={{ px: 2, pb: 2, pt: 1 }}>
+              <Box sx={{ p: 2 }}>
                 <Button
                   fullWidth
                   variant="contained"
@@ -215,7 +217,7 @@ const MarkSubscription = ({
   MARK_SUBSCRIPTIONS,
   isAuthenticated,
 }: {
-  MARK_SUBSCRIPTIONS: any;
+  MARK_SUBSCRIPTIONS: Subscription[];
   isAuthenticated: boolean;
 }) => {
   return (
@@ -242,7 +244,7 @@ const MarkSubscription = ({
           py: 2,
         }}
       >
-        {MARK_SUBSCRIPTIONS.map((pkg: any) => (
+        {MARK_SUBSCRIPTIONS.map((pkg) => (
           <Card
             key={pkg.id}
             sx={{
@@ -294,7 +296,7 @@ const MarkSubscription = ({
                     mt: 1,
                   }}
                 >
-                  {pkg.features.map((feature: any, idx: any) => (
+                  {pkg.features.map((feature: Feature, idx: number) => (
                     <Box
                       key={idx}
                       sx={{
@@ -320,7 +322,7 @@ const MarkSubscription = ({
                   ))}
                 </Box>
               </Box>
-              <Box sx={{ px: 2, pb: 2, pt: 1 }}>
+              <Box sx={{ p: 2 }}>
                 <Button
                   fullWidth
                   variant="contained"
@@ -362,7 +364,7 @@ const ComboSubscription = ({
   COMBO_SUBSCRIPTIONS,
   isAuthenticated,
 }: {
-  COMBO_SUBSCRIPTIONS: any;
+  COMBO_SUBSCRIPTIONS: Subscription[];
   isAuthenticated: boolean;
 }) => {
   return (
@@ -390,7 +392,7 @@ const ComboSubscription = ({
           mx: "auto",
         }}
       >
-        {COMBO_SUBSCRIPTIONS.map((pkg: any) => (
+        {COMBO_SUBSCRIPTIONS.map((pkg) => (
           <Card
             key={pkg.id}
             sx={{
@@ -447,7 +449,7 @@ const ComboSubscription = ({
                     mt: 2,
                   }}
                 >
-                  {pkg.features.map((feature: any, idx: any) => (
+                  {pkg.features.map((feature: Feature, idx: number) => (
                     <Box
                       key={idx}
                       sx={{
@@ -474,7 +476,7 @@ const ComboSubscription = ({
                   ))}
                 </Box>
               </Box>
-              <Box sx={{ px: 4, pt: 2, pb: 3, mt: 2 }}>
+              <Box sx={{ p: 4 }}>
                 <Button
                   fullWidth
                   variant="contained"
