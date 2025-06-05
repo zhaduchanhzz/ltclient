@@ -8,6 +8,7 @@ const BasicImage = (props: BasicImageProps) => {
     <img
       id={id}
       data-cy={id}
+      alt={otherProps.alt || "image"}
       style={{ display: "block", width: "100%", height: "100%", ...style }}
       {...otherProps}
     />
