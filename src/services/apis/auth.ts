@@ -6,7 +6,7 @@ import {
   LoginRequest,
   LoginResponse,
   RegisterRequest,
-  UserInfo
+  UserInfo,
 } from "../types/auth";
 
 export const useLogoutQuery = (enabled = false) => {

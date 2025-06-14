@@ -106,7 +106,7 @@ export type ExamsDetail = {
       isCorrect: boolean;
     }[];
   }[];
-}
+};
 
 export type SimulationExam = {
   id: number;
@@ -137,18 +137,6 @@ export type SimulationSession = {
   startTime: number;
   timeLimit: number; // in minutes
   isCompleted: boolean;
-};
-
-export type SimulationResult = {
-  totalQuestions: number;
-  correctAnswers: number;
-  score: number;
-  examResults: {
-    examType: string;
-    questions: number;
-    correct: number;
-    score: number;
-  }[];
 };
 
 export type ExamSubmitRequest = {

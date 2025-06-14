@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { ImgHTMLAttributes } from "react";
 
 type BasicImageProps = ImgHTMLAttributes<HTMLImageElement> & {};
@@ -5,7 +6,8 @@ type BasicImageProps = ImgHTMLAttributes<HTMLImageElement> & {};
 const BasicImage = (props: BasicImageProps) => {
   const { id, style, ...otherProps } = props;
   return (
-    <img
+    // @ts-ignore
+    <Image
       id={id}
       data-cy={id}
       alt={otherProps.alt || "image"}

@@ -2,11 +2,21 @@ import { API_PATH } from "@/consts/api-path";
 import { CommonResponse } from "@/types/common";
 import HttpClient from "@/utils/axios-config";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Exam, ExamFilterParams, ExamsDetail, ExamSubmitRequest, ExamSubmitResponse, SimulationExam, TakeExamResponse, UserHistory, UserWriting } from "../types/exam";
+import {
+  Exam,
+  ExamFilterParams,
+  ExamsDetail,
+  ExamSubmitRequest,
+  ExamSubmitResponse,
+  SimulationExam,
+  TakeExamResponse,
+  UserHistory,
+  UserWriting,
+} from "../types/exam";
 
 export const useExamsQuery = (enabled = false) => {
   return useQuery({
-    queryKey: [API_PATH.EXAMS], 
+    queryKey: [API_PATH.EXAMS],
     queryFn: () => {
       return HttpClient.get<null, CommonResponse<ExamsDetail>>(API_PATH.EXAMS);
     },
@@ -72,7 +82,9 @@ export const useGetUserWritingQuery = (enabled = false) => {
   return useQuery({
     queryKey: [API_PATH.EXAMS, "user-writing"],
     queryFn: () => {
-      return HttpClient.get<null, CommonResponse<UserWriting[]>>(API_PATH.EXAMS + "/user-writing");
+      return HttpClient.get<null, CommonResponse<UserWriting[]>>(
+        API_PATH.EXAMS + "/user-writing",
+      );
     },
     enabled,
   });
@@ -82,7 +94,9 @@ export const useGetUserHistoryQuery = (enabled = false) => {
   return useQuery({
     queryKey: [API_PATH.EXAMS, "history"],
     queryFn: () => {
-      return HttpClient.get<null, CommonResponse<UserHistory[]>>(API_PATH.EXAMS + "/history");
+      return HttpClient.get<null, CommonResponse<UserHistory[]>>(
+        API_PATH.EXAMS + "/history",
+      );
     },
     enabled,
   });
@@ -91,16 +105,20 @@ export const useGetUserHistoryQuery = (enabled = false) => {
 export const useTakeExamMutation = () => {
   return useMutation({
     mutationFn: () => {
-      return HttpClient.post<null, CommonResponse<TakeExamResponse>>(API_PATH.TAKE_EXAM);
+      return HttpClient.post<null, CommonResponse<TakeExamResponse>>(
+        API_PATH.TAKE_EXAM,
+      );
     },
   });
 };
 
-export const useGetExamByIdQuery = (examId: string, enabled = false) => {
+export const useGetExamByIdQuery = (termId: string) => {
   return useQuery({
-    queryKey: [API_PATH.EXAMS, examId],
+    queryKey: [API_PATH.EXAMS, termId],
     queryFn: () => {
-      return HttpClient.get<null, CommonResponse<Exam>>(API_PATH.EXAMS + "/" + examId);
+      return HttpClient.get<null, CommonResponse<Exam>>(
+        API_PATH.EXAMS + "/" + termId,
+      );
     },
   });
 };
@@ -109,7 +127,9 @@ export const useGetAllExamsQuery = (enabled = false) => {
   return useQuery({
     queryKey: [API_PATH.EXAMS, "all"],
     queryFn: () => {
-      return HttpClient.get<null, CommonResponse<SimulationExam[]>>(API_PATH.EXAMS);
+      return HttpClient.get<null, CommonResponse<SimulationExam[]>>(
+        API_PATH.EXAMS,
+      );
     },
     enabled,
   });
@@ -118,7 +138,10 @@ export const useGetAllExamsQuery = (enabled = false) => {
 export const useSubmitExamMutation = () => {
   return useMutation({
     mutationFn: (data: ExamSubmitRequest) => {
-      return HttpClient.post<ExamSubmitRequest, CommonResponse<ExamSubmitResponse>>(API_PATH.EXAMS + "/submit", data);
+      return HttpClient.post<
+        ExamSubmitRequest,
+        CommonResponse<ExamSubmitResponse>
+      >(API_PATH.EXAMS + "/submit", data);
     },
   });
 };

@@ -47,7 +47,6 @@ import {
   ExamSubmitRequest,
   ExamTermSession,
   SimulationExam,
-  SimulationResult,
 } from "@/services/types/exam";
 
 const EXAM_TIME_LIMIT = 120; // 120 minutes for full exam
@@ -445,7 +444,6 @@ export default function ExamPage() {
     }
   };
 
-
   // Reset exam
   const resetExam = () => {
     setSession(null);
@@ -486,7 +484,7 @@ export default function ExamPage() {
           </Typography>
 
           <Grid2 container spacing={2} sx={{ mb: 4 }}>
-            <Grid2 xs={12} sm={6}>
+            <Grid2 size={12}>
               <Card variant="outlined">
                 <CardContent>
                   <Typography variant="h6" color="primary">
@@ -497,7 +495,7 @@ export default function ExamPage() {
                 </CardContent>
               </Card>
             </Grid2>
-            <Grid2 xs={12} sm={6}>
+            <Grid2 size={12}>
               <Card variant="outlined">
                 <CardContent>
                   <Typography variant="h6" color="primary">
@@ -519,7 +517,7 @@ export default function ExamPage() {
                 const parts = examsByType[examType] || [];
                 const Icon = ExamTypeIcons[examType];
                 return (
-                  <Grid2 key={examType} xs={12} sm={6} md={3}>
+                  <Grid2 key={examType} size={12}>
                     <Card variant="outlined">
                       <CardContent sx={{ textAlign: "center" }}>
                         <Icon
@@ -581,10 +579,12 @@ export default function ExamPage() {
         </DialogTitle>
         <DialogContent>
           <Typography variant="body1" sx={{ mb: 2 }}>
-            Your exam has been successfully submitted with Term ID: <strong>{session?.termId}</strong>
+            Your exam has been successfully submitted with Term ID:{" "}
+            <strong>{session?.termId}</strong>
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Your responses have been recorded and will be evaluated by your instructor.
+            Your responses have been recorded and will be evaluated by your
+            instructor.
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -726,13 +726,20 @@ export default function ExamPage() {
           <Box sx={{ display: "flex", gap: 2 }}>
             {/* Check if this is the last question of the last exam (speaking) */}
             {(() => {
-              const currentTypeIndex = examTypes.indexOf(session.currentExamType);
+              const currentTypeIndex = examTypes.indexOf(
+                session.currentExamType,
+              );
               const isLastExamType = currentTypeIndex >= examTypes.length - 1;
-              const currentTypeExams = examsByType[session.currentExamType] || [];
-              const isLastPartInType = session.currentExamIndex >= currentTypeExams.length - 1;
-              const isLastQuestion = session.currentQuestionIndex >= currentExam.questions.length - 1;
-              const isLastOfAll = isLastExamType && isLastPartInType && isLastQuestion;
-              
+              const currentTypeExams =
+                examsByType[session.currentExamType] || [];
+              const isLastPartInType =
+                session.currentExamIndex >= currentTypeExams.length - 1;
+              const isLastQuestion =
+                session.currentQuestionIndex >=
+                currentExam.questions.length - 1;
+              const isLastOfAll =
+                isLastExamType && isLastPartInType && isLastQuestion;
+
               if (isLastOfAll) {
                 return (
                   <Button
@@ -742,7 +749,9 @@ export default function ExamPage() {
                     endIcon={<Send />}
                     disabled={submitExamMutation.isPending}
                   >
-                    {submitExamMutation.isPending ? "Submitting..." : "Submit Exam"}
+                    {submitExamMutation.isPending
+                      ? "Submitting..."
+                      : "Submit Exam"}
                   </Button>
                 );
               } else {
@@ -780,7 +789,7 @@ export default function ExamPage() {
               const isCurrentType = session.currentExamType === examType;
 
               return (
-                <Grid2 key={examType} xs={12} sm={3}>
+                <Grid2 key={examType} size={12}>
                   <Card
                     variant="outlined"
                     sx={{
