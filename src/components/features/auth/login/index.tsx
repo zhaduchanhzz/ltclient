@@ -8,19 +8,19 @@ import TextFieldHookForm from "@/components/base/MaterialUI-HookForm/TextFieldHo
 import DarkNightChange from "@/components/common/DarkNightChange";
 import { APP_LOCAL_STORAGE_KEY } from "@/consts";
 import { APP_ROUTE } from "@/consts/app-route";
+import { useAppContextHandle } from "@/contexts/AppContext";
 import { useLoginMutation, useProfileQuery } from "@/services/apis/auth";
 import { LoginRequest } from "@/services/types/auth";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { loginValidate } from "./utils/schema";
-import { useAppContextHandle } from "@/contexts/AppContext";
 
 const LoginPage = () => {
   const { push } = useRouter();
   const loginMutation = useLoginMutation();
-  const profileQuery = useProfileQuery();
   const { updateAppState } = useAppContextHandle();
+  const profileQuery = useProfileQuery();
   const form = useForm<LoginRequest>({
     mode: "onChange",
     resolver: yupResolver(loginValidate()),

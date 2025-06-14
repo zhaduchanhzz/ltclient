@@ -1,27 +1,71 @@
 "use client";
+import BasicAudio from "@/components/base/MaterialUI-Basic/Audio";
 import BasicBox from "@/components/base/MaterialUI-Basic/Box";
-import UserInfomation from "./components/UserInfomation";
+import BasicButton from "@/components/base/MaterialUI-Basic/Button";
+import BasicDivider from "@/components/base/MaterialUI-Basic/Divider";
 import BasicGrid from "@/components/base/MaterialUI-Basic/Grid";
+import BasicNextLink from "@/components/base/MaterialUI-Basic/Link/BasicNextLink";
 import BasicStack from "@/components/base/MaterialUI-Basic/Stack";
 import BasicTypography from "@/components/base/MaterialUI-Basic/Typography";
-import { useTheme } from "@mui/material";
-import BasicAudio from "@/components/base/MaterialUI-Basic/Audio";
 import AudioRecorder from "@/components/common/AudioRecorder";
-import BasicDivider from "@/components/base/MaterialUI-Basic/Divider";
-import BasicButton from "@/components/base/MaterialUI-Basic/Button";
-import BasicNextLink from "@/components/base/MaterialUI-Basic/Link/BasicNextLink";
-import { APP_ROUTE } from "@/consts/app-route";
 import DarkNightChange from "@/components/common/DarkNightChange";
+import { APP_ROUTE } from "@/consts/app-route";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { useTakeExamMutation } from "@/services/apis/exam";
+import { useTheme } from "@mui/material";
 import { useRouter } from "next/navigation";
+import UserInfomation from "./components/UserInfomation";
+import LocalStorage from "@/utils/local-storage";
+import { APP_LOCAL_STORAGE_KEY } from "@/consts";
 
 type ExamRoomProps = {};
 
 const ExamRoom = (_: ExamRoomProps) => {
   const theme = useTheme();
   const router = useRouter();
+  const { userInfo } = useAuthContext();
+  const { mutateAsync: takeExam } = useTakeExamMutation();
 
-  const onClickReceiveExamPaper = () => {
-    router.push(APP_ROUTE.EXAM_LISTENING);
+  if (!LocalStorage.get(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN)) {
+    setTimeout(() => {
+      router.push(APP_ROUTE.LOGIN);
+    }, 3000);
+
+    return (
+      <BasicStack sx={{ height: "100vh", width: "100vw", justifyContent: "center", alignItems: "center", gap: 4 }}>
+        <BasicTypography variant="h3" sx={{ textAlign: "center" }}>
+          Vui lòng đăng nhập để tham gia thi
+        </BasicTypography>
+        <BasicTypography variant="body1" sx={{ textAlign: "center" }}>
+          Chúng tôi đang chuyển hướng bạn đến trang đăng nhập trong 3 giây...
+        </BasicTypography>
+      </BasicStack>
+    );
+  }
+
+  const onClickReceiveExamPaper = async () => {
+    if (!userInfo) {
+      console.error("User not logged in");
+      return;
+    }
+
+    try {
+      const response = await takeExam();
+
+      
+      if (response.success) {
+      console.log(response);
+
+        console.log("Exam created successfully:", response.data);
+        setTimeout(() => {
+          router.push(`/exam/${response.data.termId}`);
+        }, 3000);
+      } else {
+        console.error("Failed to create exam:", response.message);
+      }
+    } catch (error: any) {
+      console.error("Error taking exam:", error?.response?.data?.message || error);
+    }
   };
 
   return (

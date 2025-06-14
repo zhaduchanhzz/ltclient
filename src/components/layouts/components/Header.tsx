@@ -15,6 +15,8 @@ import { navLinks } from "../utils/data";
 import ArticleMenuPopper from "./ArticleMenuPopper";
 import DrawerMobile from "./DrawerMobile";
 import UserMenuPopper from "./UserMenuPopper";
+import LocalStorage from "@/utils/local-storage";
+import { APP_LOCAL_STORAGE_KEY } from "@/consts";
 
 const Header = () => {
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
@@ -25,6 +27,8 @@ const Header = () => {
   const toggleDrawer = () => {
     setDrawerOpen(!drawerOpen);
   };
+
+
 
   return (
     <BasicBox
@@ -68,38 +72,46 @@ const Header = () => {
                 display: { xs: "none", md: "flex" },
               }}
             >
-              {navLinks.map((nav) => (
-                <BasicBox key={nav.name} sx={{ position: "relative" }}>
-                  <BasicTypography
-                    variant="body2"
-                    component="span"
-                    onClick={() => push(nav.href)}
-                    sx={{
-                      fontWeight: "bold",
-                      color: pathname.includes(nav.href)
-                        ? theme.palette.customStyle.link.primary
-                        : theme.palette.text.primary,
-                      ":hover": {
-                        cursor: "pointer",
-                        color: theme.palette.customStyle.link.primary,
-                      },
-                    }}
-                  >
-                    {nav.name}
-                  </BasicTypography>
-                  {pathname.includes(nav.href) && (
-                    <Divider
-                      variant="fullWidth"
-                      sx={{
-                        position: "relative",
-                        top: 21,
-                        borderWidth: 1,
-                        borderColor: theme.palette.customStyle.link.primary,
+              {navLinks.map((nav) => {
+                return (
+                  <BasicBox key={nav.name} sx={{ position: "relative" }}>
+                    <BasicTypography
+                      variant="body2"
+                      component="span"
+                      onClick={() => {
+                        if (nav.href === APP_ROUTE.EXAM_ROOM && !LocalStorage.get(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN)) {
+                          push(APP_ROUTE.LOGIN);
+                        } else {
+                          push(nav.href);
+                        }
                       }}
-                    />
-                  )}
-                </BasicBox>
-              ))}
+                      sx={{
+                        fontWeight: "bold",
+                        color: pathname.includes(nav.href)
+                          ? theme.palette.customStyle.link.primary
+                          : theme.palette.text.primary,
+                        ":hover": {
+                          cursor: "pointer",
+                          color: theme.palette.customStyle.link.primary,
+                        },
+                      }}
+                    >
+                      {nav.name}
+                    </BasicTypography>
+                    {pathname.includes(nav.href) && (
+                      <Divider
+                        variant="fullWidth"
+                        sx={{
+                          position: "relative",
+                          top: 21,
+                          borderWidth: 1,
+                          borderColor: theme.palette.customStyle.link.primary,
+                        }}
+                      />
+                    )}
+                  </BasicBox>
+                );
+              })}
               <ArticleMenuPopper />
             </BasicStack>
             <BasicStack
@@ -108,7 +120,6 @@ const Header = () => {
               sx={{ justifyContent: "center", alignItems: "center" }}
             >
               <DarkNightChange />
-
               <UserMenuPopper />
             </BasicStack>
           </BasicStack>

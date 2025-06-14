@@ -7,11 +7,17 @@ import TextFieldHookForm from "@/components/base/MaterialUI-HookForm/TextFieldHo
 import BorderColorIcon from "@mui/icons-material/BorderColor";
 import { useForm } from "react-hook-form";
 import UserInfoCard from "./components/UserInfoCard";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 type UserGeneralProps = {};
 
 const UserGeneral = (_: UserGeneralProps) => {
   const form = useForm();
+  const { userInfo } = useAuthContext();
+
+  if (!userInfo) {
+    return null;
+  }
 
   const onFinish = (data: any) => {
     console.log(data);
@@ -27,6 +33,7 @@ const UserGeneral = (_: UserGeneralProps) => {
               name="fullname"
               size="small"
               placeholder="Nhập họ và tên"
+              defaultValue={userInfo.name}
             />
           </BasicGrid>
           <BasicGrid container spacing={1} size={{ xs: 12 }}>
@@ -35,6 +42,7 @@ const UserGeneral = (_: UserGeneralProps) => {
               name="email"
               size="small"
               placeholder="Nhập địa chỉ email"
+              defaultValue={userInfo.email}
             />
           </BasicGrid>
           <BasicGrid container spacing={1} size={{ xs: 12 }}>
@@ -43,6 +51,7 @@ const UserGeneral = (_: UserGeneralProps) => {
               name="phone"
               size="small"
               placeholder="Nhập số điện thoại"
+              defaultValue={userInfo.phone}
             />
           </BasicGrid>
           <BasicGrid size={{ xs: 12 }}></BasicGrid>

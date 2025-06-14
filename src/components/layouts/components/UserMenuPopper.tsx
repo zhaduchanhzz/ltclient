@@ -18,7 +18,6 @@ import { Fragment, SyntheticEvent, useEffect, useRef, useState } from "react";
 import { guestMenuLinks, userMenuLinks } from "../utils/data";
 import BasicTypography from "@/components/base/MaterialUI-Basic/Typography";
 import { APP_LOCAL_STORAGE_KEY } from "@/consts";
-import { useProfileQuery } from "@/services/apis/auth";
 import LocalStorage from "@/utils/local-storage";
 
 type UserMenuPopperProps = {};
@@ -28,7 +27,7 @@ const UserMenuPopper = (_: UserMenuPopperProps) => {
   const [openAlert, setOpenAlert] = useState(false);
   const prevOpenUserMenu = useRef(openUserMenu);
   const anchorUserMenuRef = useRef<HTMLButtonElement>(null);
-  const profileQuery = useProfileQuery();
+  // const profileQuery = useProfileQuery();
 
   const theme = useTheme();
   const router = useRouter();
@@ -68,7 +67,7 @@ const UserMenuPopper = (_: UserMenuPopperProps) => {
     handleCloseUserMenu(event);
 
     LocalStorage.remove(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN);
-    profileQuery.refetch();
+    // profileQuery.refetch();
     setOpenAlert(true);
 
     setTimeout(() => {

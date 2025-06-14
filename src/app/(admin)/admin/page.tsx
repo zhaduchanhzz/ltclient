@@ -1,26 +1,27 @@
 "use client";
+import BasicStack from "@/components/base/MaterialUI-Basic/Stack";
+import ArticleIcon from "@mui/icons-material/Article";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import PeopleIcon from "@mui/icons-material/People";
+import SchoolIcon from "@mui/icons-material/School";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import {
-  Grid,
-  Paper,
-  Typography,
+  Avatar,
   Box,
   Card,
   CardContent,
+  Divider,
+  Grid,
   IconButton,
   LinearProgress,
-  Stack,
-  Divider,
   List,
   ListItem,
-  ListItemText,
   ListItemAvatar,
-  Avatar,
+  ListItemText,
+  Paper,
+  Stack,
+  Typography,
 } from "@mui/material";
-import PeopleIcon from "@mui/icons-material/People";
-import SchoolIcon from "@mui/icons-material/School";
-import ArticleIcon from "@mui/icons-material/Article";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
 import React from "react";
 
 export default function AdminDashboard() {
@@ -84,6 +85,7 @@ export default function AdminDashboard() {
         sx={{ mb: 4 }}
       >
         <Typography
+          component="h1"
           variant="h4"
           sx={{ fontWeight: "bold", color: "text.primary" }}
         >
@@ -113,8 +115,10 @@ export default function AdminDashboard() {
             >
               <Stack
                 direction="row"
+                alignItems="center"
                 justifyContent="space-between"
                 sx={{ mb: 2 }}
+                component="div"
               >
                 <Avatar
                   sx={{
@@ -128,6 +132,7 @@ export default function AdminDashboard() {
                 </Avatar>
                 <Box>
                   <Typography
+                    component="div"
                     variant="h4"
                     sx={{ fontWeight: "bold", mb: 0.5, textAlign: "right" }}
                   >
@@ -138,18 +143,24 @@ export default function AdminDashboard() {
                     alignItems="center"
                     spacing={0.5}
                     justifyContent="flex-end"
+                    component="div"
                   >
                     <TrendingUpIcon
                       fontSize="small"
                       sx={{ color: "success.main" }}
                     />
-                    <Typography variant="body2" sx={{ color: "success.main" }}>
+                    <Typography
+                      component="span"
+                      variant="body2"
+                      sx={{ color: "success.main" }}
+                    >
                       {stat.trend}
                     </Typography>
                   </Stack>
                 </Box>
               </Stack>
               <Typography
+                component="div"
                 variant="subtitle2"
                 sx={{ color: "text.secondary", mb: 1 }}
               >
@@ -180,19 +191,24 @@ export default function AdminDashboard() {
             }}
           >
             <CardContent>
-              <Stack
+              <BasicStack
                 direction="row"
                 alignItems="center"
                 justifyContent="space-between"
                 sx={{ mb: 3 }}
+                component="div"
               >
-                <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                <Typography
+                  component="h2"
+                  variant="h6"
+                  sx={{ fontWeight: "bold" }}
+                >
                   Hoạt động gần đây
                 </Typography>
                 <IconButton size="small">
                   <MoreVertIcon />
                 </IconButton>
-              </Stack>
+              </BasicStack>
 
               <List>
                 {recentActivities.map((activity, index) => (
@@ -202,22 +218,28 @@ export default function AdminDashboard() {
                         <Avatar src={activity.avatar} />
                       </ListItemAvatar>
                       <ListItemText
+                        disableTypography
                         primary={
                           <Typography
+                            component="span"
                             variant="subtitle2"
-                            sx={{ fontWeight: "medium" }}
+                            sx={{ fontWeight: "medium", display: "block" }}
                           >
                             {activity.user} {activity.action}
                           </Typography>
                         }
                         secondary={
-                          <Stack
-                            direction="row"
-                            alignItems="center"
-                            spacing={1}
-                            sx={{ mt: 0.5 }}
+                          <Box
+                            component="span"
+                            sx={{
+                              mt: 0.5,
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                            }}
                           >
                             <Typography
+                              component="span"
                               variant="caption"
                               sx={{
                                 color: "primary.main",
@@ -227,12 +249,13 @@ export default function AdminDashboard() {
                               {activity.exam}
                             </Typography>
                             <Typography
+                              component="span"
                               variant="caption"
                               sx={{ color: "text.secondary" }}
                             >
                               • {activity.time}
                             </Typography>
-                          </Stack>
+                          </Box>
                         }
                       />
                     </ListItem>

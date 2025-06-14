@@ -2,6 +2,7 @@ import { APP_LOCAL_STORAGE_KEY } from "@/consts";
 import { useProfileQuery } from "@/services/apis/auth";
 import { UserInfo } from "@/services/types/auth";
 import LocalStorage from "@/utils/local-storage";
+import { isTokenExpired } from "@/utils/jwt";
 import {
   createContext,
   useCallback,
@@ -45,11 +46,13 @@ export const AuthContextProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const profileQuery = useProfileQuery();
   const [authState, dispatchAuthState] = useReducer(
     _updateAuthStateReducer,
     initAuthContextState,
   );
+
+  const accessToken = LocalStorage.get(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN);
+  const profileQuery = useProfileQuery(!!accessToken);
 
   const updateAuthState = useCallback(
     (payload: Partial<AuthContextType>, type?: "update" | "reset") => {
@@ -63,48 +66,32 @@ export const AuthContextProvider = ({
   }, [updateAuthState]);
 
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (!profileQuery) return;
+    if (!accessToken || (accessToken && isTokenExpired(accessToken))) {
+      LocalStorage.remove(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN);
+      updateAuthState({
+        isInitialized: true,
+        isAuthenticated: false,
+        userInfo: null,
+      });
+      return;
+    }
 
-      const accessToken = LocalStorage.get(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN);
-
-      if (!accessToken) {
-        updateAuthState({
-          isInitialized: true,
-          isAuthenticated: false,
-          userInfo: null,
-        });
-        return;
-      }
-
-      try {
-        const response = await profileQuery.refetch();
-
-        if (response.data?.data) {
-          updateAuthState({
-            isInitialized: true,
-            isAuthenticated: true,
-            userInfo: response.data.data || null,
-          });
-        } else {
-          updateAuthState({
-            isInitialized: true,
-            isAuthenticated: false,
-            userInfo: null,
-          });
-        }
-      } catch (errors) {
-        console.log("errors", errors);
-        updateAuthState({
-          isInitialized: true,
-          isAuthenticated: false,
-          userInfo: null,
-        });
-      }
-    };
-
-    fetchUserProfile();
-  }, [profileQuery.isFetching]);
+    if (profileQuery.data?.data) {
+      updateAuthState({
+        isInitialized: true,
+        isAuthenticated: true,
+        userInfo: profileQuery.data.data,
+      });
+    } else if (profileQuery.isError) {
+      console.error("Profile fetch error:", profileQuery.error);
+      LocalStorage.remove(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN);
+      updateAuthState({
+        isInitialized: true,
+        isAuthenticated: false,
+        userInfo: null,
+      });
+    }
+  }, [accessToken, profileQuery.data, profileQuery.isError]);
 
   return (
     <AuthContext.Provider value={authState}>

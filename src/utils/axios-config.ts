@@ -7,6 +7,7 @@ import axios, {
 import { ApiServerURL } from "./config";
 import LocalStorage from "./local-storage";
 import { APP_LOCAL_STORAGE_KEY } from "@/consts";
+import { isTokenExpired } from "./jwt";
 
 const headers: AxiosRequestConfig["headers"] = {
   "Content-Type": "application/json",
@@ -28,7 +29,14 @@ class Axios {
 
         if (config.headers) {
           if (accessToken) {
-            config.headers.Authorization = accessToken;
+            // Check if token is expired before adding it to headers
+            if (isTokenExpired(accessToken)) {
+              LocalStorage.remove(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN);
+              delete config.headers.Authorization;
+              // Optionally redirect to login here if needed
+            } else {
+              config.headers.Authorization = `Bearer ${accessToken}`;
+            }
           } else {
             delete config.headers.Authorization;
           }
@@ -42,7 +50,11 @@ class Axios {
     const interceptor = instance.interceptors.response.use(
       (response: AxiosResponse) => response.data,
       (error: AxiosError) => {
-        // this.handleAuth(error);
+        // Handle 401 Unauthorized errors
+        if (error.response?.status === 401) {
+          LocalStorage.remove(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN);
+          // Optionally redirect to login here if needed
+        }
         return Promise.reject(error);
       },
     );

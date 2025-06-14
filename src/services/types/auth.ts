@@ -17,10 +17,16 @@ export type RegisterRequest = {
 };
 
 export type UserInfo = {
+  id: string;
   username: string;
   password: string;
-  phoneNumber: string;
+  phone: string;
   address: string;
   email: string;
-  fullName: string;
+  name: string;
+  accountType: "FREE" | "VIP";
+  examsTaken: number;
+  expirationVipDate?: string;
+  gradeRequest: number;
+  createdAt: string;
 };

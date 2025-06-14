@@ -6,7 +6,7 @@ import {
   LoginRequest,
   LoginResponse,
   RegisterRequest,
-  UserInfo,
+  UserInfo
 } from "../types/auth";
 
 export const useLogoutQuery = (enabled = false) => {
@@ -47,6 +47,12 @@ export const useProfileQuery = (enabled = false) => {
     queryFn: () => {
       return HttpClient.get<null, CommonResponse<UserInfo>>(API_PATH.PROFILE);
     },
-    enabled,
+    enabled: enabled,
+    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+    gcTime: 1000 * 60 * 30, // Keep data in cache for 30 minutes
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
+    refetchOnMount: false, // Don't refetch on component mount if data exists
+    retry: false, // Don't retry failed requests
+    refetchInterval: false, // Don't automatically refetch
   });
 };
