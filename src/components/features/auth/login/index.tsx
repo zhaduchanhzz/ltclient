@@ -41,6 +41,10 @@ const LoginPage = () => {
             APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN,
             response.data.accessToken,
           );
+          localStorage.setItem(
+            APP_LOCAL_STORAGE_KEY.IS_AUTHENTICATED,
+            "true",
+          );
           profileQuery.refetch();
           push(APP_ROUTE.HOME);
           return;

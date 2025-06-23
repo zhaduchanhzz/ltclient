@@ -1,15 +1,15 @@
 "use client";
 
 import {
+  AccessTime,
   Assignment,
   CheckCircle,
-  PlayArrow,
-  Quiz,
+  Create,
   Headphones,
   MenuBook,
-  Create,
   Mic,
-  AccessTime,
+  PlayArrow,
+  Quiz,
 } from "@mui/icons-material";
 import {
   Alert,
@@ -30,12 +30,11 @@ import {
   Typography,
   Zoom,
 } from "@mui/material";
-import { useExamLogic } from "./hooks/useExamLogic";
 import ExamHeader from "./components/ExamHeader";
 import ExamSidebar from "./components/ExamSidebar";
-import QuestionCard from "./components/QuestionCard";
 import NavigationControls from "./components/NavigationControls";
-import SettingsDialog from "./components/SettingsDialog";
+import QuestionCard from "./components/QuestionCard";
+import { useExamLogic } from "./hooks/useExamLogic";
 
 const EXAM_TIME_LIMITS = {
   LISTENING: 47,
@@ -69,11 +68,6 @@ export default function ExamPage() {
     allExams,
     showSuccessDialog,
     sidebarOpen,
-    fullscreen,
-    flaggedQuestions,
-    showSettings,
-    fontSize,
-    darkMode,
     sectionStatus,
     currentSectionTimeRemaining,
     getCurrentExamAndQuestion,
@@ -81,8 +75,6 @@ export default function ExamPage() {
     submitExamMutation,
     startExam,
     handleAnswerChange,
-    toggleQuestionFlag,
-    toggleFullscreen,
     navigateToExamTypePart,
     nextQuestion,
     previousQuestion,
@@ -90,9 +82,6 @@ export default function ExamPage() {
     submitExam,
     resetExam,
     setSidebarOpen,
-    setShowSettings,
-    setFontSize,
-    setDarkMode,
   } = useExamLogic();
 
   if (isLoading) {
@@ -371,14 +360,8 @@ export default function ExamPage() {
         examTypes={examTypes}
         sectionStatus={sectionStatus}
         currentSectionTimeRemaining={currentSectionTimeRemaining}
-        flaggedQuestions={flaggedQuestions}
-        fullscreen={fullscreen}
-        currentQuestion={currentQuestion}
         onCloseSidebar={() => setSidebarOpen(false)}
         onNavigateToExamTypePart={navigateToExamTypePart}
-        onToggleQuestionFlag={toggleQuestionFlag}
-        onToggleFullscreen={toggleFullscreen}
-        onShowSettings={() => setShowSettings(true)}
       />
 
       {/* Main Content */}
@@ -399,11 +382,8 @@ export default function ExamPage() {
             session={session}
             currentExam={currentExam}
             currentQuestion={currentQuestion}
-            flaggedQuestions={flaggedQuestions}
-            fontSize={fontSize}
             progress={progress}
             onAnswerChange={handleAnswerChange}
-            onToggleQuestionFlag={toggleQuestionFlag}
           />
 
           {/* Navigation Controls */}
@@ -420,16 +400,6 @@ export default function ExamPage() {
           />
         </Box>
       </Box>
-
-      {/* Settings Dialog */}
-      <SettingsDialog
-        open={showSettings}
-        fontSize={fontSize}
-        darkMode={darkMode}
-        onClose={() => setShowSettings(false)}
-        onFontSizeChange={setFontSize}
-        onDarkModeChange={setDarkMode}
-      />
     </Box>
   );
 }

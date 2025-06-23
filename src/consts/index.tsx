@@ -19,6 +19,7 @@ export const EXAM_SECTION = {
 
 export const APP_LOCAL_STORAGE_KEY = {
   ACCESS_TOKEN: "access_token",
+  IS_AUTHENTICATED: "isAuthenticated",
 };
 
 export const SERVICES = [

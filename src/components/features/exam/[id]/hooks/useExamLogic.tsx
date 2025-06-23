@@ -25,6 +25,17 @@ const EXAM_TIME_LIMITS = {
   SPEAKING: 12,
 };
 
+// Persistence key for localStorage
+const EXAM_STATE_KEY = "exam_session_state";
+
+// Extended types for persistence
+type PersistedExamState = {
+  session: ExamTermSession | null;
+  sectionStatus: Record<string, ExamSectionStatus>;
+  sectionStartTimes: Record<string, number>;
+  lastSavedAt: number;
+};
+
 export function useExamLogic() {
   const params = useParams();
   const router = useRouter();
@@ -38,13 +49,6 @@ export function useExamLogic() {
   const [session, setSession] = useState<ExamTermSession | null>(null);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
-  const [fullscreen, setFullscreen] = useState(false);
-  const [flaggedQuestions, setFlaggedQuestions] = useState<Set<number>>(
-    new Set(),
-  );
-  const [showSettings, setShowSettings] = useState(false);
-  const [fontSize, setFontSize] = useState("medium");
-  const [darkMode, setDarkMode] = useState(false);
 
   // Time management state
   const [sectionStatus, setSectionStatus] = useState<
@@ -55,6 +59,50 @@ export function useExamLogic() {
   >({});
   const [currentSectionTimeRemaining, setCurrentSectionTimeRemaining] =
     useState(0);
+
+  // Persistence functions
+  const saveStateToLocalStorage = useCallback(
+    (state: PersistedExamState) => {
+      try {
+        localStorage.setItem(
+          EXAM_STATE_KEY + "_" + examId,
+          JSON.stringify(state),
+        );
+      } catch (error) {
+        console.error("Failed to save exam state:", error);
+      }
+    },
+    [examId],
+  );
+
+  const loadStateFromLocalStorage =
+    useCallback((): PersistedExamState | null => {
+      try {
+        const saved = localStorage.getItem(EXAM_STATE_KEY + "_" + examId);
+
+        if (saved) {
+          const state: PersistedExamState = JSON.parse(saved);
+          // Check if saved state is less than 6 hours old
+          const maxAge = 6 * 60 * 60 * 1000; // 6 hours in ms
+
+          if (Date.now() - state.lastSavedAt < maxAge) {
+            return state;
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load exam state:", error);
+      }
+
+      return null;
+    }, [examId]);
+
+  const clearPersistedState = useCallback(() => {
+    try {
+      localStorage.removeItem(EXAM_STATE_KEY + "_" + examId);
+    } catch (error) {
+      console.error("Failed to clear exam state:", error);
+    }
+  }, [examId]);
 
   // Mock data for development testing
   const mockExamData: SimulationExam[] = [
@@ -173,6 +221,7 @@ export function useExamLogic() {
         if (!acc[exam.examType]) {
           acc[exam.examType] = [];
         }
+
         acc[exam.examType].push(exam);
         return acc;
       },
@@ -185,6 +234,42 @@ export function useExamLogic() {
     "LISTENING" | "READING" | "WRITING" | "SPEAKING"
   >;
   const allExams = Object.values(examsByType).flat();
+
+  // Load persisted state on mount
+  useEffect(() => {
+    const savedState = loadStateFromLocalStorage();
+
+    if (savedState && savedState.session && !savedState.session.isCompleted) {
+      setSession(savedState.session);
+      setSectionStatus(savedState.sectionStatus);
+      setSectionStartTimes(savedState.sectionStartTimes);
+
+      // Calculate remaining time for current section
+      const currentType = savedState.session.currentExamType;
+      const startTime = savedState.sectionStartTimes[currentType];
+
+      if (startTime) {
+        const timeLimit =
+          EXAM_TIME_LIMITS[currentType as keyof typeof EXAM_TIME_LIMITS] * 60;
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        const remaining = Math.max(0, timeLimit - elapsed);
+        setCurrentSectionTimeRemaining(remaining);
+      }
+    }
+  }, [loadStateFromLocalStorage]);
+
+  // Save state to localStorage whenever critical state changes
+  useEffect(() => {
+    if (session && !session.isCompleted) {
+      const stateToSave: PersistedExamState = {
+        session,
+        sectionStatus,
+        sectionStartTimes,
+        lastSavedAt: Date.now(),
+      };
+      saveStateToLocalStorage(stateToSave);
+    }
+  }, [session, sectionStatus, sectionStartTimes, saveStateToLocalStorage]);
 
   // Auto-close sidebar on mobile when navigating
   useEffect(() => {
@@ -309,29 +394,6 @@ export function useExamLogic() {
     });
   };
 
-  // Toggle question flag
-  const toggleQuestionFlag = (questionId: number) => {
-    setFlaggedQuestions((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(questionId)) {
-        newSet.delete(questionId);
-      } else {
-        newSet.add(questionId);
-      }
-      return newSet;
-    });
-  };
-
-  // Toggle fullscreen
-  const toggleFullscreen = () => {
-    if (!fullscreen) {
-      document.documentElement.requestFullscreen?.();
-    } else {
-      document.exitFullscreen?.();
-    }
-    setFullscreen(!fullscreen);
-  };
-
   // Auto submit section when time expires
   const autoSubmitSection = useCallback(
     (examType: string) => {
@@ -380,8 +442,6 @@ export function useExamLogic() {
   // Complete current section and move to next
   const completeSection = useCallback(
     (examType: string) => {
-      console.log(`Completing section: ${examType}`);
-
       setSectionStatus((prev) => ({
         ...prev,
         [examType]: "completed",
@@ -422,23 +482,14 @@ export function useExamLogic() {
     [examTypes, submitExamMutation],
   );
 
-  // Navigate to specific exam type and part
+  // Enhanced navigation logic with completed section locking
   const navigateToExamTypePart = (examType: string, partIndex: number) => {
     if (!session) return;
 
     const targetStatus = sectionStatus[examType];
 
-    if (targetStatus === "locked") {
-      console.log(`Cannot navigate to locked section: ${examType}`);
-      return;
-    }
-
     if (examType !== session.currentExamType) {
-      if (
-        !["available", "in_progress", "completed", "expired"].includes(
-          targetStatus,
-        )
-      ) {
+      if (!["available", "in_progress"].includes(targetStatus)) {
         return;
       }
 
@@ -541,19 +592,25 @@ export function useExamLogic() {
           currentQuestionIndex: prevExam.questions.length - 1,
         };
       } else {
+        // Don't allow navigation to previous completed sections
         const currentTypeIndex = examTypes.indexOf(prev.currentExamType);
 
         if (currentTypeIndex > 0) {
           const prevExamType = examTypes[currentTypeIndex - 1];
-          const prevTypeExams = examsByType[prevExamType] || [];
-          const lastExamInPrevType = prevTypeExams[prevTypeExams.length - 1];
+          const prevStatus = sectionStatus[prevExamType];
 
-          return {
-            ...prev,
-            currentExamType: prevExamType,
-            currentExamIndex: prevTypeExams.length - 1,
-            currentQuestionIndex: lastExamInPrevType.questions.length - 1,
-          };
+          // Only allow if previous section is still in progress
+          if (prevStatus === "in_progress") {
+            const prevTypeExams = examsByType[prevExamType] || [];
+            const lastExamInPrevType = prevTypeExams[prevTypeExams.length - 1];
+
+            return {
+              ...prev,
+              currentExamType: prevExamType,
+              currentExamIndex: prevTypeExams.length - 1,
+              currentQuestionIndex: lastExamInPrevType.questions.length - 1,
+            };
+          }
         }
       }
 
@@ -584,11 +641,14 @@ export function useExamLogic() {
 
       setShowSuccessDialog(true);
       setSession((prev) => (prev ? { ...prev, isCompleted: true } : null));
+
+      // Clear persisted state after successful submission
+      clearPersistedState();
     } catch (error) {
       console.error("Failed to submit exam:", error);
       alert("Failed to submit exam. Please try again.");
     }
-  }, [session, submitExamMutation]);
+  }, [session, submitExamMutation, clearPersistedState]);
 
   // Reset exam
   const resetExam = () => {
@@ -597,6 +657,8 @@ export function useExamLogic() {
     setSectionStatus({});
     setSectionStartTimes({});
     setCurrentSectionTimeRemaining(0);
+
+    clearPersistedState();
   };
 
   return {
@@ -608,42 +670,32 @@ export function useExamLogic() {
     examsByType,
     examTypes,
     allExams,
-    
+
     // UI State
     showSuccessDialog,
     sidebarOpen,
-    fullscreen,
-    flaggedQuestions,
-    showSettings,
-    fontSize,
-    darkMode,
-    
+
     // Exam State
     sectionStatus,
     currentSectionTimeRemaining,
-    
+
     // Computed
     getCurrentExamAndQuestion,
     isMobile,
     router,
     submitExamMutation,
-    
+
     // Actions
     startExam,
     handleAnswerChange,
-    toggleQuestionFlag,
-    toggleFullscreen,
     navigateToExamTypePart,
     nextQuestion,
     previousQuestion,
     completeSection,
     submitExam,
     resetExam,
-    
+
     // UI Actions
     setSidebarOpen,
-    setShowSettings,
-    setFontSize,
-    setDarkMode,
   };
 }

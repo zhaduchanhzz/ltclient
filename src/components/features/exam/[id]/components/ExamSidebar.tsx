@@ -1,18 +1,7 @@
-import {
-  Close,
-  Flag,
-  Fullscreen,
-  FullscreenExit,
-  Settings,
-  Headphones,
-  MenuBook,
-  Create,
-  Mic,
-} from "@mui/icons-material";
+import { Close, Headphones, MenuBook, Create, Mic } from "@mui/icons-material";
 import {
   Avatar,
   Box,
-  Button,
   Card,
   CardContent,
   Chip,
@@ -50,7 +39,7 @@ const ExamTypeIcons = {
 const ExamTypeColors = {
   LISTENING: "#2196f3",
   READING: "#4caf50",
-  WRITING: "#ff9800", 
+  WRITING: "#ff9800",
   SPEAKING: "#9c27b0",
 };
 
@@ -61,14 +50,8 @@ interface ExamSidebarProps {
   examTypes: Array<"LISTENING" | "READING" | "WRITING" | "SPEAKING">;
   sectionStatus: Record<string, ExamSectionStatus>;
   currentSectionTimeRemaining: number;
-  flaggedQuestions: Set<number>;
-  fullscreen: boolean;
-  currentQuestion: any;
   onCloseSidebar: () => void;
   onNavigateToExamTypePart: (examType: string, partIndex: number) => void;
-  onToggleQuestionFlag: (questionId: number) => void;
-  onToggleFullscreen: () => void;
-  onShowSettings: () => void;
 }
 
 const formatTime = (seconds: number) => {
@@ -85,14 +68,8 @@ export default function ExamSidebar({
   examTypes,
   sectionStatus,
   currentSectionTimeRemaining,
-  flaggedQuestions,
-  fullscreen,
-  currentQuestion,
   onCloseSidebar,
   onNavigateToExamTypePart,
-  onToggleQuestionFlag,
-  onToggleFullscreen,
-  onShowSettings,
 }: ExamSidebarProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -183,12 +160,17 @@ export default function ExamSidebar({
             };
 
             const statusInfo = getStatusInfo();
-            const isClickable = [
-              "available",
-              "in_progress", 
-              "completed",
-              "expired",
-            ].includes(status);
+            const isClickable = ["available", "in_progress"].includes(status);
+
+            // Show lock icon for completed/expired sections to indicate they're locked
+            const displayIcon =
+              status === "completed" || status === "expired"
+                ? "🔒"
+                : statusInfo.icon;
+            const displayTextColor =
+              status === "completed" || status === "expired"
+                ? "text.disabled"
+                : statusInfo.textColor;
 
             return (
               <Card
@@ -199,7 +181,12 @@ export default function ExamSidebar({
                   borderColor: isActive ? color : "divider",
                   backgroundColor: statusInfo.bgColor,
                   cursor: isClickable ? "pointer" : "not-allowed",
-                  opacity: status === "locked" ? 0.6 : 1,
+                  opacity:
+                    status === "locked" ||
+                    status === "completed" ||
+                    status === "expired"
+                      ? 0.6
+                      : 1,
                   transition: "all 0.2s",
                   "&:hover": isClickable
                     ? {
@@ -216,7 +203,12 @@ export default function ExamSidebar({
                   <Stack direction="row" alignItems="center" spacing={2}>
                     <Avatar
                       sx={{
-                        bgcolor: status === "locked" ? "grey.400" : color,
+                        bgcolor:
+                          status === "locked" ||
+                          status === "completed" ||
+                          status === "expired"
+                            ? "grey.400"
+                            : color,
                         width: 40,
                         height: 40,
                       }}
@@ -229,12 +221,12 @@ export default function ExamSidebar({
                         <Typography
                           variant="subtitle1"
                           fontWeight="bold"
-                          color={statusInfo.textColor}
+                          color={displayTextColor}
                         >
                           {examType}
                         </Typography>
                         <Typography sx={{ fontSize: "1.2rem" }}>
-                          {statusInfo.icon}
+                          {displayIcon}
                         </Typography>
                       </Stack>
 
@@ -261,19 +253,19 @@ export default function ExamSidebar({
                       {/* Status message */}
                       <Typography
                         variant="caption"
-                        color={statusInfo.textColor}
+                        color={displayTextColor}
                         fontWeight="medium"
                       >
                         {status === "locked" && "Locked"}
                         {status === "available" && "Click to start"}
                         {status === "in_progress" && "In progress"}
-                        {status === "completed" && "Completed"}
-                        {status === "expired" && "Time expired"}
+                        {status === "completed" && "Completed (Locked)"}
+                        {status === "expired" && "Time expired (Locked)"}
                       </Typography>
                     </Box>
                   </Stack>
 
-                  {/* Parts navigation - only show for current section */}
+                  {/* Parts navigation - only show for current section and if clickable */}
                   {isActive && isClickable && (
                     <Box sx={{ mt: 2 }}>
                       <Divider sx={{ mb: 1 }} />
@@ -320,45 +312,6 @@ export default function ExamSidebar({
               </Card>
             );
           })}
-        </Stack>
-
-        <Divider sx={{ my: 2 }} />
-
-        {/* Quick Actions */}
-        <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1 }}>
-          Quick Actions
-        </Typography>
-        <Stack spacing={1}>
-          <Button
-            startIcon={<Flag />}
-            onClick={() => onToggleQuestionFlag(currentQuestion.id)}
-            variant={
-              flaggedQuestions.has(currentQuestion.id)
-                ? "contained"
-                : "outlined"
-            }
-            size="small"
-            color="warning"
-          >
-            {flaggedQuestions.has(currentQuestion.id) ? "Unflag" : "Flag"}{" "}
-            Question
-          </Button>
-          <Button
-            startIcon={fullscreen ? <FullscreenExit /> : <Fullscreen />}
-            onClick={onToggleFullscreen}
-            variant="outlined"
-            size="small"
-          >
-            {fullscreen ? "Exit Fullscreen" : "Fullscreen"}
-          </Button>
-          <Button
-            startIcon={<Settings />}
-            onClick={onShowSettings}
-            variant="outlined"
-            size="small"
-          >
-            Settings
-          </Button>
         </Stack>
       </Box>
     </Drawer>

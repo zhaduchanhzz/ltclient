@@ -1,47 +1,39 @@
-import {
-  Flag,
-} from "@mui/icons-material";
+import { ExamTermSession } from "@/services/types/exam";
 import {
   Card,
   CardContent,
   Checkbox,
-  Chip,
   Divider,
   FormControl,
   FormControlLabel,
   FormGroup,
   FormLabel,
-  IconButton,
   LinearProgress,
   Paper,
   Radio,
   RadioGroup,
   Stack,
-  Tooltip,
   Typography,
 } from "@mui/material";
-import { ExamTermSession } from "@/services/types/exam";
 
 interface QuestionCardProps {
   session: ExamTermSession;
   currentExam: any;
   currentQuestion: any;
-  flaggedQuestions: Set<number>;
-  fontSize: string;
   progress: number;
-  onAnswerChange: (questionId: number, answerId: number, isChecked?: boolean) => void;
-  onToggleQuestionFlag: (questionId: number) => void;
+  onAnswerChange: (
+    questionId: number,
+    answerId: number,
+    isChecked?: boolean,
+  ) => void;
 }
 
 export default function QuestionCard({
   session,
   currentExam,
   currentQuestion,
-  flaggedQuestions,
-  fontSize,
   progress,
   onAnswerChange,
-  onToggleQuestionFlag,
 }: QuestionCardProps) {
   return (
     <>
@@ -66,22 +58,6 @@ export default function QuestionCard({
               Question {session.currentQuestionIndex + 1} of{" "}
               {currentExam.questions.length}
             </Typography>
-            <Stack direction="row" spacing={1}>
-              {flaggedQuestions.has(currentQuestion.id) && (
-                <Chip
-                  icon={<Flag />}
-                  label="Flagged"
-                  size="small"
-                  color="warning"
-                  sx={{ bgcolor: "#ff9800", color: "white" }}
-                />
-              )}
-              <Chip
-                label={`${Math.round(progress)}% Complete`}
-                size="small"
-                sx={{ bgcolor: "rgba(255,255,255,0.2)", color: "white" }}
-              />
-            </Stack>
           </Stack>
           <LinearProgress
             variant="determinate"
@@ -109,46 +85,9 @@ export default function QuestionCard({
             spacing={{ xs: 2, sm: 0 }}
             sx={{ mb: 3 }}
           >
-            <Typography
-              variant="h5"
-              fontWeight="medium"
-              sx={{
-                fontSize: {
-                  xs:
-                    fontSize === "small"
-                      ? "1rem"
-                      : fontSize === "large"
-                        ? "1.3rem"
-                        : "1.15rem",
-                  md:
-                    fontSize === "small"
-                      ? "1.1rem"
-                      : fontSize === "large"
-                        ? "1.5rem"
-                        : "1.25rem",
-                },
-                lineHeight: 1.6,
-                flex: 1,
-              }}
-            >
+            <Typography variant="h5" fontWeight="medium">
               {currentQuestion.questionText}
             </Typography>
-            <Tooltip title="Flag this question for review">
-              <IconButton
-                onClick={() => onToggleQuestionFlag(currentQuestion.id)}
-                color={
-                  flaggedQuestions.has(currentQuestion.id)
-                    ? "warning"
-                    : "default"
-                }
-                sx={{
-                  ml: { xs: 0, sm: 2 },
-                  alignSelf: { xs: "flex-end", sm: "flex-start" },
-                }}
-              >
-                <Flag />
-              </IconButton>
-            </Tooltip>
           </Stack>
 
           <Divider sx={{ mb: 3 }} />
@@ -173,10 +112,7 @@ export default function QuestionCard({
               <RadioGroup
                 value={session.answers[currentQuestion.id]?.[0] || ""}
                 onChange={(e) =>
-                  onAnswerChange(
-                    currentQuestion.id,
-                    parseInt(e.target.value),
-                  )
+                  onAnswerChange(currentQuestion.id, parseInt(e.target.value))
                 }
               >
                 {currentQuestion.answers.map((answer: any, index: number) => (
@@ -214,27 +150,8 @@ export default function QuestionCard({
                       value={answer.id.toString()}
                       control={<Radio />}
                       label={
-                        <Typography
-                          sx={{
-                            fontSize: {
-                              xs:
-                                fontSize === "small"
-                                  ? "0.85rem"
-                                  : fontSize === "large"
-                                    ? "1rem"
-                                    : "0.9rem",
-                              md:
-                                fontSize === "small"
-                                  ? "0.9rem"
-                                  : fontSize === "large"
-                                    ? "1.1rem"
-                                    : "1rem",
-                            },
-                          }}
-                        >
-                          <strong>
-                            {String.fromCharCode(65 + index)}.
-                          </strong>{" "}
+                        <Typography>
+                          <strong>{String.fromCharCode(65 + index)}.</strong>{" "}
                           {answer.answerText}
                         </Typography>
                       }
@@ -301,27 +218,8 @@ export default function QuestionCard({
                         />
                       }
                       label={
-                        <Typography
-                          sx={{
-                            fontSize: {
-                              xs:
-                                fontSize === "small"
-                                  ? "0.85rem"
-                                  : fontSize === "large"
-                                    ? "1rem"
-                                    : "0.9rem",
-                              md:
-                                fontSize === "small"
-                                  ? "0.9rem"
-                                  : fontSize === "large"
-                                    ? "1.1rem"
-                                    : "1rem",
-                            },
-                          }}
-                        >
-                          <strong>
-                            {String.fromCharCode(65 + index)}.
-                          </strong>{" "}
+                        <Typography>
+                          <strong>{String.fromCharCode(65 + index)}.</strong>{" "}
                           {answer.answerText}
                         </Typography>
                       }
