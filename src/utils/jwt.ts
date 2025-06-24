@@ -10,10 +10,12 @@ export const isTokenExpired = (token: string): boolean => {
     if (!decoded.exp) return true;
 
     // exp is in seconds, Date.now() is in milliseconds
+    // Add 5 minute buffer to prevent premature expiration
     const currentTime = Date.now() / 1000;
-    return decoded.exp < currentTime;
+    const bufferTime = 5 * 60; // 5 minutes in seconds
+    return decoded.exp < currentTime + bufferTime;
   } catch (error) {
-    console.error(error);
+    console.error("Error decoding token:", error);
     return true;
   }
 };

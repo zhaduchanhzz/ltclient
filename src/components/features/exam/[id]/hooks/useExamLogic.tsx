@@ -1,14 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useMediaQuery, useTheme } from "@mui/material";
-import {
-  useGetAllExamsQuery,
-  useSubmitExamMutation,
-} from "@/services/apis/exam";
+import { useSubmitExamMutation } from "@/services/apis/exam";
 import {
   ExamSubmitRequest,
   ExamTermSession,
   SimulationExam,
+  TakeExamRequest,
 } from "@/services/types/exam";
 
 type ExamSectionStatus =
@@ -33,6 +31,7 @@ type PersistedExamState = {
   session: ExamTermSession | null;
   sectionStatus: Record<string, ExamSectionStatus>;
   sectionStartTimes: Record<string, number>;
+  examData: TakeExamRequest | null;
   lastSavedAt: number;
 };
 
@@ -43,12 +42,15 @@ export function useExamLogic() {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const examId = params.id as string;
 
-  const { data: examsData, isLoading, error } = useGetAllExamsQuery(true);
   const submitExamMutation = useSubmitExamMutation();
 
   const [session, setSession] = useState<ExamTermSession | null>(null);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  const [examExpired, setExamExpired] = useState(false);
+  const [examData, setExamData] = useState<TakeExamRequest | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<any>(null);
 
   // Time management state
   const [sectionStatus, setSectionStatus] = useState<
@@ -104,120 +106,104 @@ export function useExamLogic() {
     }
   }, [examId]);
 
-  // Mock data for development testing
-  const mockExamData: SimulationExam[] = [
-    {
-      id: 1,
-      examType: "LISTENING",
-      title: "Listening Part 1",
-      description: "Basic listening comprehension",
-      isNeedVip: false,
-      questions: [
-        {
-          id: 1001,
-          questionText: "What is the main topic of the conversation?",
-          answers: [
-            { id: 1, answerText: "Travel plans", isCorrect: true },
-            { id: 2, answerText: "Work schedule", isCorrect: false },
-            { id: 3, answerText: "Weather forecast", isCorrect: false },
-          ],
-        },
-        {
-          id: 1002,
-          questionText: "When will they meet?",
-          answers: [
-            { id: 4, answerText: "Tomorrow morning", isCorrect: false },
-            { id: 5, answerText: "This afternoon", isCorrect: true },
-            { id: 6, answerText: "Next week", isCorrect: false },
-          ],
-        },
-      ],
-    },
-    {
-      id: 2,
-      examType: "READING",
-      title: "Reading Part 1",
-      description: "Reading comprehension",
-      isNeedVip: false,
-      questions: [
-        {
-          id: 2001,
-          questionText:
-            "According to the passage, what is the author's main argument?",
-          answers: [
-            {
-              id: 7,
-              answerText: "Technology improves education",
-              isCorrect: true,
-            },
-            {
-              id: 8,
-              answerText: "Traditional methods are better",
-              isCorrect: false,
-            },
-            { id: 9, answerText: "Both methods are equal", isCorrect: false },
-          ],
-        },
-      ],
-    },
-    {
-      id: 3,
-      examType: "WRITING",
-      title: "Writing Part 1",
-      description: "Essay writing task",
-      isNeedVip: false,
-      questions: [
-        {
-          id: 3001,
-          questionText:
-            "Write an essay about the advantages of online learning.",
-          answers: [
-            {
-              id: 10,
-              answerText: "Flexibility in scheduling",
-              isCorrect: true,
-            },
-            { id: 11, answerText: "Cost-effective", isCorrect: true },
-            {
-              id: 12,
-              answerText: "Access to global resources",
-              isCorrect: true,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: 4,
-      examType: "SPEAKING",
-      title: "Speaking Part 1",
-      description: "Oral communication task",
-      isNeedVip: false,
-      questions: [
-        {
-          id: 4001,
-          questionText: "Describe your hometown and what makes it special.",
-          answers: [
-            { id: 13, answerText: "Clear pronunciation", isCorrect: true },
-            { id: 14, answerText: "Good vocabulary usage", isCorrect: true },
-            { id: 15, answerText: "Coherent structure", isCorrect: true },
-          ],
-        },
-      ],
-    },
-  ];
+  // Load persisted state or exam data on mount
+  useEffect(() => {
+    const loadExamData = () => {
+      setIsLoading(true);
+
+      // First try to load from localStorage
+      const savedState = loadStateFromLocalStorage();
+
+      if (savedState && savedState.examData) {
+        console.log("Found saved exam data");
+        setExamData(savedState.examData);
+
+        // If there's also a session and it's not completed, restore the session
+        if (savedState.session && !savedState.session.isCompleted) {
+          console.log("Loading ongoing exam from saved state");
+          setSession(savedState.session);
+          setSectionStatus(savedState.sectionStatus);
+          setSectionStartTimes(savedState.sectionStartTimes);
+
+          // Calculate remaining time for current section
+          const currentType = savedState.session.currentExamType;
+          const startTime = savedState.sectionStartTimes[currentType];
+
+          if (startTime) {
+            const timeLimit =
+              EXAM_TIME_LIMITS[currentType as keyof typeof EXAM_TIME_LIMITS] *
+              60;
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const remaining = Math.max(0, timeLimit - elapsed);
+            setCurrentSectionTimeRemaining(remaining);
+          }
+        } else {
+          console.log(
+            "Exam data found but no active session - exam ready to start",
+          );
+        }
+
+        setIsLoading(false);
+        setExamExpired(false);
+      } else {
+        // If no saved state, this means the exam data is not available
+        console.log("No exam data found - exam not available");
+        setExamExpired(true);
+        setIsLoading(false);
+      }
+    };
+
+    loadExamData();
+  }, [loadStateFromLocalStorage]);
+
+  // Convert API exam data to SimulationExam format
+  const convertToSimulationExams = (
+    apiExams: TakeExamRequest["exams"],
+  ): SimulationExam[] => {
+    return apiExams.map((exam) => ({
+      id: parseInt(exam.id),
+      examType: exam.examType,
+      title: exam.title,
+      description: exam.description,
+      isNeedVip: exam.isNeedVip === 1,
+      questions: exam.questions.map((question) => ({
+        id: parseInt(question.id),
+        questionText: question.questionText,
+        answers: question.answers.map((answer) => {
+          // Debug logging to see what's in the answer object
+          console.log("Raw answer data:", answer);
+
+          // Try different possible field names for answer text
+          const answerText =
+            answer.anwserText ||
+            (answer as any).answerText ||
+            (answer as any).text ||
+            (answer as any).content ||
+            `Answer ${answer.id}`;
+
+          console.log("Mapped answer text:", answerText);
+
+          return {
+            id: parseInt(answer.id),
+            answerText: answerText,
+            isCorrect: answer.isCorrect || false,
+          };
+        }),
+      })),
+    }));
+  };
 
   // Organize exams by type
   const examsByType = useMemo(() => {
-    const dataToUse = examsData?.data || mockExamData;
-
-    if (!dataToUse || dataToUse.length === 0) {
+    if (!examData?.exams) {
       return {};
     }
 
-    const freeExams = dataToUse.filter((exam) => !exam.isNeedVip);
+    const simulationExams = convertToSimulationExams(examData.exams);
+    const freeExams = simulationExams.filter((exam) => !exam.isNeedVip);
+
     const organized = freeExams.reduce(
-      (acc, exam) => {
+      (acc: Record<string, SimulationExam[]>, exam: SimulationExam) => {
         if (!acc[exam.examType]) {
           acc[exam.examType] = [];
         }
@@ -228,48 +214,32 @@ export function useExamLogic() {
       {} as Record<string, SimulationExam[]>,
     );
     return organized;
-  }, [examsData]);
+  }, [examData]);
 
   const examTypes = Object.keys(examsByType) as Array<
     "LISTENING" | "READING" | "WRITING" | "SPEAKING"
   >;
   const allExams = Object.values(examsByType).flat();
 
-  // Load persisted state on mount
-  useEffect(() => {
-    const savedState = loadStateFromLocalStorage();
-
-    if (savedState && savedState.session && !savedState.session.isCompleted) {
-      setSession(savedState.session);
-      setSectionStatus(savedState.sectionStatus);
-      setSectionStartTimes(savedState.sectionStartTimes);
-
-      // Calculate remaining time for current section
-      const currentType = savedState.session.currentExamType;
-      const startTime = savedState.sectionStartTimes[currentType];
-
-      if (startTime) {
-        const timeLimit =
-          EXAM_TIME_LIMITS[currentType as keyof typeof EXAM_TIME_LIMITS] * 60;
-        const elapsed = Math.floor((Date.now() - startTime) / 1000);
-        const remaining = Math.max(0, timeLimit - elapsed);
-        setCurrentSectionTimeRemaining(remaining);
-      }
-    }
-  }, [loadStateFromLocalStorage]);
-
   // Save state to localStorage whenever critical state changes
   useEffect(() => {
-    if (session && !session.isCompleted) {
+    if (session && examData && !session.isCompleted) {
       const stateToSave: PersistedExamState = {
         session,
         sectionStatus,
         sectionStartTimes,
+        examData,
         lastSavedAt: Date.now(),
       };
       saveStateToLocalStorage(stateToSave);
     }
-  }, [session, sectionStatus, sectionStartTimes, saveStateToLocalStorage]);
+  }, [
+    session,
+    sectionStatus,
+    sectionStartTimes,
+    examData,
+    saveStateToLocalStorage,
+  ]);
 
   // Auto-close sidebar on mobile when navigating
   useEffect(() => {
@@ -278,44 +248,71 @@ export function useExamLogic() {
     }
   }, [session?.currentQuestionIndex, isMobile]);
 
-  // Generate termId when starting exam
-  const generateTermId = () => Math.floor(Math.random() * 100000000);
+  // Initialize exam session with provided exam data
+  const startExamWithData = (apiExamData: TakeExamRequest) => {
+    console.log("Starting exam with data:", apiExamData);
 
-  // Initialize exam session
-  const startExam = () => {
-    if (allExams.length === 0) return;
+    setExamData(apiExamData);
 
-    const termId = generateTermId();
+    const simulationExams = convertToSimulationExams(apiExamData.exams);
+    const freeExams = simulationExams.filter((exam) => !exam.isNeedVip);
+
+    if (freeExams.length === 0) {
+      setError("No available exam parts found");
+      return;
+    }
+
+    const examTypeOrder: Array<
+      "LISTENING" | "READING" | "WRITING" | "SPEAKING"
+    > = ["LISTENING", "READING", "WRITING", "SPEAKING"];
+    const availableTypes = examTypeOrder.filter((type) =>
+      freeExams.some((exam) => exam.examType === type),
+    );
+
+    const termId = parseInt(apiExamData.termId);
     const newSession: ExamTermSession = {
       termId,
       examId: parseInt(examId),
-      exams: allExams,
-      currentExamType: examTypes[0],
+      exams: freeExams,
+      currentExamType: availableTypes[0],
       currentExamIndex: 0,
       currentQuestionIndex: 0,
       answers: {},
       startTime: Date.now(),
       timeLimit:
-        EXAM_TIME_LIMITS[examTypes[0] as keyof typeof EXAM_TIME_LIMITS],
+        EXAM_TIME_LIMITS[availableTypes[0] as keyof typeof EXAM_TIME_LIMITS],
       isCompleted: false,
     };
 
     // Initialize section status - only first section is available
     const initialStatus: Record<string, ExamSectionStatus> = {};
-    examTypes.forEach((type, index) => {
+    availableTypes.forEach((type, index) => {
       initialStatus[type] = index === 0 ? "in_progress" : "locked";
     });
 
     // Initialize section start times
     const initialStartTimes: Record<string, number> = {};
-    initialStartTimes[examTypes[0]] = Date.now();
+    initialStartTimes[availableTypes[0]] = Date.now();
 
     setSession(newSession);
     setSectionStatus(initialStatus);
     setSectionStartTimes(initialStartTimes);
     setCurrentSectionTimeRemaining(
-      EXAM_TIME_LIMITS[examTypes[0] as keyof typeof EXAM_TIME_LIMITS] * 60,
+      EXAM_TIME_LIMITS[availableTypes[0] as keyof typeof EXAM_TIME_LIMITS] * 60,
     );
+    setExamExpired(false);
+    setIsLoading(false);
+  };
+
+  // Start exam using available exam data
+  const startExam = () => {
+    if (!examData) {
+      setError("No exam data available");
+      return;
+    }
+
+    console.log("Starting exam with available data");
+    startExamWithData(examData);
   };
 
   // Timer effect for current section
@@ -389,6 +386,43 @@ export function useExamLogic() {
         answers: {
           ...prev.answers,
           [questionId]: newAnswers,
+        },
+      };
+    });
+  };
+
+  // Handle writing answer
+  const handleWritingAnswerChange = (questionId: number, text: string) => {
+    if (!session) return;
+
+    setSession((prev) => {
+      if (!prev) return prev;
+
+      return {
+        ...prev,
+        answers: {
+          ...prev.answers,
+          [questionId]: [text], // Store the text as an array for consistency
+        },
+      };
+    });
+  };
+
+  // Handle speaking answer (audio base64)
+  const handleSpeakingAnswerChange = (
+    questionId: number,
+    audioBase64: string,
+  ) => {
+    if (!session) return;
+
+    setSession((prev) => {
+      if (!prev) return prev;
+
+      return {
+        ...prev,
+        answers: {
+          ...prev.answers,
+          [questionId]: [audioBase64], // Store the base64 audio as an array for consistency
         },
       };
     });
@@ -657,6 +691,8 @@ export function useExamLogic() {
     setSectionStatus({});
     setSectionStartTimes({});
     setCurrentSectionTimeRemaining(0);
+    setExamData(null);
+    setExamExpired(false);
 
     clearPersistedState();
   };
@@ -674,6 +710,7 @@ export function useExamLogic() {
     // UI State
     showSuccessDialog,
     sidebarOpen,
+    examExpired,
 
     // Exam State
     sectionStatus,
@@ -687,7 +724,10 @@ export function useExamLogic() {
 
     // Actions
     startExam,
+    startExamWithData,
     handleAnswerChange,
+    handleWritingAnswerChange,
+    handleSpeakingAnswerChange,
     navigateToExamTypePart,
     nextQuestion,
     previousQuestion,

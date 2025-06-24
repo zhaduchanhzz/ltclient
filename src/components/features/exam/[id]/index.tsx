@@ -68,6 +68,7 @@ export default function ExamPage() {
     allExams,
     showSuccessDialog,
     sidebarOpen,
+    examExpired,
     sectionStatus,
     currentSectionTimeRemaining,
     getCurrentExamAndQuestion,
@@ -75,6 +76,8 @@ export default function ExamPage() {
     submitExamMutation,
     startExam,
     handleAnswerChange,
+    handleWritingAnswerChange,
+    handleSpeakingAnswerChange,
     navigateToExamTypePart,
     nextQuestion,
     previousQuestion,
@@ -96,9 +99,63 @@ export default function ExamPage() {
     console.error("Error loading exams:", error);
     return (
       <Container sx={{ display: "flex", justifyContent: "center", p: 4 }}>
-        <Alert severity="warning">
-          Failed to load exam data. Using demo data for testing.
+        <Alert severity="error">
+          Failed to load exam data. Please try again.
         </Alert>
+      </Container>
+    );
+  }
+
+  if (examExpired) {
+    return (
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Paper
+          sx={{
+            p: 4,
+            textAlign: "center",
+            background: "linear-gradient(135deg, #f44336 0%, #e91e63 100%)",
+            color: "white",
+            borderRadius: 3,
+          }}
+        >
+          <Box>
+            <Avatar
+              sx={{
+                width: 80,
+                height: 80,
+                mx: "auto",
+                mb: 2,
+                bgcolor: "rgba(255,255,255,0.2)",
+                backdropFilter: "blur(10px)",
+              }}
+            >
+              <AccessTime sx={{ fontSize: 40 }} />
+            </Avatar>
+            <Typography variant="h3" gutterBottom fontWeight="bold">
+              Exam Not Available
+            </Typography>
+            <Typography variant="h6" sx={{ mb: 4, opacity: 0.9 }}>
+              This exam session is not available. Please start a new exam
+              session from the exam room.
+            </Typography>
+            <Button
+              variant="contained"
+              size="large"
+              onClick={() => router.push("/exam/room")}
+              sx={{
+                bgcolor: "rgba(255,255,255,0.2)",
+                backdropFilter: "blur(10px)",
+                border: "1px solid rgba(255,255,255,0.3)",
+                color: "white",
+                "&:hover": {
+                  bgcolor: "rgba(255,255,255,0.3)",
+                },
+              }}
+            >
+              Go to Exam Room
+            </Button>
+          </Box>
+        </Paper>
       </Container>
     );
   }
@@ -384,6 +441,8 @@ export default function ExamPage() {
             currentQuestion={currentQuestion}
             progress={progress}
             onAnswerChange={handleAnswerChange}
+            onWritingAnswerChange={handleWritingAnswerChange}
+            onSpeakingAnswerChange={handleSpeakingAnswerChange}
           />
 
           {/* Navigation Controls */}

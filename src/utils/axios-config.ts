@@ -29,11 +29,11 @@ class Axios {
 
         if (config.headers) {
           if (accessToken) {
-            // Check if token is expired before adding it to headers
+            // Only check token expiration and remove if it's significantly expired (5 minute buffer)
             if (isTokenExpired(accessToken)) {
+              console.warn("Token is expired, removing from storage");
               LocalStorage.remove(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN);
               delete config.headers.Authorization;
-              // Optionally redirect to login here if needed
             } else {
               config.headers.Authorization = `Bearer ${accessToken}`;
             }
@@ -50,10 +50,32 @@ class Axios {
     const interceptor = instance.interceptors.response.use(
       (response: AxiosResponse) => response.data,
       (error: AxiosError) => {
-        // Handle 401 Unauthorized errors
+        // Only remove token on specific 401 scenarios, not all 401s
         if (error.response?.status === 401) {
-          LocalStorage.remove(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN);
-          // Optionally redirect to login here if needed
+          const errorData = error.response?.data as any;
+          const errorMessage = errorData?.message || "";
+          const errorCode = errorData?.code || "";
+
+          // Only remove token if it's actually an authentication failure
+          // Don't remove on authorization failures (user doesn't have permission)
+          if (
+            errorMessage.toLowerCase().includes("token") ||
+            errorMessage.toLowerCase().includes("unauthorized") ||
+            errorMessage.toLowerCase().includes("expired") ||
+            errorCode === "TOKEN_EXPIRED" ||
+            errorCode === "INVALID_TOKEN"
+          ) {
+            console.warn(
+              "Authentication failed, removing token:",
+              errorMessage,
+            );
+            LocalStorage.remove(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN);
+          } else {
+            console.warn(
+              "Authorization failed but keeping token:",
+              errorMessage,
+            );
+          }
         }
 
         return Promise.reject(error);

@@ -74,6 +74,12 @@ export type TakeExamResponse = {
   termId: string;
 };
 
+export type ExamStatusResponse = {
+  isActive: boolean;
+  isExpired: boolean;
+  timeRemaining?: number;
+};
+
 export type ExamSection = {
   id: string;
   examType: "LISTENING" | "READING" | "WRITING" | "SPEAKING";

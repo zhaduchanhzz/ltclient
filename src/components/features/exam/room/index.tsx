@@ -9,21 +9,19 @@ import BasicStack from "@/components/base/MaterialUI-Basic/Stack";
 import BasicTypography from "@/components/base/MaterialUI-Basic/Typography";
 import AudioRecorder from "@/components/common/AudioRecorder";
 import DarkNightChange from "@/components/common/DarkNightChange";
+import { APP_LOCAL_STORAGE_KEY } from "@/consts";
 import { APP_ROUTE } from "@/consts/app-route";
-import { useAuthContext } from "@/contexts/AuthContext";
 import { useTakeExamMutation } from "@/services/apis/exam";
+import LocalStorage from "@/utils/local-storage";
 import { useTheme } from "@mui/material";
 import { useRouter } from "next/navigation";
 import UserInfomation from "./components/UserInfomation";
-import LocalStorage from "@/utils/local-storage";
-import { APP_LOCAL_STORAGE_KEY } from "@/consts";
 
 type ExamRoomProps = {};
 
 const ExamRoom = (_: ExamRoomProps) => {
   const theme = useTheme();
   const router = useRouter();
-  const { userInfo } = useAuthContext();
   const { mutateAsync: takeExam } = useTakeExamMutation();
 
   if (!LocalStorage.get(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN)) {
@@ -32,7 +30,15 @@ const ExamRoom = (_: ExamRoomProps) => {
     }, 3000);
 
     return (
-      <BasicStack sx={{ height: "100vh", width: "100vw", justifyContent: "center", alignItems: "center", gap: 4 }}>
+      <BasicStack
+        sx={{
+          height: "100vh",
+          width: "100vw",
+          justifyContent: "center",
+          alignItems: "center",
+          gap: 4,
+        }}
+      >
         <BasicTypography variant="h3" sx={{ textAlign: "center" }}>
           Vui lòng đăng nhập để tham gia thi
         </BasicTypography>
@@ -44,27 +50,75 @@ const ExamRoom = (_: ExamRoomProps) => {
   }
 
   const onClickReceiveExamPaper = async () => {
-    if (!userInfo) {
-      console.error("User not logged in");
+    console.log("Starting exam creation process...");
+
+    // Check if token exists before making the call
+    const token = LocalStorage.get(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN);
+
+    if (!token) {
+      console.error("No access token found before making request");
+      router.push(APP_ROUTE.LOGIN);
       return;
     }
 
     try {
+      console.log("Making takeExam API call...");
       const response = await takeExam();
 
-      
-      if (response.success) {
-      console.log(response);
+      console.log("API response received:", response);
 
+      if (response.success) {
         console.log("Exam created successfully:", response.data);
-        setTimeout(() => {
-          router.push(`/exam/${response.data.termId}`);
-        }, 3000);
+
+        // Store the exam data in localStorage with the termId
+        const examStateKey = `exam_session_state_${response.data.termId}`;
+        const examState = {
+          session: null,
+          sectionStatus: {},
+          sectionStartTimes: {},
+          examData: response.data,
+          lastSavedAt: Date.now(),
+        };
+
+        try {
+          localStorage.setItem(examStateKey, JSON.stringify(examState));
+          console.log("Stored exam data for termId:", response.data.termId);
+        } catch (storageError) {
+          console.error("Failed to store exam data:", storageError);
+        }
+
+        // Navigate to exam page
+        router.push(`/exam/${response.data.termId}`);
       } else {
         console.error("Failed to create exam:", response.message);
+        alert(`Failed to create exam: ${response.message || "Unknown error"}`);
       }
     } catch (error: any) {
-      console.error("Error taking exam:", error?.response?.data?.message || error);
+      console.error("Error taking exam:", error);
+      console.error("Error details:", {
+        status: error?.response?.status,
+        message: error?.response?.data?.message,
+        code: error?.response?.data?.code,
+        data: error?.response?.data,
+      });
+
+      // Check if token still exists after error
+      const tokenAfterError = LocalStorage.get(
+        APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN,
+      );
+
+      console.log("Token exists after error:", !!tokenAfterError);
+
+      if (!tokenAfterError) {
+        console.warn(
+          "Token was removed during API call - redirecting to login",
+        );
+        router.push(APP_ROUTE.LOGIN);
+      } else {
+        alert(
+          `Error taking exam: ${error?.response?.data?.message || error.message || "Unknown error"}`,
+        );
+      }
     }
   };
 
