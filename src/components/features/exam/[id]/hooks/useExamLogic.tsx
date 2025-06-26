@@ -42,7 +42,7 @@ export function useExamLogic() {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const examId = params.id as string;
 
-  const submitExamMutation = useSubmitExamMutation();
+  const submitExamMutation = useSubmitExamMutation(parseInt(examId));
 
   const [session, setSession] = useState<ExamTermSession | null>(null);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);

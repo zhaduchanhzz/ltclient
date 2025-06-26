@@ -1,14 +1,33 @@
 "use client";
 
 import {
+  useCreateExamMutation,
+  useGetAllExamsQuery,
+} from "@/services/apis/exam";
+import { CreateExamRequest } from "@/services/types/exam";
+import {
+  Add as AddIcon,
+  ExpandMore as ExpandMoreIcon,
+  Remove as RemoveIcon,
+  Search as SearchIcon,
+} from "@mui/icons-material";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   Button,
   Card,
+  Checkbox,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
+  FormControlLabel,
   IconButton,
+  MenuItem,
   Paper,
   Stack,
   Table,
@@ -20,65 +39,70 @@ import {
   TableRow,
   TextField,
   Typography,
-  Chip,
-  MenuItem,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  FormControlLabel,
-  Checkbox,
-  Divider,
+  CircularProgress,
 } from "@mui/material";
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Search as SearchIcon,
-  ExpandMore as ExpandMoreIcon,
-  Remove as RemoveIcon,
-} from "@mui/icons-material";
-import { useState, useEffect } from "react";
-import {
-  useCreateExamMutation,
-  useExamsQuery,
-  useUpdateExamMutation,
-  useDeleteExamMutation,
-} from "@/services/apis/exam";
-import { CreateExamRequest, ExamResponse } from "@/services/types/exam";
-import { useQueryClient } from "@tanstack/react-query";
-import { API_PATH } from "@/consts/api-path";
+import { useState } from "react";
 
-interface FormData extends CreateExamRequest {
+interface ExamFormData {
   id?: number;
+  title: string;
+  examType: "LISTENING" | "READING" | "WRITING" | "SPEAKING";
+  description: string;
+  isNeedVip: boolean;
+  questions: Array<{
+    questionText: string;
+    audioFile?: string;
+    answers?: Array<{
+      answerText: string;
+      isCorrect: boolean;
+    }>;
+  }>;
 }
 
 const ExamsPage = () => {
-  const queryClient = useQueryClient();
-  const { data: examsResponse, isLoading } = useExamsQuery(true);
+  const { data: examsResponse, isLoading, error } = useGetAllExamsQuery(true);
   const createExamMutation = useCreateExamMutation();
-  const updateExamMutation = useUpdateExamMutation();
-  const deleteExamMutation = useDeleteExamMutation();
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [searchQuery, setSearchQuery] = useState("");
   const [openDialog, setOpenDialog] = useState(false);
-  const [selectedExam, setSelectedExam] = useState<ExamResponse | null>(null);
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<ExamFormData>({
     title: "",
     examType: "LISTENING",
     description: "",
     isNeedVip: false,
-    questions: [
-      {
-        questionText: "",
-        answers: [
-          { answerText: "", isCorrect: false },
-          { answerText: "", isCorrect: false },
-        ],
-      },
-    ],
+    questions: [getInitialQuestionForType("LISTENING")],
   });
+
+  function getInitialQuestionForType(examType: ExamFormData["examType"]) {
+    switch (examType) {
+      case "LISTENING":
+        return {
+          questionText: "",
+          audioFile: "",
+          answers: [
+            { answerText: "", isCorrect: false },
+            { answerText: "", isCorrect: false },
+          ],
+        };
+      case "SPEAKING":
+      case "WRITING":
+        return {
+          questionText: "",
+          // No answers for speaking and writing (users provide text/audio responses)
+        };
+      case "READING":
+      default:
+        return {
+          questionText: "",
+          answers: [
+            { answerText: "", isCorrect: false },
+            { answerText: "", isCorrect: false },
+          ],
+        };
+    }
+  }
 
   const exams = examsResponse?.data || [];
 
@@ -102,48 +126,20 @@ const ExamsPage = () => {
     exam.title.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const handleOpenDialog = (exam?: ExamResponse) => {
-    if (exam) {
-      setSelectedExam(exam);
-      setFormData({
-        id: exam.id,
-        title: exam.title,
-        examType: exam.examType,
-        description: exam.description,
-        isNeedVip: exam.isNeedVip,
-        questions: exam.questions.map((q) => ({
-          questionText: q.questionText,
-          answers: q.answers.map((a) => ({
-            answerText: a.answerText,
-            isCorrect: a.isCorrect,
-          })),
-        })),
-      });
-    } else {
-      setSelectedExam(null);
-      setFormData({
-        title: "",
-        examType: "LISTENING",
-        description: "",
-        isNeedVip: false,
-        questions: [
-          {
-            questionText: "",
-            answers: [
-              { answerText: "", isCorrect: false },
-              { answerText: "", isCorrect: false },
-            ],
-          },
-        ],
-      });
-    }
-
+  const handleOpenDialog = () => {
+    const initialQuestion = getInitialQuestionForType("LISTENING");
+    setFormData({
+      title: "",
+      examType: "LISTENING",
+      description: "",
+      isNeedVip: false,
+      questions: [initialQuestion],
+    });
     setOpenDialog(true);
   };
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
-    setSelectedExam(null);
   };
 
   const handleSubmit = async () => {
@@ -156,46 +152,19 @@ const ExamsPage = () => {
         questions: formData.questions,
       };
 
-      if (selectedExam) {
-        await updateExamMutation.mutateAsync({
-          id: selectedExam.id.toString(),
-          data: submitData,
-        });
-      } else {
-        await createExamMutation.mutateAsync(submitData);
-      }
-
-      queryClient.invalidateQueries({ queryKey: [API_PATH.EXAMS] });
+      await createExamMutation.mutateAsync(submitData);
       handleCloseDialog();
+      // TODO: Refresh the exam list after successful creation
     } catch (error) {
-      console.error("Error submitting exam:", error);
-    }
-  };
-
-  const handleDelete = async (id: number) => {
-    if (window.confirm("Are you sure you want to delete this exam?")) {
-      try {
-        await deleteExamMutation.mutateAsync(id.toString());
-        queryClient.invalidateQueries({ queryKey: [API_PATH.EXAMS] });
-      } catch (error) {
-        console.error("Error deleting exam:", error);
-      }
+      console.error("Error creating exam:", error);
     }
   };
 
   const addQuestion = () => {
+    const newQuestion = getInitialQuestionForType(formData.examType);
     setFormData({
       ...formData,
-      questions: [
-        ...formData.questions,
-        {
-          questionText: "",
-          answers: [
-            { answerText: "", isCorrect: false },
-            { answerText: "", isCorrect: false },
-          ],
-        },
-      ],
+      questions: [...formData.questions, newQuestion],
     });
   };
 
@@ -208,27 +177,58 @@ const ExamsPage = () => {
     });
   };
 
-  const updateQuestion = (questionIndex: number, questionText: string) => {
+  const updateQuestion = (
+    questionIndex: number,
+    field: string,
+    value: string,
+  ) => {
     const updatedQuestions = [...formData.questions];
-    updatedQuestions[questionIndex].questionText = questionText;
+    updatedQuestions[questionIndex] = {
+      ...updatedQuestions[questionIndex],
+      [field]: value,
+    };
     setFormData({ ...formData, questions: updatedQuestions });
+  };
+
+  const handleAudioFileUpload = (
+    questionIndex: number,
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+
+    if (file) {
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        const base64 = e.target?.result as string;
+        updateQuestion(questionIndex, "audioFile", base64);
+      };
+
+      reader.readAsDataURL(file);
+    }
   };
 
   const addAnswer = (questionIndex: number) => {
     const updatedQuestions = [...formData.questions];
-    updatedQuestions[questionIndex].answers.push({
-      answerText: "",
-      isCorrect: false,
-    });
-    setFormData({ ...formData, questions: updatedQuestions });
+
+    if (updatedQuestions[questionIndex].answers) {
+      updatedQuestions[questionIndex].answers!.push({
+        answerText: "",
+        isCorrect: false,
+      });
+      setFormData({ ...formData, questions: updatedQuestions });
+    }
   };
 
   const removeAnswer = (questionIndex: number, answerIndex: number) => {
     const updatedQuestions = [...formData.questions];
-    updatedQuestions[questionIndex].answers = updatedQuestions[
-      questionIndex
-    ].answers.filter((_, index) => index !== answerIndex);
-    setFormData({ ...formData, questions: updatedQuestions });
+
+    if (updatedQuestions[questionIndex].answers) {
+      updatedQuestions[questionIndex].answers = updatedQuestions[
+        questionIndex
+      ].answers!.filter((_, index) => index !== answerIndex);
+      setFormData({ ...formData, questions: updatedQuestions });
+    }
   };
 
   const updateAnswer = (
@@ -238,11 +238,14 @@ const ExamsPage = () => {
     value: string | boolean,
   ) => {
     const updatedQuestions = [...formData.questions];
-    updatedQuestions[questionIndex].answers[answerIndex] = {
-      ...updatedQuestions[questionIndex].answers[answerIndex],
-      [field]: value,
-    };
-    setFormData({ ...formData, questions: updatedQuestions });
+
+    if (updatedQuestions[questionIndex].answers) {
+      updatedQuestions[questionIndex].answers![answerIndex] = {
+        ...updatedQuestions[questionIndex].answers![answerIndex],
+        [field]: value,
+      };
+      setFormData({ ...formData, questions: updatedQuestions });
+    }
   };
 
   const getStatusColor = (isNeedVip: boolean) => {
@@ -266,8 +269,27 @@ const ExamsPage = () => {
 
   if (isLoading) {
     return (
+      <Box
+        sx={{
+          p: 3,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "400px",
+        }}
+      >
+        <CircularProgress />
+        <Typography sx={{ ml: 2 }}>Loading exams...</Typography>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
       <Box sx={{ p: 3 }}>
-        <Typography>Loading exams...</Typography>
+        <Typography color="error">
+          Failed to load exams. Please try again.
+        </Typography>
       </Box>
     );
   }
@@ -348,20 +370,7 @@ const ExamsPage = () => {
                       />
                     </TableCell>
                     <TableCell align="right">
-                      <IconButton
-                        color="primary"
-                        onClick={() => handleOpenDialog(exam)}
-                        size="small"
-                      >
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton
-                        color="error"
-                        onClick={() => handleDelete(exam.id)}
-                        size="small"
-                      >
-                        <DeleteIcon />
-                      </IconButton>
+                      <Chip label="View Only" size="small" variant="outlined" />
                     </TableCell>
                   </TableRow>
                 ))}
@@ -385,7 +394,7 @@ const ExamsPage = () => {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>{selectedExam ? "Edit Exam" : "Add New Exam"}</DialogTitle>
+        <DialogTitle>Add New Exam</DialogTitle>
         <DialogContent>
           <Stack spacing={3} sx={{ mt: 1 }}>
             <TextField
@@ -402,12 +411,15 @@ const ExamsPage = () => {
               select
               label="Exam Type"
               value={formData.examType}
-              onChange={(e) =>
+              onChange={(e) => {
+                const newExamType = e.target.value as ExamFormData["examType"];
+                const initialQuestion = getInitialQuestionForType(newExamType);
                 setFormData({
                   ...formData,
-                  examType: e.target.value as CreateExamRequest["examType"],
-                })
-              }
+                  examType: newExamType,
+                  questions: [initialQuestion],
+                });
+              }}
             >
               <MenuItem value="LISTENING">LISTENING</MenuItem>
               <MenuItem value="READING">READING</MenuItem>
@@ -491,77 +503,105 @@ const ExamsPage = () => {
                         label="Question Text"
                         value={question.questionText}
                         onChange={(e) =>
-                          updateQuestion(questionIndex, e.target.value)
+                          updateQuestion(
+                            questionIndex,
+                            "questionText",
+                            e.target.value,
+                          )
                         }
                         multiline
                         rows={2}
                       />
 
-                      <Stack
-                        direction="row"
-                        justifyContent="space-between"
-                        alignItems="center"
-                      >
-                        <Typography variant="subtitle2">Answers</Typography>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          startIcon={<AddIcon />}
-                          onClick={() => addAnswer(questionIndex)}
-                        >
-                          Add Answer
-                        </Button>
-                      </Stack>
+                      {formData.examType === "LISTENING" && (
+                        <TextField
+                          fullWidth
+                          label="Audio File"
+                          value={question.audioFile}
+                          onChange={(e) =>
+                            handleAudioFileUpload(
+                              questionIndex,
+                              e as React.ChangeEvent<HTMLInputElement>,
+                            )
+                          }
+                          InputProps={{
+                            type: "file",
+                          }}
+                        />
+                      )}
 
-                      {question.answers.map((answer, answerIndex) => (
-                        <Stack
-                          key={answerIndex}
-                          direction="row"
-                          spacing={2}
-                          alignItems="center"
-                        >
-                          <TextField
-                            fullWidth
-                            label={`Answer ${answerIndex + 1}`}
-                            value={answer.answerText}
-                            onChange={(e) =>
-                              updateAnswer(
-                                questionIndex,
-                                answerIndex,
-                                "answerText",
-                                e.target.value,
-                              )
-                            }
-                          />
-                          <FormControlLabel
-                            control={
-                              <Checkbox
-                                checked={answer.isCorrect}
+                      {/* Show answers section only for LISTENING and READING */}
+                      {(formData.examType === "LISTENING" ||
+                        formData.examType === "READING") && (
+                        <>
+                          <Stack
+                            direction="row"
+                            justifyContent="space-between"
+                            alignItems="center"
+                          >
+                            <Typography variant="subtitle2">Answers</Typography>
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              startIcon={<AddIcon />}
+                              onClick={() => addAnswer(questionIndex)}
+                            >
+                              Add Answer
+                            </Button>
+                          </Stack>
+
+                          {question.answers?.map((answer, answerIndex) => (
+                            <Stack
+                              key={answerIndex}
+                              direction="row"
+                              spacing={2}
+                              alignItems="center"
+                            >
+                              <TextField
+                                fullWidth
+                                label={`Answer ${answerIndex + 1}`}
+                                value={answer.answerText}
                                 onChange={(e) =>
                                   updateAnswer(
                                     questionIndex,
                                     answerIndex,
-                                    "isCorrect",
-                                    e.target.checked,
+                                    "answerText",
+                                    e.target.value,
                                   )
                                 }
                               />
-                            }
-                            label="Correct"
-                          />
-                          {question.answers.length > 2 && (
-                            <IconButton
-                              size="small"
-                              color="error"
-                              onClick={() =>
-                                removeAnswer(questionIndex, answerIndex)
-                              }
-                            >
-                              <RemoveIcon />
-                            </IconButton>
-                          )}
-                        </Stack>
-                      ))}
+                              <FormControlLabel
+                                control={
+                                  <Checkbox
+                                    checked={answer.isCorrect}
+                                    onChange={(e) =>
+                                      updateAnswer(
+                                        questionIndex,
+                                        answerIndex,
+                                        "isCorrect",
+                                        e.target.checked,
+                                      )
+                                    }
+                                  />
+                                }
+                                label="Correct"
+                              />
+                              {question.answers?.length &&
+                                question.answers?.length > 2 && (
+                                  <IconButton
+                                    size="small"
+                                    color="error"
+                                    onClick={() =>
+                                      removeAnswer(questionIndex, answerIndex)
+                                    }
+                                  >
+                                    <RemoveIcon />
+                                  </IconButton>
+                                )}
+                            </Stack>
+                          ))}
+                        </>
+                      )}
                     </Stack>
                   </AccordionDetails>
                 </Accordion>
@@ -571,18 +611,8 @@ const ExamsPage = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleSubmit}
-            disabled={
-              createExamMutation.isPending || updateExamMutation.isPending
-            }
-          >
-            {createExamMutation.isPending || updateExamMutation.isPending
-              ? "Saving..."
-              : selectedExam
-                ? "Update"
-                : "Create"}
+          <Button variant="contained" onClick={handleSubmit}>
+            Create
           </Button>
         </DialogActions>
       </Dialog>

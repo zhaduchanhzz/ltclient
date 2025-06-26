@@ -3,6 +3,7 @@ import { CommonResponse } from "@/types/common";
 import HttpClient from "@/utils/axios-config";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
+  CreateExamRequest,
   Exam,
   ExamFilterParams,
   ExamsDetail,
@@ -54,8 +55,11 @@ export const useGetFilteredExamsQuery = (
 
 export const useCreateExamMutation = () => {
   return useMutation({
-    mutationFn: (data: Exam) => {
-      return HttpClient.post<Exam, CommonResponse<Exam>>(API_PATH.EXAMS, data);
+    mutationFn: (data: CreateExamRequest) => {
+      return HttpClient.post<CreateExamRequest, CommonResponse<Exam>>(
+        API_PATH.EXAMS,
+        data,
+      );
     },
   });
 };
@@ -135,13 +139,13 @@ export const useGetAllExamsQuery = (enabled = false) => {
   });
 };
 
-export const useSubmitExamMutation = () => {
+export const useSubmitExamMutation = (id: number) => {
   return useMutation({
     mutationFn: (data: ExamSubmitRequest) => {
       return HttpClient.post<
         ExamSubmitRequest,
         CommonResponse<ExamSubmitResponse>
-      >(API_PATH.EXAMS + "/submit", data);
+      >(API_PATH.EXAMS + "/submit/" + id, data);
     },
   });
 };

@@ -27,7 +27,8 @@ export type CreateExamRequest = {
 
 export type CreateExamQuestion = {
   questionText: string;
-  answers: CreateExamAnswer[];
+  audioFile?: string; // Base64 audio for LISTENING exams
+  answers?: CreateExamAnswer[]; // Optional - not used for SPEAKING
 };
 
 export type CreateExamAnswer = {
@@ -47,7 +48,8 @@ export type ExamResponse = {
 export type ExamQuestionResponse = {
   id: number;
   questionText: string;
-  answers: ExamAnswerResponse[];
+  audioFile?: string; // Base64 audio for LISTENING exams
+  answers?: ExamAnswerResponse[]; // Optional - not used for SPEAKING
 };
 
 export type ExamAnswerResponse = {
