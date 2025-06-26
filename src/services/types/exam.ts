@@ -17,6 +17,45 @@ export type ExamDetailRequest = {
   examId: string;
 };
 
+export type CreateExamRequest = {
+  examType: "LISTENING" | "READING" | "WRITING" | "SPEAKING";
+  title: string;
+  description: string;
+  isNeedVip: boolean;
+  questions: CreateExamQuestion[];
+};
+
+export type CreateExamQuestion = {
+  questionText: string;
+  answers: CreateExamAnswer[];
+};
+
+export type CreateExamAnswer = {
+  answerText: string;
+  isCorrect: boolean;
+};
+
+export type ExamResponse = {
+  id: number;
+  examType: "LISTENING" | "READING" | "WRITING" | "SPEAKING";
+  title: string;
+  description: string;
+  isNeedVip: boolean;
+  questions: ExamQuestionResponse[];
+};
+
+export type ExamQuestionResponse = {
+  id: number;
+  questionText: string;
+  answers: ExamAnswerResponse[];
+};
+
+export type ExamAnswerResponse = {
+  id: number;
+  answerText: string;
+  isCorrect: boolean;
+};
+
 export type Exam = {
   id: string;
   name: string;

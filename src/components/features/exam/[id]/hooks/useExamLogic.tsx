@@ -658,9 +658,37 @@ export function useExamLogic() {
 
     try {
       const responses: Record<string, string> = {};
+      let speakingFile: string | undefined;
 
-      Object.entries(session.answers).forEach(([questionId, answerIds]) => {
-        responses[`question_${questionId}`] = answerIds.join(",");
+      // Build responses based on exam type and question type
+      Object.entries(session.answers).forEach(([questionId, answers]) => {
+        const questionIdNum = parseInt(questionId);
+
+        // Find the question to determine its type
+        let isWritingQuestion = false;
+        let isSpeakingQuestion = false;
+
+        // Search through all exams to find this question
+        allExams.forEach((exam) => {
+          const question = exam.questions.find((q) => q.id === questionIdNum);
+
+          if (question) {
+            isWritingQuestion = exam.examType === "WRITING";
+            isSpeakingQuestion = exam.examType === "SPEAKING";
+          }
+        });
+
+        if (isSpeakingQuestion) {
+          // For speaking questions, the answer is base64 audio
+          speakingFile = answers[0] || "";
+          responses[questionId] = "speaking_response";
+        } else if (isWritingQuestion) {
+          // For writing questions, the answer is text
+          responses[questionId] = answers[0] || "";
+        } else {
+          // For listening/reading questions, the answer is answer IDs
+          responses[questionId] = answers.join(",");
+        }
       });
 
       const submitRequest: ExamSubmitRequest = {
@@ -668,7 +696,9 @@ export function useExamLogic() {
           examId: session.examId,
           responses,
           termId: session.termId,
+          speakingFile,
         },
+        speakingFile, // Also include at top level as per Postman structure
       };
 
       await submitExamMutation.mutateAsync(submitRequest);
@@ -682,7 +712,7 @@ export function useExamLogic() {
       console.error("Failed to submit exam:", error);
       alert("Failed to submit exam. Please try again.");
     }
-  }, [session, submitExamMutation, clearPersistedState]);
+  }, [session, submitExamMutation, clearPersistedState, allExams]);
 
   // Reset exam
   const resetExam = () => {
