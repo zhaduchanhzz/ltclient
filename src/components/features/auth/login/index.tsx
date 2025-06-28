@@ -6,7 +6,8 @@ import BasicTypography from "@/components/base/MaterialUI-Basic/Typography";
 import HookForm from "@/components/base/MaterialUI-HookForm/HookForm";
 import TextFieldHookForm from "@/components/base/MaterialUI-HookForm/TextFieldHookForm/Index";
 import DarkNightChange from "@/components/common/DarkNightChange";
-import { APP_LOCAL_STORAGE_KEY } from "@/consts";
+import { APP_COOKIE_KEY } from "@/consts";
+import CookieStorage from "@/utils/cookie-storage";
 import { APP_ROUTE } from "@/consts/app-route";
 import { useAppContextHandle } from "@/contexts/AppContext";
 import { useLoginMutation, useProfileQuery } from "@/services/apis/auth";
@@ -37,13 +38,13 @@ const LoginPage = () => {
               severity: "success",
             },
           });
-          localStorage.setItem(
-            APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN,
+          CookieStorage.set(
+            APP_COOKIE_KEY.ACCESS_TOKEN,
             response.data.accessToken,
           );
-          localStorage.setItem(
-            APP_LOCAL_STORAGE_KEY.IS_AUTHENTICATED,
-            "true",
+          CookieStorage.setBoolean(
+            APP_COOKIE_KEY.IS_AUTHENTICATED,
+            true,
           );
           profileQuery.refetch();
           push(APP_ROUTE.HOME);

@@ -9,10 +9,10 @@ import BasicStack from "@/components/base/MaterialUI-Basic/Stack";
 import BasicTypography from "@/components/base/MaterialUI-Basic/Typography";
 import AudioRecorder from "@/components/common/AudioRecorder";
 import DarkNightChange from "@/components/common/DarkNightChange";
-import { APP_LOCAL_STORAGE_KEY } from "@/consts";
+import { APP_COOKIE_KEY } from "@/consts";
 import { APP_ROUTE } from "@/consts/app-route";
 import { useTakeExamMutation } from "@/services/apis/exam";
-import LocalStorage from "@/utils/local-storage";
+import CookieStorage from "@/utils/cookie-storage";
 import { useTheme } from "@mui/material";
 import { useRouter } from "next/navigation";
 import UserInfomation from "./components/UserInfomation";
@@ -24,7 +24,7 @@ const ExamRoom = (_: ExamRoomProps) => {
   const router = useRouter();
   const { mutateAsync: takeExam } = useTakeExamMutation();
 
-  if (!LocalStorage.get(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN)) {
+  if (!CookieStorage.get(APP_COOKIE_KEY.ACCESS_TOKEN)) {
     setTimeout(() => {
       router.push(APP_ROUTE.LOGIN);
     }, 3000);
@@ -53,7 +53,7 @@ const ExamRoom = (_: ExamRoomProps) => {
     console.log("Starting exam creation process...");
 
     // Check if token exists before making the call
-    const token = LocalStorage.get(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN);
+    const token = CookieStorage.get(APP_COOKIE_KEY.ACCESS_TOKEN);
 
     if (!token) {
       console.error("No access token found before making request");
@@ -103,9 +103,7 @@ const ExamRoom = (_: ExamRoomProps) => {
       });
 
       // Check if token still exists after error
-      const tokenAfterError = LocalStorage.get(
-        APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN,
-      );
+      const tokenAfterError = CookieStorage.get(APP_COOKIE_KEY.ACCESS_TOKEN);
 
       console.log("Token exists after error:", !!tokenAfterError);
 

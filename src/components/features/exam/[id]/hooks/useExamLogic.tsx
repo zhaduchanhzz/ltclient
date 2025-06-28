@@ -692,13 +692,10 @@ export function useExamLogic() {
       });
 
       const submitRequest: ExamSubmitRequest = {
-        request: {
-          examId: session.examId,
-          responses,
-          termId: session.termId,
-          speakingFile,
-        },
-        speakingFile, // Also include at top level as per Postman structure
+        examId: session.examId,
+        responses,
+        termId: session.termId,
+        speakingFile,
       };
 
       await submitExamMutation.mutateAsync(submitRequest);

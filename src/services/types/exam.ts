@@ -187,12 +187,9 @@ export type SimulationSession = {
 };
 
 export type ExamSubmitRequest = {
-  request: {
-    examId: number;
-    responses: Record<string, string>;
-    termId: number;
-    speakingFile?: string;
-  };
+  examId: number;
+  responses: Record<string, string>;
+  termId: number;
   speakingFile?: string;
 };
 

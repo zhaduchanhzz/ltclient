@@ -5,8 +5,8 @@ import axios, {
   AxiosResponse,
 } from "axios";
 import { ApiServerURL } from "./config";
-import LocalStorage from "./local-storage";
-import { APP_LOCAL_STORAGE_KEY } from "@/consts";
+import CookieStorage from "./cookie-storage";
+import { APP_COOKIE_KEY } from "@/consts";
 import { isTokenExpired } from "./jwt";
 
 const headers: AxiosRequestConfig["headers"] = {
@@ -24,16 +24,15 @@ class Axios {
     // Config request interceptor
     instance.interceptors.request.use(
       (config: any) => {
-        const accessToken = LocalStorage.get(
-          APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN,
-        );
+        const accessToken = CookieStorage.get(APP_COOKIE_KEY.ACCESS_TOKEN);
 
         if (config.headers) {
           if (accessToken) {
             // Only check token expiration and remove if it's significantly expired (5 minute buffer)
             if (isTokenExpired(accessToken)) {
-              console.warn("Token is expired, removing from storage");
-              LocalStorage.remove(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN);
+              console.warn("Token is expired, removing from cookies");
+              CookieStorage.remove(APP_COOKIE_KEY.ACCESS_TOKEN);
+              CookieStorage.remove(APP_COOKIE_KEY.IS_AUTHENTICATED);
               delete config.headers.Authorization;
             } else {
               config.headers.Authorization = `Bearer ${accessToken}`;
@@ -70,7 +69,8 @@ class Axios {
               "Authentication failed, removing token:",
               errorMessage,
             );
-            LocalStorage.remove(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN);
+            CookieStorage.remove(APP_COOKIE_KEY.ACCESS_TOKEN);
+            CookieStorage.remove(APP_COOKIE_KEY.IS_AUTHENTICATED);
           } else {
             console.warn(
               "Authorization failed but keeping token:",

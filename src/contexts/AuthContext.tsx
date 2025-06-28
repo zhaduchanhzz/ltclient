@@ -1,7 +1,7 @@
-import { APP_LOCAL_STORAGE_KEY } from "@/consts";
+import { APP_COOKIE_KEY } from "@/consts";
 import { useProfileQuery } from "@/services/apis/auth";
 import { UserInfo } from "@/services/types/auth";
-import LocalStorage from "@/utils/local-storage";
+import CookieStorage from "@/utils/cookie-storage";
 import { isTokenExpired } from "@/utils/jwt";
 import {
   createContext,
@@ -51,7 +51,7 @@ export const AuthContextProvider = ({
     initAuthContextState,
   );
 
-  const accessToken = LocalStorage.get(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN);
+  const accessToken = CookieStorage.get(APP_COOKIE_KEY.ACCESS_TOKEN);
   const profileQuery = useProfileQuery(!!accessToken);
 
   const updateAuthState = useCallback(
@@ -67,7 +67,8 @@ export const AuthContextProvider = ({
 
   useEffect(() => {
     if (!accessToken || (accessToken && isTokenExpired(accessToken))) {
-      LocalStorage.remove(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN);
+      CookieStorage.remove(APP_COOKIE_KEY.ACCESS_TOKEN);
+      CookieStorage.remove(APP_COOKIE_KEY.IS_AUTHENTICATED);
       updateAuthState({
         isInitialized: true,
         isAuthenticated: false,
@@ -77,6 +78,7 @@ export const AuthContextProvider = ({
     }
 
     if (profileQuery.data?.data) {
+      CookieStorage.setBoolean(APP_COOKIE_KEY.IS_AUTHENTICATED, true);
       updateAuthState({
         isInitialized: true,
         isAuthenticated: true,
@@ -84,14 +86,15 @@ export const AuthContextProvider = ({
       });
     } else if (profileQuery.isError) {
       console.error("Profile fetch error:", profileQuery.error);
-      LocalStorage.remove(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN);
+      CookieStorage.remove(APP_COOKIE_KEY.ACCESS_TOKEN);
+      CookieStorage.remove(APP_COOKIE_KEY.IS_AUTHENTICATED);
       updateAuthState({
         isInitialized: true,
         isAuthenticated: false,
         userInfo: null,
       });
     }
-  }, [accessToken, profileQuery.data, profileQuery.isError]);
+  }, [accessToken, profileQuery.data, profileQuery.isError, updateAuthState]);
 
   return (
     <AuthContext.Provider value={authState}>
