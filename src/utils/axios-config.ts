@@ -11,6 +11,7 @@ import { isTokenExpired } from "./jwt";
 
 const headers: AxiosRequestConfig["headers"] = {
   "Content-Type": "application/json",
+  "ngrok-skip-browser-warning": "true",
 };
 
 class Axios {

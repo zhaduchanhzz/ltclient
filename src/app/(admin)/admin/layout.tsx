@@ -2,7 +2,9 @@
 import { Box, CssBaseline, ThemeProvider, createTheme } from "@mui/material";
 import AdminSidebar from "@/components/features/admin/Sidebar";
 import AdminHeader from "@/components/features/admin/Header";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 const drawerWidth = 240;
 
@@ -12,11 +14,27 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(true);
+  const { isAuthenticated, isInitialized } = useAuthContext();
+  const router = useRouter();
   const theme = createTheme();
+
+  useEffect(() => {
+    if (isInitialized && !isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated, isInitialized, router]);
 
   const toggleDrawer = () => {
     setOpen(!open);
   };
+
+  if (!isInitialized) {
+    return null;
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <ThemeProvider theme={theme}>
