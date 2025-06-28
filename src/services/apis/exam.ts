@@ -139,13 +139,13 @@ export const useGetAllExamsQuery = (enabled = false) => {
   });
 };
 
-export const useSubmitExamMutation = (id: number) => {
+export const useSubmitExamMutation = () => {
   return useMutation({
     mutationFn: (data: ExamSubmitRequest) => {
       return HttpClient.post<
         ExamSubmitRequest,
         CommonResponse<ExamSubmitResponse>
-      >(API_PATH.EXAMS + "/submit/" + id, data);
+      >(API_PATH.EXAMS + "/submit", data);
     },
   });
 };
