@@ -10,6 +10,7 @@ import {
   Mic,
   PlayArrow,
   Quiz,
+  School,
 } from "@mui/icons-material";
 import {
   Alert,
@@ -35,6 +36,7 @@ import ExamSidebar from "./components/ExamSidebar";
 import NavigationControls from "./components/NavigationControls";
 import QuestionCard from "./components/QuestionCard";
 import { useExamLogic } from "./hooks/useExamLogic";
+import { useGradingRequestMutation } from "@/services/apis/exam";
 
 const EXAM_TIME_LIMITS = {
   LISTENING: 47,
@@ -73,7 +75,6 @@ export default function ExamPage() {
     currentSectionTimeRemaining,
     getCurrentExamAndQuestion,
     router,
-    submitExamMutation,
     startExam,
     handleAnswerChange,
     handleWritingAnswerChange,
@@ -82,10 +83,87 @@ export default function ExamPage() {
     nextQuestion,
     previousQuestion,
     completeSection,
-    submitExam,
-    resetExam,
+    submitWritingExam,
     setSidebarOpen,
+    setShowSuccessDialog,
   } = useExamLogic();
+
+  const gradingRequestMutation = useGradingRequestMutation();
+
+  const calculateExamResultsByType = () => {
+    if (!session || !allExams) return {};
+
+    // Group exams by type
+    const examsByTypeResults = examTypes.reduce((acc, examType) => {
+      const typeExams = allExams.filter((exam) => exam.examType === examType);
+      
+      if (typeExams.length === 0) return acc;
+
+      let correctAnswers = 0;
+      let totalQuestions = 0;
+      let status = "Completed";
+
+      typeExams.forEach((exam) => {
+        exam.questions.forEach((question) => {
+          totalQuestions++;
+          
+          const userAnswers = session.answers[question.id] || [];
+
+          if (examType === "LISTENING" || examType === "READING") {
+            // Multiple choice questions - calculate score
+            const correctAnswerIds = question.answers
+              .filter((answer) => answer.isCorrect)
+              .map((answer) => answer.id.toString());
+
+            const userAnswerSet = new Set(userAnswers);
+            const correctAnswerSet = new Set(correctAnswerIds);
+
+            const isCorrect = userAnswerSet.size === correctAnswerSet.size &&
+              [...userAnswerSet].every((answer) => correctAnswerSet.has(answer));
+
+            if (isCorrect) {
+              correctAnswers++;
+            }
+          } else if (examType === "WRITING" || examType === "SPEAKING") {
+            // For writing/speaking, just check if answered
+            if (userAnswers.length > 0) {
+              correctAnswers++; // Count as "answered" not "correct"
+            }
+            // TODO: Check if the exam is already graded
+            
+            status = "Pending Grading";
+          }
+        });
+      });
+
+      const percentage = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+
+      acc[examType] = {
+        correct: correctAnswers,
+        total: totalQuestions,
+        percentage: examType === "WRITING" || examType === "SPEAKING" ? 0 : percentage,
+        status,
+      };
+
+      return acc;
+    }, {} as Record<string, { correct: number; total: number; percentage: number; status: string }>);
+
+    return examsByTypeResults;
+  };
+
+  const examResultsByType = calculateExamResultsByType();
+
+  const handleGradingRequest = async () => {
+    if (!session?.termId) return;
+    
+    try {
+      await gradingRequestMutation.mutateAsync({ termId: session.termId });
+      alert("Grading request submitted successfully!");
+    } catch (error) {
+      console.error("Failed to submit grading request:", error);
+      alert("Failed to submit grading request. Please try again.");
+    }
+  };
 
   if (isLoading) {
     return (
@@ -356,32 +434,114 @@ export default function ExamPage() {
     );
   }
 
-  // Success dialog after exam submission
+  // Exam results dialog
   if (showSuccessDialog) {
     return (
       <Dialog open={showSuccessDialog} maxWidth="sm" fullWidth>
         <DialogTitle>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <CheckCircle color="success" />
-            Exam Submitted Successfully!
+            Exam Completed!
           </Box>
         </DialogTitle>
         <DialogContent>
-          <Typography variant="body1" sx={{ mb: 2 }}>
-            Your exam has been successfully submitted with Term ID:{" "}
+          <Typography variant="body1" sx={{ mb: 3, color: "black" }}>
+            Your exam has been completed with Term ID:{" "}
             <strong>{session?.termId}</strong>
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Your responses have been recorded and will be evaluated by your
-            instructor.
+          
+          {/* Exam Results by Type */}
+          <Typography variant="h5" sx={{ mb: 2, fontWeight: "bold", color: "black" }}>
+            Exam Results
           </Typography>
+          
+          <Grid2 container spacing={2} sx={{ mb: 3 }}>
+            {examTypes.map((examType) => {
+              const results = examResultsByType[examType];
+              if (!results) return null;
+
+              const Icon = ExamTypeIcons[examType];
+              const color = ExamTypeColors[examType];
+              
+              const getScoreColor = () => {
+                if (examType === "WRITING" || examType === "SPEAKING") return "black";
+                if (results.percentage >= 70) return "green";
+                if (results.percentage >= 50) return "orange";
+                return "red";
+              };
+
+              return (
+                <Grid2 key={examType} size={{ xs: 12, sm: 6 }}>
+                  <Card sx={{ p: 2, border: `2px solid ${color}`, borderRadius: 2 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                      <Avatar sx={{ bgcolor: color, mr: 2, width: 40, height: 40 }}>
+                        <Icon sx={{ fontSize: 20 }} />
+                      </Avatar>
+                      <Typography variant="h6" sx={{ fontWeight: "bold", color: "black" }}>
+                        {examType}
+                      </Typography>
+                    </Box>
+                    
+                    <Box sx={{ textAlign: "center" }}>
+                      {examType === "LISTENING" || examType === "READING" ? (
+                        <>
+                          <Typography variant="h4" sx={{ fontWeight: "bold", color: getScoreColor(), mb: 1 }}>
+                            {results.correct}/{results.total}
+                          </Typography>
+                          <Typography variant="h6" sx={{ color: "black", mb: 1 }}>
+                            {results.percentage}% Correct
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: "green", fontWeight: "medium" }}>
+                            {results.status}
+                          </Typography>
+                        </>
+                      ) : (
+                        <>
+                          <Typography variant="h5" sx={{ color: "black", mb: 1 }}>
+                            {results.correct}/{results.total} Answered
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: "orange", fontWeight: "medium" }}>
+                            {results.status}
+                          </Typography>
+                        </>
+                      )}
+                    </Box>
+                  </Card>
+                </Grid2>
+              );
+            })}
+          </Grid2>
+
+          <Typography variant="body2" sx={{ mb: 3, color: "black" }}>
+            Your responses have been recorded. You can request grading for your writing and speaking sections.
+          </Typography>
+          
+          <Box sx={{ p: 2, bgcolor: "grey.100", borderRadius: 1 }}>
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: "medium", color: "black" }}>
+              Next Steps:
+            </Typography>
+            <Typography variant="body2" sx={{ color: "black" }}>
+              • Request grading for personalized feedback on your writing and speaking responses
+              • Return to the exam room to take more practice tests
+            </Typography>
+          </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => router.push("/exam/room")} variant="outlined">
-            Back to Exams
+        <DialogActions sx={{ p: 3, gap: 1 }}>
+          <Button 
+            onClick={() => router.push("/exam/room")} 
+            variant="outlined"
+            fullWidth
+          >
+            Back to Exam Room
           </Button>
-          <Button onClick={resetExam} variant="contained">
-            Take Another Exam
+          <Button 
+            onClick={handleGradingRequest}
+            variant="contained"
+            startIcon={<School />}
+            disabled={gradingRequestMutation.isPending}
+            fullWidth
+          >
+            {gradingRequestMutation.isPending ? "Requesting..." : "Request Grading"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -451,11 +611,11 @@ export default function ExamPage() {
             currentExam={currentExam}
             examsByType={examsByType}
             examTypes={examTypes}
-            submitExamMutation={submitExamMutation}
             onPreviousQuestion={previousQuestion}
             onNextQuestion={nextQuestion}
             onCompleteSection={completeSection}
-            onSubmitExam={submitExam}
+            onShowExamResults={() => setShowSuccessDialog(true)}
+            onSubmitWritingExam={submitWritingExam}
           />
         </Box>
       </Box>

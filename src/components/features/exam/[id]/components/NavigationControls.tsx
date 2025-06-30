@@ -19,11 +19,11 @@ interface NavigationControlsProps {
   currentExam: SimulationExam;
   examsByType: Record<string, SimulationExam[]>;
   examTypes: Array<"LISTENING" | "READING" | "WRITING" | "SPEAKING">;
-  submitExamMutation: any;
   onPreviousQuestion: () => void;
   onNextQuestion: () => void;
   onCompleteSection: (examType: string) => void;
-  onSubmitExam: () => void;
+  onShowExamResults: () => void;
+  onSubmitWritingExam?: () => void;
 }
 
 export default function NavigationControls({
@@ -31,11 +31,11 @@ export default function NavigationControls({
   currentExam,
   examsByType,
   examTypes,
-  submitExamMutation,
   onPreviousQuestion,
   onNextQuestion,
   onCompleteSection,
-  onSubmitExam,
+  onShowExamResults,
+  onSubmitWritingExam,
 }: NavigationControlsProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -54,36 +54,68 @@ export default function NavigationControls({
 
   const renderActionButton = () => {
     if (isLastExamType && isLastQuestionOfSection) {
-      // Last question of last section - submit entire exam
+      // Last question of last section - show exam results dialog
       return (
         <Button
           variant="contained"
           color="success"
-          onClick={onSubmitExam}
+          onClick={onShowExamResults}
           endIcon={<Send />}
-          disabled={submitExamMutation.isPending}
           size={isMobile ? "medium" : "large"}
           fullWidth={isMobile}
           sx={{ px: { xs: 2, md: 4 } }}
         >
-          {submitExamMutation.isPending ? "Submitting..." : "Submit Exam"}
+          View Results
         </Button>
       );
     } else if (isLastQuestionOfSection) {
-      // Last question of current section - complete section
-      return (
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => onCompleteSection(session.currentExamType)}
-          endIcon={<CheckCircle />}
-          size={isMobile ? "medium" : "large"}
-          fullWidth={isMobile}
-          sx={{ px: { xs: 2, md: 4 } }}
-        >
-          Complete {session.currentExamType}
-        </Button>
-      );
+      // Last question of current section - handle differently for WRITING vs others
+      if (session.currentExamType === "WRITING" && onSubmitWritingExam) {
+        return (
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={onSubmitWritingExam}
+            endIcon={<CheckCircle />}
+            size={isMobile ? "medium" : "large"}
+            fullWidth={isMobile}
+            sx={{ px: { xs: 2, md: 4 } }}
+          >
+            Complete WRITING
+          </Button>
+        );
+      } else if (session.currentExamType === "SPEAKING") {
+        // For speaking, just move to next section without showing complete button
+        // since individual questions are automatically submitted
+        return (
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => onCompleteSection(session.currentExamType)}
+            endIcon={<CheckCircle />}
+            size={isMobile ? "medium" : "large"}
+            fullWidth={isMobile}
+            sx={{ px: { xs: 2, md: 4 } }}
+          >
+            Next Section
+          </Button>
+        );
+      } else {
+        // For LISTENING/READING - complete section
+        return (
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => onCompleteSection(session.currentExamType)}
+            endIcon={<CheckCircle />}
+            size={isMobile ? "medium" : "large"}
+            fullWidth={isMobile}
+            sx={{ px: { xs: 2, md: 4 } }}
+          >
+            Complete {session.currentExamType}
+          </Button>
+        );
+      }
     } else {
       // Regular next question
       return (
@@ -128,12 +160,18 @@ export default function NavigationControls({
           >
             {renderActionButton()}
 
-            {/* Section complete button - always available except for last section */}
+            {/* Section complete button - conditionally rendered based on exam type */}
             {session.currentExamType !== examTypes[examTypes.length - 1] && (
               <Button
                 variant="outlined"
                 color="primary"
-                onClick={() => onCompleteSection(session.currentExamType)}
+                onClick={() => {
+                  if (session.currentExamType === "WRITING" && onSubmitWritingExam) {
+                    onSubmitWritingExam();
+                  } else {
+                    onCompleteSection(session.currentExamType);
+                  }
+                }}
                 startIcon={<CheckCircle />}
                 size={isMobile ? "small" : "medium"}
                 sx={{
@@ -141,7 +179,7 @@ export default function NavigationControls({
                   display: { xs: "none", sm: "flex" }, // Hide on mobile to save space
                 }}
               >
-                Complete Section
+                {session.currentExamType === "WRITING" ? "Complete WRITING" : "Complete Section"}
               </Button>
             )}
           </Stack>

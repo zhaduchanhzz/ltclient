@@ -149,3 +149,14 @@ export const useSubmitExamMutation = () => {
     },
   });
 };
+
+export const useGradingRequestMutation = () => {
+  return useMutation({
+    mutationFn: (data: { termId: number }) => {
+      return HttpClient.post<
+        { termId: number },
+        CommonResponse<{ message: string }>
+      >(API_PATH.GRADING_REQUEST, data);
+    },
+  });
+};

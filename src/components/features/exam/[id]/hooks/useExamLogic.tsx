@@ -408,8 +408,55 @@ export function useExamLogic() {
     });
   };
 
-  // Handle speaking answer (audio base64)
-  const handleSpeakingAnswerChange = (
+  // Submit individual speaking question - called when user records audio
+  const submitSpeakingQuestion = useCallback(
+    async (questionId: number, speakingFile: string) => {
+      if (!session) return;
+
+      try {
+        // Find the exam that contains this question
+        let targetExamId: number | null = null;
+        
+        allExams.forEach((exam) => {
+          const question = exam.questions.find((q) => q.id === questionId);
+
+          if (question && exam.examType === "SPEAKING") {
+            targetExamId = exam.id;
+          }
+        });
+
+        if (targetExamId === null) {
+          console.error(`Could not find exam for speaking question ${questionId}`);
+          return;
+        }
+
+        // Simplified request body for speaking submissions
+        const submitRequest = {
+          examId: targetExamId, // Use the individual exam ID from take-exam response (e.g., 21)
+          responses: {
+            [questionId]: "speaking_response",
+          },
+          termId: session.termId, // Use termId from take-exam response (e.g., 69)
+          speakingFile, // Base64 audio file
+        };
+
+        console.log(`Submitting speaking question ${questionId} for exam ${targetExamId}:`, submitRequest);
+        await submitExamMutation.mutateAsync(submitRequest as unknown as ExamSubmitRequest);
+
+        console.log(`Successfully submitted speaking question ${questionId} for exam ${targetExamId}`);
+      } catch (error) {
+        console.error(
+          `Failed to submit speaking question ${questionId}:`,
+          error,
+        );
+        alert("Failed to submit speaking response. Please try again.");
+      }
+    },
+    [session, submitExamMutation, allExams],
+  );
+
+  // Handle speaking answer (audio base64) - automatically submit each question
+  const handleSpeakingAnswerChange = useCallback((
     questionId: number,
     audioBase64: string,
   ) => {
@@ -426,7 +473,10 @@ export function useExamLogic() {
         },
       };
     });
-  };
+
+    // Automatically submit the speaking question
+    submitSpeakingQuestion(questionId, audioBase64);
+  }, [session, submitSpeakingQuestion]);
 
   // Auto submit section when time expires
   const autoSubmitSection = useCallback(
@@ -652,7 +702,59 @@ export function useExamLogic() {
     });
   };
 
-  // Submit exam
+  // Submit writing exams - called when user clicks "Complete WRITING"
+  const submitWritingExam = useCallback(async () => {
+    if (!session) return;
+
+    try {
+      // Group writing questions by their exam ID
+      const writingExamSubmissions: Record<number, { responses: Record<string, string> }> = {};
+
+      // Build responses grouped by exam for writing questions only
+      Object.entries(session.answers).forEach(([questionId, answers]) => {
+        const questionIdNum = parseInt(questionId);
+
+        // Find the question and its exam
+        allExams.forEach((exam) => {
+          const question = exam.questions.find((q) => q.id === questionIdNum);
+
+          if (question && exam.examType === "WRITING") {
+            if (!writingExamSubmissions[exam.id]) {
+              writingExamSubmissions[exam.id] = { responses: {} };
+            }
+            // For writing questions, the answer is text from user input
+
+            writingExamSubmissions[exam.id].responses[questionId] = answers[0] || "";
+          }
+        });
+      });
+
+      // Submit each writing exam separately using their individual exam ID
+      const submissionPromises = Object.entries(writingExamSubmissions).map(async ([examId, { responses }]) => {
+        const submitRequest: ExamSubmitRequest = {
+          examId: parseInt(examId), // Use the individual exam ID from take-exam response (e.g., 13, 20)
+          responses, // Format: { "17": "user input text", "26": "user input text" }
+          termId: session.termId,
+        };
+
+        console.log(`Submitting writing exam ${examId}:`, submitRequest);
+        return submitExamMutation.mutateAsync(submitRequest);
+      });
+
+      // Wait for all writing exams to be submitted
+      await Promise.all(submissionPromises);
+
+      console.log("All writing exams submitted successfully");
+
+      // Continue to next section
+      completeSection("WRITING");
+    } catch (error) {
+      console.error("Failed to submit writing exam:", error);
+      alert("Failed to submit writing exam. Please try again.");
+    }
+  }, [session, submitExamMutation, allExams, completeSection]);
+
+  // Submit exam (for listening/reading or final submission)
   const submitExam = useCallback(async () => {
     if (!session) return;
 
@@ -660,21 +762,21 @@ export function useExamLogic() {
       const responses: Record<string, string> = {};
       let speakingFile: string | undefined;
 
-      // Build responses based on exam type and question type
+      // Build responses for listening/reading questions only (not writing)
       Object.entries(session.answers).forEach(([questionId, answers]) => {
         const questionIdNum = parseInt(questionId);
 
         // Find the question to determine its type
-        let isWritingQuestion = false;
         let isSpeakingQuestion = false;
+        let isListeningOrReadingQuestion = false;
 
         // Search through all exams to find this question
         allExams.forEach((exam) => {
           const question = exam.questions.find((q) => q.id === questionIdNum);
 
           if (question) {
-            isWritingQuestion = exam.examType === "WRITING";
             isSpeakingQuestion = exam.examType === "SPEAKING";
+            isListeningOrReadingQuestion = exam.examType === "LISTENING" || exam.examType === "READING";
           }
         });
 
@@ -682,13 +784,11 @@ export function useExamLogic() {
           // For speaking questions, the answer is base64 audio
           speakingFile = answers[0] || "";
           responses[questionId] = "speaking_response";
-        } else if (isWritingQuestion) {
-          // For writing questions, the answer is text
-          responses[questionId] = answers[0] || "";
-        } else {
+        } else if (isListeningOrReadingQuestion) {
           // For listening/reading questions, the answer is answer IDs
           responses[questionId] = answers.join(",");
         }
+        // Note: Writing questions are handled separately in submitWritingExam
       });
 
       const submitRequest: ExamSubmitRequest = {
@@ -760,9 +860,12 @@ export function useExamLogic() {
     previousQuestion,
     completeSection,
     submitExam,
+    submitWritingExam,
+    submitSpeakingQuestion,
     resetExam,
 
     // UI Actions
     setSidebarOpen,
+    setShowSuccessDialog,
   };
 }
