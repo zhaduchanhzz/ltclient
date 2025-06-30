@@ -16,6 +16,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { loginValidate } from "./utils/schema";
+import { CircularProgress } from "@mui/material";
 
 const LoginPage = () => {
   const { push } = useRouter();
@@ -27,6 +28,9 @@ const LoginPage = () => {
     resolver: yupResolver(loginValidate()),
     defaultValues: loginValidate().getDefault(),
   });
+
+  // Get loading state from mutation
+  const isLoading = loginMutation.isPending;
 
   const onFinish = (data: LoginRequest) => {
     loginMutation.mutate(data, {
@@ -42,10 +46,7 @@ const LoginPage = () => {
             APP_COOKIE_KEY.ACCESS_TOKEN,
             response.data.accessToken,
           );
-          CookieStorage.setBoolean(
-            APP_COOKIE_KEY.IS_AUTHENTICATED,
-            true,
-          );
+          CookieStorage.setBoolean(APP_COOKIE_KEY.IS_AUTHENTICATED, true);
           profileQuery.refetch();
           push(APP_ROUTE.HOME);
           return;
@@ -100,6 +101,7 @@ const LoginPage = () => {
               id="login-form-username"
               name="username"
               placeholder="Enter Username"
+              disabled={isLoading}
             />
           </BasicGrid>
         </BasicGrid>
@@ -113,6 +115,8 @@ const LoginPage = () => {
               id="login-form-password"
               name="password"
               placeholder="Enter Password"
+              autoComplete="off"
+              disabled={isLoading}
             />
           </BasicGrid>
         </BasicGrid>
@@ -128,8 +132,14 @@ const LoginPage = () => {
             variant="contained"
             fullWidth
             size="large"
+            disabled={isLoading}
+            startIcon={
+              isLoading ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : undefined
+            }
           >
-            Đăng nhập
+            {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
           </BasicButton>
         </BasicGrid>
         <BasicGrid size={{ xs: 12 }}>
