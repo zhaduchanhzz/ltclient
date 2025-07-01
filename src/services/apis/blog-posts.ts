@@ -2,17 +2,57 @@ import { API_PATH } from "@/consts/api-path";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import HttpClient from "@/utils/axios-config";
 import { CommonResponse } from "@/types/common";
-import { BlogPost } from "../types/blog-posts";
+import {
+  BlogPost,
+  BlogPostsResponse,
+  BlogPostFilters,
+  BlogPostCategory,
+} from "../types/blog-posts";
 
-export const useGetBlogPostsQuery = (enabled = false) => {
+export const useGetBlogPostsQuery = (
+  filters: BlogPostFilters = {},
+  enabled = true,
+) => {
+  const { search, category, page = 1, limit = 12 } = filters;
+
   return useQuery({
-    queryKey: [API_PATH.BLOG_POSTS],
+    queryKey: [API_PATH.BLOG_POSTS, filters],
     queryFn: () => {
-      return HttpClient.get<null, CommonResponse<BlogPost[]>>(
-        API_PATH.BLOG_POSTS,
+      const params = new URLSearchParams();
+      if (search) params.append("search", search);
+      if (category) params.append("category", category);
+      params.append("page", page.toString());
+      params.append("limit", limit.toString());
+
+      return HttpClient.get<null, CommonResponse<BlogPostsResponse>>(
+        `${API_PATH.BLOG_POSTS}?${params.toString()}`,
       );
     },
     enabled,
+  });
+};
+
+export const useGetBlogPostCategoriesQuery = (enabled = true) => {
+  return useQuery({
+    queryKey: [`${API_PATH.BLOG_POSTS}/categories`],
+    queryFn: () => {
+      return HttpClient.get<null, CommonResponse<BlogPostCategory[]>>(
+        `${API_PATH.BLOG_POSTS}/categories`,
+      );
+    },
+    enabled,
+  });
+};
+
+export const useGetBlogPostBySlugQuery = (slug: string, enabled = true) => {
+  return useQuery({
+    queryKey: [`${API_PATH.BLOG_POSTS}/slug`, slug],
+    queryFn: () => {
+      return HttpClient.get<null, CommonResponse<BlogPost>>(
+        `${API_PATH.BLOG_POSTS}/slug/${slug}`,
+      );
+    },
+    enabled: enabled && !!slug,
   });
 };
 
