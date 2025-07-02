@@ -10,4 +10,5 @@ export const API_PATH = {
   BLOG_POSTS: "/blogposts",
   TAKE_EXAM: "/take-exam",
   GRADING_REQUEST: "/grading-request",
+  PAYMENT: "/payment",
 };

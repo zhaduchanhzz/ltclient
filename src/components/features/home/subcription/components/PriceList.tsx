@@ -1,10 +1,13 @@
 "use client";
 
 import { useAuthContext } from "@/contexts/AuthContext";
+import { createPaymentMomo } from "@/services/apis/payment";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { Box, Button, Card, Typography } from "@mui/material";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Subscription, useSubscriptions } from "../utils/subs";
+import { usePayment } from "@/hooks/usePayment";
 
 type Feature = {
   label: string;
@@ -16,9 +19,8 @@ const PriceList = ({ id }: { id: string }) => {
   const { isAuthenticated } = useAuthContext();
   const { VIP_SUBSCRIPTIONS, MARK_SUBSCRIPTIONS, COMBO_SUBSCRIPTIONS } =
     useSubscriptions();
-  console.log(VIP_SUBSCRIPTIONS);
-  console.log(MARK_SUBSCRIPTIONS);
-  console.log(COMBO_SUBSCRIPTIONS);
+  console.log("🚀 ~ PriceList ~ VIP_SUBSCRIPTIONS:", VIP_SUBSCRIPTIONS);
+
   return (
     <Box sx={{ py: 6, px: 2 }} id={id}>
       <Typography
@@ -48,10 +50,7 @@ const PriceList = ({ id }: { id: string }) => {
         tiết kiệm, giúp bạn đạt <b>B1 - B2 - C1</b> dễ dàng.
       </Typography>
 
-      <VipSubscription
-        VIP_SUBSCRIPTIONS={VIP_SUBSCRIPTIONS}
-        isAuthenticated={isAuthenticated}
-      />
+      <VipSubscription VIP_SUBSCRIPTIONS={VIP_SUBSCRIPTIONS} />
 
       <MarkSubscription
         MARK_SUBSCRIPTIONS={MARK_SUBSCRIPTIONS}
@@ -68,11 +67,11 @@ const PriceList = ({ id }: { id: string }) => {
 
 const VipSubscription = ({
   VIP_SUBSCRIPTIONS,
-  isAuthenticated,
 }: {
   VIP_SUBSCRIPTIONS: Subscription[];
-  isAuthenticated: boolean;
 }) => {
+  const { handlePurchase } = usePayment();
+
   return (
     <>
       <Typography
@@ -196,13 +195,9 @@ const VipSubscription = ({
                     },
                     transition: "background 0.2s, color 0.2s",
                   }}
+                  onClick={() => handlePurchase(pkg.id)}
                 >
-                  <Link
-                    href={isAuthenticated ? "/dang-ky" : "/dang-ky"}
-                    style={{ textDecoration: "none", color: "inherit" }}
-                  >
-                    {pkg.button}
-                  </Link>
+                  {pkg.button}
                 </Button>
               </Box>
             </Box>
@@ -215,11 +210,10 @@ const VipSubscription = ({
 
 const MarkSubscription = ({
   MARK_SUBSCRIPTIONS,
-  isAuthenticated,
 }: {
   MARK_SUBSCRIPTIONS: Subscription[];
-  isAuthenticated: boolean;
 }) => {
+  const { handlePurchase } = usePayment();
   return (
     <Box sx={{ mt: 6 }}>
       <Typography
@@ -343,13 +337,9 @@ const MarkSubscription = ({
                     },
                     transition: "background 0.2s, color 0.2s",
                   }}
+                  onClick={() => handlePurchase(pkg.id)}
                 >
-                  <Link
-                    href={isAuthenticated ? "/dang-ky" : "/dang-ky"}
-                    style={{ textDecoration: "none", color: "inherit" }}
-                  >
-                    {pkg.button}
-                  </Link>
+                  {pkg.button}
                 </Button>
               </Box>
             </Box>
@@ -362,11 +352,10 @@ const MarkSubscription = ({
 
 const ComboSubscription = ({
   COMBO_SUBSCRIPTIONS,
-  isAuthenticated,
 }: {
   COMBO_SUBSCRIPTIONS: Subscription[];
-  isAuthenticated: boolean;
 }) => {
+  const { handlePurchase } = usePayment();
   return (
     <Box sx={{ mt: 8 }}>
       <Typography
@@ -497,13 +486,9 @@ const ComboSubscription = ({
                     },
                     transition: "background 0.2s, color 0.2s",
                   }}
+                  onClick={() => handlePurchase(pkg.id)}
                 >
-                  <Link
-                    href={isAuthenticated ? "/dang-ky" : "/dang-ky"}
-                    style={{ textDecoration: "none", color: "inherit" }}
-                  >
-                    {pkg.button}
-                  </Link>
+                  {pkg.button}
                 </Button>
               </Box>
             </Box>
