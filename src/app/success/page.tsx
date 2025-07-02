@@ -1,28 +1,28 @@
 "use client";
 
 import {
-    AccessTime,
-    AccountCircle,
-    ArrowForward,
-    CheckCircle,
-    Home,
-    Quiz,
-    School,
+  AccessTime,
+  AccountCircle,
+  ArrowForward,
+  CheckCircle,
+  Home,
+  Quiz,
+  School,
 } from "@mui/icons-material";
 import {
-    Avatar,
-    Box,
-    Button,
-    Card,
-    Chip,
-    Container,
-    Divider,
-    Fade,
-    Grid2,
-    Paper,
-    Slide,
-    Stack,
-    Typography,
+  Avatar,
+  Box,
+  Button,
+  Card,
+  Chip,
+  Container,
+  Divider,
+  Fade,
+  Grid2,
+  Paper,
+  Slide,
+  Stack,
+  Typography,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";

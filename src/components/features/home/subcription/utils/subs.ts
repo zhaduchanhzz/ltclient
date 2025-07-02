@@ -48,17 +48,6 @@ const transformPackageToSubscription = (
     { label: "Truy cập không giới hạn lượt thi", checked: true },
   ];
 
-  const getPackagePrefix = (type: PackageType): string => {
-    switch (type) {
-      case "DE_THI_VIP":
-        return "vip";
-      case "CHAM_TU_LUAN":
-        return "essay";
-      case "COMBO_UU_DAI":
-        return "combo";
-    }
-  };
-
   const baseSub: Omit<Subscription, "features" | "icon" | "saving"> = {
     id: pkg.id,
     packageType: pkg.packageType,

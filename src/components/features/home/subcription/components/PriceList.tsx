@@ -1,13 +1,9 @@
 "use client";
 
-import { useAuthContext } from "@/contexts/AuthContext";
-import { createPaymentMomo } from "@/services/apis/payment";
+import { usePayment } from "@/hooks/usePayment";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { Box, Button, Card, Typography } from "@mui/material";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Subscription, useSubscriptions } from "../utils/subs";
-import { usePayment } from "@/hooks/usePayment";
 
 type Feature = {
   label: string;
@@ -16,7 +12,6 @@ type Feature = {
 };
 
 const PriceList = ({ id }: { id: string }) => {
-  const { isAuthenticated } = useAuthContext();
   const { VIP_SUBSCRIPTIONS, MARK_SUBSCRIPTIONS, COMBO_SUBSCRIPTIONS } =
     useSubscriptions();
   console.log("🚀 ~ PriceList ~ VIP_SUBSCRIPTIONS:", VIP_SUBSCRIPTIONS);
@@ -54,12 +49,10 @@ const PriceList = ({ id }: { id: string }) => {
 
       <MarkSubscription
         MARK_SUBSCRIPTIONS={MARK_SUBSCRIPTIONS}
-        isAuthenticated={isAuthenticated}
       />
 
       <ComboSubscription
         COMBO_SUBSCRIPTIONS={COMBO_SUBSCRIPTIONS}
-        isAuthenticated={isAuthenticated}
       />
     </Box>
   );
