@@ -8,6 +8,7 @@ import {
   SimulationExam,
   TakeExamRequest,
 } from "@/services/types/exam";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 type ExamSectionStatus =
   | "locked"
@@ -36,23 +37,23 @@ type PersistedExamState = {
 };
 
 export function useExamLogic() {
-  const params = useParams();
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const examId = params.id as string;
-
+  const { id: examId } = useParams() as { id: string };
   const submitExamMutation = useSubmitExamMutation();
+  const { userInfo } = useAuthContext();
 
+  // Track submitted speaking questions to avoid duplicates
+  const [submittedSpeakingQuestions, setSubmittedSpeakingQuestions] = useState<
+    Set<number>
+  >(new Set());
+
+  // State management
   const [session, setSession] = useState<ExamTermSession | null>(null);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
-  const [examExpired, setExamExpired] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [examData, setExamData] = useState<TakeExamRequest | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<any>(null);
-
-  // Time management state
   const [sectionStatus, setSectionStatus] = useState<
     Record<string, ExamSectionStatus>
   >({});
@@ -61,11 +62,28 @@ export function useExamLogic() {
   >({});
   const [currentSectionTimeRemaining, setCurrentSectionTimeRemaining] =
     useState(0);
+  const [examExpired, setExamExpired] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Track submitted speaking questions to avoid duplicates
-  const [submittedSpeakingQuestions, setSubmittedSpeakingQuestions] = useState<
-    Set<number>
-  >(new Set());
+  // Filter exams based on user account type
+  const filterExamsByAccountType = useCallback(
+    (exams: SimulationExam[]) => {
+      if (!userInfo) {
+        // If no user info, show no exams for safety
+        return [];
+      }
+
+      if (userInfo.accountType === "VIP") {
+        // VIP users can access all exams
+        return exams;
+      } else {
+        // FREE users can only access non-VIP exams
+        return exams.filter((exam) => !exam.isNeedVip);
+      }
+    },
+    [userInfo],
+  );
 
   // Persistence functions
   const saveStateToLocalStorage = useCallback(
@@ -205,7 +223,7 @@ export function useExamLogic() {
     }
 
     const simulationExams = convertToSimulationExams(examData.exams);
-    const freeExams = simulationExams.filter((exam) => !exam.isNeedVip);
+    const freeExams = filterExamsByAccountType(simulationExams);
 
     const organized = freeExams.reduce(
       (acc: Record<string, SimulationExam[]>, exam: SimulationExam) => {
@@ -219,7 +237,7 @@ export function useExamLogic() {
       {} as Record<string, SimulationExam[]>,
     );
     return organized;
-  }, [examData]);
+  }, [examData, filterExamsByAccountType]);
 
   const examTypes = Object.keys(examsByType) as Array<
     "LISTENING" | "READING" | "WRITING" | "SPEAKING"
@@ -260,10 +278,15 @@ export function useExamLogic() {
     setExamData(apiExamData);
 
     const simulationExams = convertToSimulationExams(apiExamData.exams);
-    const freeExams = simulationExams.filter((exam) => !exam.isNeedVip);
+    const freeExams = filterExamsByAccountType(simulationExams);
 
     if (freeExams.length === 0) {
-      setError("No available exam parts found");
+      const hasVipExams = simulationExams.some((exam) => exam.isNeedVip);
+      const errorMessage =
+        hasVipExams && userInfo?.accountType === "FREE"
+          ? "Các đề thi này yêu cầu tài khoản VIP. Vui lòng nâng cấp tài khoản để truy cập."
+          : "No available exam parts found";
+      setError(errorMessage);
       return;
     }
 
