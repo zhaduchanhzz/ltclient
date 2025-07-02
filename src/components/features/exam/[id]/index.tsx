@@ -61,7 +61,6 @@ const ExamTypeColors = {
 
 export default function ExamPage() {
   const {
-    examId,
     isLoading,
     error,
     session,
@@ -84,6 +83,7 @@ export default function ExamPage() {
     previousQuestion,
     completeSection,
     submitWritingExam,
+    submitFinalSpeaking,
     setSidebarOpen,
     setShowSuccessDialog,
   } = useExamLogic();
@@ -94,59 +94,72 @@ export default function ExamPage() {
     if (!session || !allExams) return {};
 
     // Group exams by type
-    const examsByTypeResults = examTypes.reduce((acc, examType) => {
-      const typeExams = allExams.filter((exam) => exam.examType === examType);
-      
-      if (typeExams.length === 0) return acc;
+    const examsByTypeResults = examTypes.reduce(
+      (acc, examType) => {
+        const typeExams = allExams.filter((exam) => exam.examType === examType);
 
-      let correctAnswers = 0;
-      let totalQuestions = 0;
-      let status = "Completed";
+        if (typeExams.length === 0) return acc;
 
-      typeExams.forEach((exam) => {
-        exam.questions.forEach((question) => {
-          totalQuestions++;
-          
-          const userAnswers = session.answers[question.id] || [];
+        let correctAnswers = 0;
+        let totalQuestions = 0;
+        let status = "Completed";
 
-          if (examType === "LISTENING" || examType === "READING") {
-            // Multiple choice questions - calculate score
-            const correctAnswerIds = question.answers
-              .filter((answer) => answer.isCorrect)
-              .map((answer) => answer.id.toString());
+        typeExams.forEach((exam) => {
+          exam.questions.forEach((question) => {
+            totalQuestions++;
 
-            const userAnswerSet = new Set(userAnswers);
-            const correctAnswerSet = new Set(correctAnswerIds);
+            const userAnswers = session.answers[question.id] || [];
 
-            const isCorrect = userAnswerSet.size === correctAnswerSet.size &&
-              [...userAnswerSet].every((answer) => correctAnswerSet.has(answer));
+            if (examType === "LISTENING" || examType === "READING") {
+              // Multiple choice questions - calculate score
+              const correctAnswerIds = question.answers
+                .filter((answer) => answer.isCorrect)
+                .map((answer) => answer.id.toString());
 
-            if (isCorrect) {
-              correctAnswers++;
+              const userAnswerSet = new Set(userAnswers);
+              const correctAnswerSet = new Set(correctAnswerIds);
+
+              const isCorrect =
+                userAnswerSet.size === correctAnswerSet.size &&
+                [...userAnswerSet].every((answer) =>
+                  correctAnswerSet.has(answer),
+                );
+
+              if (isCorrect) {
+                correctAnswers++;
+              }
+            } else if (examType === "WRITING" || examType === "SPEAKING") {
+              // For writing/speaking, just check if answered
+              if (userAnswers.length > 0) {
+                correctAnswers++; // Count as "answered" not "correct"
+              }
+              // TODO: Check if the exam is already graded
+
+              status = "Pending Grading";
             }
-          } else if (examType === "WRITING" || examType === "SPEAKING") {
-            // For writing/speaking, just check if answered
-            if (userAnswers.length > 0) {
-              correctAnswers++; // Count as "answered" not "correct"
-            }
-            // TODO: Check if the exam is already graded
-            
-            status = "Pending Grading";
-          }
+          });
         });
-      });
 
-      const percentage = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+        const percentage =
+          totalQuestions > 0
+            ? Math.round((correctAnswers / totalQuestions) * 100)
+            : 0;
 
-      acc[examType] = {
-        correct: correctAnswers,
-        total: totalQuestions,
-        percentage: examType === "WRITING" || examType === "SPEAKING" ? 0 : percentage,
-        status,
-      };
+        acc[examType] = {
+          correct: correctAnswers,
+          total: totalQuestions,
+          percentage:
+            examType === "WRITING" || examType === "SPEAKING" ? 0 : percentage,
+          status,
+        };
 
-      return acc;
-    }, {} as Record<string, { correct: number; total: number; percentage: number; status: string }>);
+        return acc;
+      },
+      {} as Record<
+        string,
+        { correct: number; total: number; percentage: number; status: string }
+      >,
+    );
 
     return examsByTypeResults;
   };
@@ -155,7 +168,7 @@ export default function ExamPage() {
 
   const handleGradingRequest = async () => {
     if (!session?.termId) return;
-    
+
     try {
       await gradingRequestMutation.mutateAsync({ termId: session.termId });
       alert("Grading request submitted successfully!");
@@ -267,10 +280,10 @@ export default function ExamPage() {
                 <Quiz sx={{ fontSize: 40 }} />
               </Avatar>
               <Typography variant="h3" gutterBottom fontWeight="bold">
-                VSTEP Exam #{examId}
+                VSTEP Exam
               </Typography>
               <Typography variant="h6" sx={{ mb: 4, opacity: 0.9 }}>
-                Take the complete VSTEP exam with all available parts
+                Nhận đề thi thử với tất cả các phần thi VSTEP
               </Typography>
 
               <Grid2 container spacing={3} sx={{ mb: 4 }}>
@@ -291,7 +304,7 @@ export default function ExamPage() {
                       >
                         <AccessTime sx={{ color: "#4caf50" }} />
                         <Typography variant="h6" color="white">
-                          Time Limit
+                          Thời gian thi
                         </Typography>
                       </Stack>
                       <Typography variant="h4" color="white" fontWeight="bold">
@@ -299,7 +312,7 @@ export default function ExamPage() {
                           (a, b) => a + b,
                           0,
                         )}{" "}
-                        min
+                        phút
                       </Typography>
                     </CardContent>
                   </Card>
@@ -321,7 +334,7 @@ export default function ExamPage() {
                       >
                         <Assignment sx={{ color: "#2196f3" }} />
                         <Typography variant="h6" color="white">
-                          Total Parts
+                          Tổng số phần thi
                         </Typography>
                       </Stack>
                       <Typography variant="h4" color="white" fontWeight="bold">
@@ -334,7 +347,7 @@ export default function ExamPage() {
 
               <Box sx={{ mb: 4 }}>
                 <Typography variant="h5" gutterBottom fontWeight="medium">
-                  Exam Sections:
+                  Các phần thi:
                 </Typography>
                 <Grid2 container spacing={2}>
                   {examTypes.map((examType, index) => {
@@ -378,9 +391,11 @@ export default function ExamPage() {
                               >
                                 {examType}
                               </Typography>
-                              <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                                {parts.length} part
-                                {parts.length !== 1 ? "s" : ""}
+                              <Typography
+                                variant="body2"
+                                sx={{ opacity: 0.8, color: "white" }}
+                              >
+                                {parts.length} phần thi
                               </Typography>
                             </CardContent>
                           </Card>
@@ -411,7 +426,7 @@ export default function ExamPage() {
                 }}
                 startIcon={<PlayArrow />}
               >
-                Start Exam
+                Bắt đầu thi
               </Button>
 
               {allExams.length === 0 && (
@@ -441,20 +456,23 @@ export default function ExamPage() {
         <DialogTitle>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <CheckCircle color="success" />
-            Exam Completed!
+            Đã hoàn thành bài thi!
           </Box>
         </DialogTitle>
         <DialogContent>
           <Typography variant="body1" sx={{ mb: 3, color: "black" }}>
-            Your exam has been completed with Term ID:{" "}
+            Bài thi của bạn đã được hoàn thành với ID:{" "}
             <strong>{session?.termId}</strong>
           </Typography>
-          
+
           {/* Exam Results by Type */}
-          <Typography variant="h5" sx={{ mb: 2, fontWeight: "bold", color: "black" }}>
-            Exam Results
+          <Typography
+            variant="h5"
+            sx={{ mb: 2, fontWeight: "bold", color: "black" }}
+          >
+            Kết quả bài thi
           </Typography>
-          
+
           <Grid2 container spacing={2} sx={{ mb: 3 }}>
             {examTypes.map((examType) => {
               const results = examResultsByType[examType];
@@ -462,9 +480,10 @@ export default function ExamPage() {
 
               const Icon = ExamTypeIcons[examType];
               const color = ExamTypeColors[examType];
-              
+
               const getScoreColor = () => {
-                if (examType === "WRITING" || examType === "SPEAKING") return "black";
+                if (examType === "WRITING" || examType === "SPEAKING")
+                  return "black";
                 if (results.percentage >= 70) return "green";
                 if (results.percentage >= 50) return "orange";
                 return "red";
@@ -472,36 +491,62 @@ export default function ExamPage() {
 
               return (
                 <Grid2 key={examType} size={{ xs: 12, sm: 6 }}>
-                  <Card sx={{ p: 2, border: `2px solid ${color}`, borderRadius: 2 }}>
+                  <Card
+                    sx={{ p: 2, border: `2px solid ${color}`, borderRadius: 2 }}
+                  >
                     <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                      <Avatar sx={{ bgcolor: color, mr: 2, width: 40, height: 40 }}>
+                      <Avatar
+                        sx={{ bgcolor: color, mr: 2, width: 40, height: 40 }}
+                      >
                         <Icon sx={{ fontSize: 20 }} />
                       </Avatar>
-                      <Typography variant="h6" sx={{ fontWeight: "bold", color: "black" }}>
+                      <Typography
+                        variant="h6"
+                        sx={{ fontWeight: "bold", color: "black" }}
+                      >
                         {examType}
                       </Typography>
                     </Box>
-                    
+
                     <Box sx={{ textAlign: "center" }}>
                       {examType === "LISTENING" || examType === "READING" ? (
                         <>
-                          <Typography variant="h4" sx={{ fontWeight: "bold", color: getScoreColor(), mb: 1 }}>
+                          <Typography
+                            variant="h4"
+                            sx={{
+                              fontWeight: "bold",
+                              color: getScoreColor(),
+                              mb: 1,
+                            }}
+                          >
                             {results.correct}/{results.total}
                           </Typography>
-                          <Typography variant="h6" sx={{ color: "black", mb: 1 }}>
-                            {results.percentage}% Correct
+                          <Typography
+                            variant="h6"
+                            sx={{ color: "black", mb: 1 }}
+                          >
+                            {results.percentage}% Đúng
                           </Typography>
-                          <Typography variant="body2" sx={{ color: "green", fontWeight: "medium" }}>
+                          <Typography
+                            variant="body2"
+                            sx={{ color: "green", fontWeight: "medium" }}
+                          >
                             {results.status}
                           </Typography>
                         </>
                       ) : (
                         <>
-                          <Typography variant="h5" sx={{ color: "black", mb: 1 }}>
-                            {results.correct}/{results.total} Answered
+                          <Typography
+                            variant="h5"
+                            sx={{ color: "black", mb: 1 }}
+                          >
+                            {results.correct}/{results.total}
                           </Typography>
-                          <Typography variant="body2" sx={{ color: "orange", fontWeight: "medium" }}>
-                            {results.status}
+                          <Typography
+                            variant="body2"
+                            sx={{ color: "orange", fontWeight: "medium" }}
+                          >
+                            Yêu cầu chấm điểm để nhận kết quả
                           </Typography>
                         </>
                       )}
@@ -513,35 +558,42 @@ export default function ExamPage() {
           </Grid2>
 
           <Typography variant="body2" sx={{ mb: 3, color: "black" }}>
-            Your responses have been recorded. You can request grading for your writing and speaking sections.
+            Câu trả lời của bạn đã được ghi nhận. Bạn có thể yêu cầu chấm điểm
+            cho các phần thi viết và nói.
           </Typography>
-          
+
           <Box sx={{ p: 2, bgcolor: "grey.100", borderRadius: 1 }}>
-            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: "medium", color: "black" }}>
-              Next Steps:
+            <Typography
+              variant="subtitle2"
+              sx={{ mb: 1, fontWeight: "medium", color: "black" }}
+            >
+              Các bước tiếp theo:
             </Typography>
             <Typography variant="body2" sx={{ color: "black" }}>
-              • Request grading for personalized feedback on your writing and speaking responses
-              • Return to the exam room to take more practice tests
+              • Yêu cầu chấm điểm để nhận phản hồi cá nhân cho các phần thi viết
+              và nói • Quay lại phòng thi để làm thêm bài thi thử
             </Typography>
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 3, gap: 1 }}>
-          <Button 
-            onClick={() => router.push("/exam/room")} 
+          <Button
+            onClick={() => router.push("/exam/room")}
             variant="outlined"
             fullWidth
           >
-            Back to Exam Room
+            Quay lại phòng thi
           </Button>
-          <Button 
+          <Button
             onClick={handleGradingRequest}
             variant="contained"
             startIcon={<School />}
             disabled={gradingRequestMutation.isPending}
             fullWidth
+            sx={{ fontSize: "0.9rem" }}
           >
-            {gradingRequestMutation.isPending ? "Requesting..." : "Request Grading"}
+            {gradingRequestMutation.isPending
+              ? "Đang yêu cầu..."
+              : "Yêu cầu chấm điểm"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -585,7 +637,6 @@ export default function ExamPage() {
       <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
         {/* Top Header */}
         <ExamHeader
-          examId={examId}
           session={session}
           sidebarOpen={sidebarOpen}
           currentSectionTimeRemaining={currentSectionTimeRemaining}
@@ -616,6 +667,7 @@ export default function ExamPage() {
             onCompleteSection={completeSection}
             onShowExamResults={() => setShowSuccessDialog(true)}
             onSubmitWritingExam={submitWritingExam}
+            onSubmitFinalSpeaking={submitFinalSpeaking}
           />
         </Box>
       </Box>

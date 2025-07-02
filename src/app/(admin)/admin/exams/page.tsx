@@ -279,7 +279,7 @@ const ExamsPage = () => {
         }}
       >
         <CircularProgress />
-        <Typography sx={{ ml: 2 }}>Loading exams...</Typography>
+        <Typography sx={{ ml: 2 }}>Đang tải đề thi...</Typography>
       </Box>
     );
   }
@@ -288,7 +288,7 @@ const ExamsPage = () => {
     return (
       <Box sx={{ p: 3 }}>
         <Typography color="error">
-          Failed to load exams. Please try again.
+          Lỗi tải đề thi. Vui lòng thử lại.
         </Typography>
       </Box>
     );
@@ -303,14 +303,14 @@ const ExamsPage = () => {
         sx={{ mb: 3 }}
       >
         <Typography variant="h4" component="h1" sx={{ fontWeight: "bold" }}>
-          Exam Management
+          Quản lý đề thi
         </Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => handleOpenDialog()}
         >
-          Add Exam
+          Thêm đề thi
         </Button>
       </Stack>
 
@@ -319,7 +319,7 @@ const ExamsPage = () => {
           <TextField
             fullWidth
             variant="outlined"
-            placeholder="Search exams..."
+            placeholder="Tìm kiếm đề thi..."
             value={searchQuery}
             onChange={handleSearch}
             InputProps={{
@@ -335,12 +335,12 @@ const ExamsPage = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Title</TableCell>
-                <TableCell>Type</TableCell>
-                <TableCell>Description</TableCell>
-                <TableCell>Questions</TableCell>
-                <TableCell>VIP Required</TableCell>
-                <TableCell align="right">Actions</TableCell>
+                <TableCell>Tiêu đề</TableCell>
+                <TableCell>Loại đề thi</TableCell>
+                <TableCell>Mô tả</TableCell>
+                <TableCell>Câu hỏi</TableCell>
+                <TableCell>Yêu cầu VIP</TableCell>
+                <TableCell align="right">Hành động</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -361,7 +361,7 @@ const ExamsPage = () => {
                         ? `${exam.description.substring(0, 50)}...`
                         : exam.description}
                     </TableCell>
-                    <TableCell>{exam.questions.length} questions</TableCell>
+                    <TableCell>{exam.questions.length} câu hỏi</TableCell>
                     <TableCell>
                       <Chip
                         label={exam.isNeedVip ? "VIP" : "FREE"}
@@ -394,12 +394,12 @@ const ExamsPage = () => {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>Add New Exam</DialogTitle>
+        <DialogTitle>Thêm đề thi mới</DialogTitle>
         <DialogContent>
           <Stack spacing={3} sx={{ mt: 1 }}>
             <TextField
               fullWidth
-              label="Title"
+              label="Tiêu đề"
               value={formData.title}
               onChange={(e) =>
                 setFormData({ ...formData, title: e.target.value })
@@ -409,7 +409,7 @@ const ExamsPage = () => {
             <TextField
               fullWidth
               select
-              label="Exam Type"
+              label="Loại đề thi"
               value={formData.examType}
               onChange={(e) => {
                 const newExamType = e.target.value as ExamFormData["examType"];
@@ -431,7 +431,7 @@ const ExamsPage = () => {
               fullWidth
               multiline
               rows={3}
-              label="Description"
+              label="Mô tả"
               value={formData.description}
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
@@ -458,14 +458,14 @@ const ExamsPage = () => {
                 justifyContent="space-between"
                 alignItems="center"
               >
-                <Typography variant="h6">Questions</Typography>
+                <Typography variant="h6">Câu hỏi</Typography>
                 <Button
                   variant="outlined"
                   startIcon={<AddIcon />}
                   onClick={addQuestion}
                   size="small"
                 >
-                  Add Question
+                  Thêm câu hỏi
                 </Button>
               </Stack>
 
@@ -479,8 +479,8 @@ const ExamsPage = () => {
                       sx={{ width: "100%" }}
                     >
                       <Typography>
-                        Question {questionIndex + 1}:{" "}
-                        {question.questionText || "Untitled Question"}
+                        Câu hỏi {questionIndex + 1}:{" "}
+                        {question.questionText || "Chưa có câu hỏi"}
                       </Typography>
                       {formData.questions.length > 1 && (
                         <IconButton
@@ -500,7 +500,7 @@ const ExamsPage = () => {
                     <Stack spacing={2}>
                       <TextField
                         fullWidth
-                        label="Question Text"
+                        label="Câu hỏi"
                         value={question.questionText}
                         onChange={(e) =>
                           updateQuestion(
@@ -516,7 +516,7 @@ const ExamsPage = () => {
                       {formData.examType === "LISTENING" && (
                         <TextField
                           fullWidth
-                          label="Audio File"
+                          label="File âm thanh"
                           value={question.audioFile}
                           onChange={(e) =>
                             handleAudioFileUpload(
@@ -539,14 +539,16 @@ const ExamsPage = () => {
                             justifyContent="space-between"
                             alignItems="center"
                           >
-                            <Typography variant="subtitle2">Answers</Typography>
+                            <Typography variant="subtitle2">
+                              Câu trả lời
+                            </Typography>
                             <Button
                               variant="outlined"
                               size="small"
                               startIcon={<AddIcon />}
                               onClick={() => addAnswer(questionIndex)}
                             >
-                              Add Answer
+                              Thêm câu trả lời
                             </Button>
                           </Stack>
 
@@ -559,7 +561,7 @@ const ExamsPage = () => {
                             >
                               <TextField
                                 fullWidth
-                                label={`Answer ${answerIndex + 1}`}
+                                label={`Câu trả lời ${answerIndex + 1}`}
                                 value={answer.answerText}
                                 onChange={(e) =>
                                   updateAnswer(
@@ -584,7 +586,7 @@ const ExamsPage = () => {
                                     }
                                   />
                                 }
-                                label="Correct"
+                                label="Đúng"
                               />
                               {question.answers?.length &&
                                 question.answers?.length > 2 && (
@@ -610,9 +612,9 @@ const ExamsPage = () => {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleCloseDialog}>Hủy</Button>
           <Button variant="contained" onClick={handleSubmit}>
-            Create
+            Tạo đề thi
           </Button>
         </DialogActions>
       </Dialog>

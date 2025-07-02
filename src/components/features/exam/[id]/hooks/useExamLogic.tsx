@@ -62,6 +62,11 @@ export function useExamLogic() {
   const [currentSectionTimeRemaining, setCurrentSectionTimeRemaining] =
     useState(0);
 
+  // Track submitted speaking questions to avoid duplicates
+  const [submittedSpeakingQuestions, setSubmittedSpeakingQuestions] = useState<
+    Set<number>
+  >(new Set());
+
   // Persistence functions
   const saveStateToLocalStorage = useCallback(
     (state: PersistedExamState) => {
@@ -416,7 +421,7 @@ export function useExamLogic() {
       try {
         // Find the exam that contains this question
         let targetExamId: number | null = null;
-        
+
         allExams.forEach((exam) => {
           const question = exam.questions.find((q) => q.id === questionId);
 
@@ -426,7 +431,9 @@ export function useExamLogic() {
         });
 
         if (targetExamId === null) {
-          console.error(`Could not find exam for speaking question ${questionId}`);
+          console.error(
+            `Could not find exam for speaking question ${questionId}`,
+          );
           return;
         }
 
@@ -440,10 +447,17 @@ export function useExamLogic() {
           speakingFile, // Base64 audio file
         };
 
-        console.log(`Submitting speaking question ${questionId} for exam ${targetExamId}:`, submitRequest);
-        await submitExamMutation.mutateAsync(submitRequest as unknown as ExamSubmitRequest);
+        console.log(
+          `Submitting speaking question ${questionId} for exam ${targetExamId}:`,
+          submitRequest,
+        );
+        await submitExamMutation.mutateAsync(
+          submitRequest as unknown as ExamSubmitRequest,
+        );
 
-        console.log(`Successfully submitted speaking question ${questionId} for exam ${targetExamId}`);
+        console.log(
+          `Successfully submitted speaking question ${questionId} for exam ${targetExamId}`,
+        );
       } catch (error) {
         console.error(
           `Failed to submit speaking question ${questionId}:`,
@@ -455,28 +469,27 @@ export function useExamLogic() {
     [session, submitExamMutation, allExams],
   );
 
-  // Handle speaking answer (audio base64) - automatically submit each question
-  const handleSpeakingAnswerChange = useCallback((
-    questionId: number,
-    audioBase64: string,
-  ) => {
-    if (!session) return;
+  // Handle speaking answer (audio base64) - store audio without auto-submit
+  const handleSpeakingAnswerChange = useCallback(
+    (questionId: number, audioBase64: string) => {
+      if (!session) return;
 
-    setSession((prev) => {
-      if (!prev) return prev;
+      setSession((prev) => {
+        if (!prev) return prev;
 
-      return {
-        ...prev,
-        answers: {
-          ...prev.answers,
-          [questionId]: [audioBase64], // Store the base64 audio as an array for consistency
-        },
-      };
-    });
+        return {
+          ...prev,
+          answers: {
+            ...prev.answers,
+            [questionId]: [audioBase64], // Store the base64 audio as an array for consistency
+          },
+        };
+      });
 
-    // Automatically submit the speaking question
-    submitSpeakingQuestion(questionId, audioBase64);
-  }, [session, submitSpeakingQuestion]);
+      // Note: Submission now happens on navigation, not recording completion
+    },
+    [session],
+  );
 
   // Auto submit section when time expires
   const autoSubmitSection = useCallback(
@@ -534,6 +547,13 @@ export function useExamLogic() {
       const currentIndex = examTypes.indexOf(examType as any);
       const nextIndex = currentIndex + 1;
 
+      // Special handling for SPEAKING - automatically show results (for non-final questions)
+      if (examType === "SPEAKING") {
+        setShowSuccessDialog(true);
+        setSession((prev) => (prev ? { ...prev, isCompleted: true } : null));
+        return;
+      }
+
       if (nextIndex < examTypes.length) {
         const nextType = examTypes[nextIndex];
         setSectionStatus((prev) => ({
@@ -563,7 +583,7 @@ export function useExamLogic() {
         submitExam();
       }
     },
-    [examTypes, submitExamMutation],
+    [examTypes, setShowSuccessDialog],
   );
 
   // Enhanced navigation logic with completed section locking
@@ -609,9 +629,77 @@ export function useExamLogic() {
     });
   };
 
-  // Navigate to next question
-  const nextQuestion = () => {
+  // Submit current speaking question during navigation
+  const submitCurrentSpeakingQuestion = useCallback(async () => {
+    if (!session || session.currentExamType !== "SPEAKING") return;
+
+    const currentTypeExams = examsByType[session.currentExamType] || [];
+    const currentExam = currentTypeExams[session.currentExamIndex];
+
+    if (!currentExam) return;
+
+    const currentQuestion = currentExam.questions[session.currentQuestionIndex];
+    if (!currentQuestion) return;
+
+    // Check if this question has audio recorded and hasn't been submitted yet
+    const hasAudio = session.answers[currentQuestion.id]?.[0];
+    const alreadySubmitted = submittedSpeakingQuestions.has(currentQuestion.id);
+
+    if (hasAudio && !alreadySubmitted) {
+      try {
+        await submitSpeakingQuestion(currentQuestion.id, hasAudio);
+        setSubmittedSpeakingQuestions((prev) =>
+          new Set(prev).add(currentQuestion.id),
+        );
+        console.log(
+          `Successfully submitted speaking question ${currentQuestion.id} during navigation`,
+        );
+      } catch (error) {
+        console.error(
+          `Failed to submit speaking question ${currentQuestion.id} during navigation:`,
+          error,
+        );
+        // Don't block navigation if submission fails, just log the error
+      }
+    }
+  }, [
+    session,
+    examsByType,
+    submitSpeakingQuestion,
+    submittedSpeakingQuestions,
+  ]);
+
+  // Submit final speaking question and complete exam
+  const submitFinalSpeaking = useCallback(async () => {
+    if (!session || session.currentExamType !== "SPEAKING") return;
+
+    try {
+      // Submit current speaking question first
+      await submitCurrentSpeakingQuestion();
+
+      // TODO: Add API call to set room time to 0 to lock it
+      // This would be something like: await lockExamRoom(session.examId);
+
+      console.log("Final speaking submission completed, locking room...");
+
+      // Show results dialog
+      setShowSuccessDialog(true);
+      setSession((prev) => (prev ? { ...prev, isCompleted: true } : null));
+
+      // Clear persisted state after successful submission
+      clearPersistedState();
+    } catch (error) {
+      console.error("Failed to submit final speaking response:", error);
+      alert("Failed to submit final speaking response. Please try again.");
+    }
+  }, [session, submitCurrentSpeakingQuestion, clearPersistedState]);
+
+  // Navigate to next question (modified to submit speaking questions)
+  const nextQuestion = useCallback(async () => {
     if (!session) return;
+
+    // Submit current speaking question before navigation
+    await submitCurrentSpeakingQuestion();
 
     setSession((prev) => {
       if (!prev) return prev;
@@ -653,7 +741,13 @@ export function useExamLogic() {
         };
       }
     });
-  };
+  }, [
+    session,
+    examsByType,
+    examTypes,
+    completeSection,
+    submitCurrentSpeakingQuestion,
+  ]);
 
   // Navigate to previous question
   const previousQuestion = () => {
@@ -708,7 +802,10 @@ export function useExamLogic() {
 
     try {
       // Group writing questions by their exam ID
-      const writingExamSubmissions: Record<number, { responses: Record<string, string> }> = {};
+      const writingExamSubmissions: Record<
+        number,
+        { responses: Record<string, string> }
+      > = {};
 
       // Build responses grouped by exam for writing questions only
       Object.entries(session.answers).forEach(([questionId, answers]) => {
@@ -724,22 +821,25 @@ export function useExamLogic() {
             }
             // For writing questions, the answer is text from user input
 
-            writingExamSubmissions[exam.id].responses[questionId] = answers[0] || "";
+            writingExamSubmissions[exam.id].responses[questionId] =
+              answers[0] || "";
           }
         });
       });
 
       // Submit each writing exam separately using their individual exam ID
-      const submissionPromises = Object.entries(writingExamSubmissions).map(async ([examId, { responses }]) => {
-        const submitRequest: ExamSubmitRequest = {
-          examId: parseInt(examId), // Use the individual exam ID from take-exam response (e.g., 13, 20)
-          responses, // Format: { "17": "user input text", "26": "user input text" }
-          termId: session.termId,
-        };
+      const submissionPromises = Object.entries(writingExamSubmissions).map(
+        async ([examId, { responses }]) => {
+          const submitRequest: ExamSubmitRequest = {
+            examId: parseInt(examId), // Use the individual exam ID from take-exam response (e.g., 13, 20)
+            responses, // Format: { "17": "user input text", "26": "user input text" }
+            termId: session.termId,
+          };
 
-        console.log(`Submitting writing exam ${examId}:`, submitRequest);
-        return submitExamMutation.mutateAsync(submitRequest);
-      });
+          console.log(`Submitting writing exam ${examId}:`, submitRequest);
+          return submitExamMutation.mutateAsync(submitRequest);
+        },
+      );
 
       // Wait for all writing exams to be submitted
       await Promise.all(submissionPromises);
@@ -776,7 +876,8 @@ export function useExamLogic() {
 
           if (question) {
             isSpeakingQuestion = exam.examType === "SPEAKING";
-            isListeningOrReadingQuestion = exam.examType === "LISTENING" || exam.examType === "READING";
+            isListeningOrReadingQuestion =
+              exam.examType === "LISTENING" || exam.examType === "READING";
           }
         });
 
@@ -862,6 +963,7 @@ export function useExamLogic() {
     submitExam,
     submitWritingExam,
     submitSpeakingQuestion,
+    submitFinalSpeaking,
     resetExam,
 
     // UI Actions

@@ -239,9 +239,12 @@ export default function ExamSidebar({
                           </Typography>
                         </Stack>
 
-                        <Typography variant="caption" color="text.secondary">
-                          {timeLimit} minutes • {parts.length} part
-                          {parts.length !== 1 ? "s" : ""}
+                        <Typography
+                          variant="caption"
+                          color="black"
+                          fontWeight="bold"
+                        >
+                          {timeLimit} phút • {parts.length} phần thi
                         </Typography>
 
                         {/* Timer for current section */}
@@ -261,15 +264,16 @@ export default function ExamSidebar({
 
                         {/* Status message */}
                         <Typography
-                          variant="caption"
-                          color={displayTextColor}
-                          fontWeight="medium"
+                          variant="body2"
+                          color="black"
+                          fontWeight="bold"
+
                         >
-                          {status === "locked" && "Locked"}
-                          {status === "available" && "Click to start"}
-                          {status === "in_progress" && "In progress"}
-                          {status === "completed" && "Completed (Locked)"}
-                          {status === "expired" && "Time expired (Locked)"}
+                          {status === "locked" && "Đã khóa"}
+                          {status === "available" && "Nhấn để bắt đầu"}
+                          {status === "in_progress" && "Đang tiến hành"}
+                          {status === "completed" && "\nĐã hoàn thành (Đã khóa)"}
+                          {status === "expired" && "Thời gian đã hết (Đã khóa)"}
                         </Typography>
                       </Box>
                     </Stack>
@@ -280,10 +284,10 @@ export default function ExamSidebar({
                         <Divider sx={{ mb: 1 }} />
                         <Typography
                           variant="caption"
-                          color="text.secondary"
+                          color="black"
                           sx={{ mb: 1, display: "block" }}
                         >
-                          Parts:
+                          Phần thi:
                         </Typography>
                         <Stack direction="row" spacing={0.5} flexWrap="wrap">
                           {parts.map((_, partIndex) => {

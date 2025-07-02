@@ -24,6 +24,7 @@ interface NavigationControlsProps {
   onCompleteSection: (examType: string) => void;
   onShowExamResults: () => void;
   onSubmitWritingExam?: () => void;
+  onSubmitFinalSpeaking?: () => void;
 }
 
 export default function NavigationControls({
@@ -36,6 +37,7 @@ export default function NavigationControls({
   onCompleteSection,
   onShowExamResults,
   onSubmitWritingExam,
+  onSubmitFinalSpeaking,
 }: NavigationControlsProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -43,31 +45,50 @@ export default function NavigationControls({
   const currentTypeIndex = examTypes.indexOf(session.currentExamType);
   const isLastExamType = currentTypeIndex >= examTypes.length - 1;
   const currentTypeExams = examsByType[session.currentExamType] || [];
-  const isLastPartInType = session.currentExamIndex >= currentTypeExams.length - 1;
-  const isLastQuestion = session.currentQuestionIndex >= currentExam.questions.length - 1;
+  const isLastPartInType =
+    session.currentExamIndex >= currentTypeExams.length - 1;
+  const isLastQuestion =
+    session.currentQuestionIndex >= currentExam.questions.length - 1;
   const isLastQuestionOfSection = isLastPartInType && isLastQuestion;
 
-  const isPreviousDisabled = 
+  const isPreviousDisabled =
     session.currentExamType === examTypes[0] &&
     session.currentExamIndex === 0 &&
     session.currentQuestionIndex === 0;
 
   const renderActionButton = () => {
     if (isLastExamType && isLastQuestionOfSection) {
-      // Last question of last section - show exam results dialog
-      return (
-        <Button
-          variant="contained"
-          color="success"
-          onClick={onShowExamResults}
-          endIcon={<Send />}
-          size={isMobile ? "medium" : "large"}
-          fullWidth={isMobile}
-          sx={{ px: { xs: 2, md: 4 } }}
-        >
-          View Results
-        </Button>
-      );
+      // Last question of last section (SPEAKING) - show "Hoàn thành bài thi" instead
+      if (session.currentExamType === "SPEAKING" && onSubmitFinalSpeaking) {
+        return (
+          <Button
+            variant="contained"
+            color="success"
+            onClick={onSubmitFinalSpeaking}
+            endIcon={<Send />}
+            size={isMobile ? "medium" : "large"}
+            fullWidth={isMobile}
+            sx={{ px: { xs: 2, md: 4 } }}
+          >
+            Hoàn thành bài thi
+          </Button>
+        );
+      } else {
+        // Fallback for other exam types (shouldn't normally reach here)
+        return (
+          <Button
+            variant="contained"
+            color="success"
+            onClick={onShowExamResults}
+            endIcon={<Send />}
+            size={isMobile ? "medium" : "large"}
+            fullWidth={isMobile}
+            sx={{ px: { xs: 2, md: 4 } }}
+          >
+            Xem kết quả
+          </Button>
+        );
+      }
     } else if (isLastQuestionOfSection) {
       // Last question of current section - handle differently for WRITING vs others
       if (session.currentExamType === "WRITING" && onSubmitWritingExam) {
@@ -81,23 +102,22 @@ export default function NavigationControls({
             fullWidth={isMobile}
             sx={{ px: { xs: 2, md: 4 } }}
           >
-            Complete WRITING
+            Hoàn thành WRITING
           </Button>
         );
       } else if (session.currentExamType === "SPEAKING") {
-        // For speaking, just move to next section without showing complete button
-        // since individual questions are automatically submitted
+        // For speaking (non-final questions), show complete section button
         return (
           <Button
             variant="contained"
-            color="primary"
+            color="success"
             onClick={() => onCompleteSection(session.currentExamType)}
             endIcon={<CheckCircle />}
             size={isMobile ? "medium" : "large"}
             fullWidth={isMobile}
             sx={{ px: { xs: 2, md: 4 } }}
           >
-            Next Section
+            Hoàn thành SPEAKING
           </Button>
         );
       } else {
@@ -112,24 +132,46 @@ export default function NavigationControls({
             fullWidth={isMobile}
             sx={{ px: { xs: 2, md: 4 } }}
           >
-            Complete {session.currentExamType}
+            Hoàn thành {session.currentExamType}
           </Button>
         );
       }
     } else {
-      // Regular next question
-      return (
-        <Button
-          variant="contained"
-          onClick={onNextQuestion}
-          endIcon={<KeyboardArrowRight />}
-          size={isMobile ? "medium" : "large"}
-          fullWidth={isMobile}
-          sx={{ px: { xs: 2, md: 4 } }}
-        >
-          Next Question
-        </Button>
-      );
+      // Regular next question - special handling for last speaking question
+      if (
+        session.currentExamType === "SPEAKING" &&
+        isLastExamType &&
+        isLastQuestion &&
+        !isLastPartInType
+      ) {
+        // This shouldn't happen based on current logic, but keeping for safety
+        return (
+          <Button
+            variant="contained"
+            onClick={onNextQuestion}
+            endIcon={<KeyboardArrowRight />}
+            size={isMobile ? "medium" : "large"}
+            fullWidth={isMobile}
+            sx={{ px: { xs: 2, md: 4 } }}
+          >
+            Câu tiếp theo
+          </Button>
+        );
+      } else {
+        // Regular next question
+        return (
+          <Button
+            variant="contained"
+            onClick={onNextQuestion}
+            endIcon={<KeyboardArrowRight />}
+            size={isMobile ? "medium" : "large"}
+            fullWidth={isMobile}
+            sx={{ px: { xs: 2, md: 4 } }}
+          >
+            Câu tiếp theo
+          </Button>
+        );
+      }
     }
   };
 
@@ -150,7 +192,7 @@ export default function NavigationControls({
             size={isMobile ? "medium" : "large"}
             fullWidth={isMobile}
           >
-            Previous
+            Câu trước
           </Button>
 
           <Stack
@@ -166,7 +208,10 @@ export default function NavigationControls({
                 variant="outlined"
                 color="primary"
                 onClick={() => {
-                  if (session.currentExamType === "WRITING" && onSubmitWritingExam) {
+                  if (
+                    session.currentExamType === "WRITING" &&
+                    onSubmitWritingExam
+                  ) {
                     onSubmitWritingExam();
                   } else {
                     onCompleteSection(session.currentExamType);
@@ -179,7 +224,7 @@ export default function NavigationControls({
                   display: { xs: "none", sm: "flex" }, // Hide on mobile to save space
                 }}
               >
-                {session.currentExamType === "WRITING" ? "Complete WRITING" : "Complete Section"}
+                Hoàn thành phần thi
               </Button>
             )}
           </Stack>
