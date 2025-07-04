@@ -1,12 +1,12 @@
 import ExamSchedule from "@/components/features/home/exam-schedule";
-import { Metadata } from "next";
+import { constructMetadata } from "@/utils/metadata";
 
 type ExamSchedulePageProps = {};
 
-export const metadata: Metadata = {
-  title: "Lịch thi VSTEP",
-  description: "Lịch thi VSTEP",
-};
+export const metadata = constructMetadata({
+  title: "Lịch thi VSTEP 2025",
+  description: "Cập nhật lịch thi VSTEP mới nhất năm 2025 tại các trường đại học trên toàn quốc. Xem ngày thi, địa điểm và hướng dẫn đăng ký.",
+});
 
 const ExamSchedulePage = (_: ExamSchedulePageProps) => {
   return <ExamSchedule />;
