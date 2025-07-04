@@ -103,7 +103,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
                     if (button.handler) {
                       button.handler();
                     } else {
-                      handleCommand(button.command, button.value);
+                      handleCommand(button.command!, button.value);
                     }
                   }}
                 >

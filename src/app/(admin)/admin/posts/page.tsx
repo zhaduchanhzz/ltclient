@@ -14,10 +14,12 @@ import {
 import { BlogPost } from "@/services/types/blog-posts";
 import {
   Add as AddIcon,
+  Close as CloseIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
   PushPin as PushPinIcon,
   Search as SearchIcon,
+  Upload as UploadIcon,
   Visibility as VisibilityIcon,
 } from "@mui/icons-material";
 import {
@@ -46,7 +48,8 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import Image from "next/image";
+import { useState } from "react";
 
 interface BlogPostFormData {
   id?: number;
@@ -55,7 +58,6 @@ interface BlogPostFormData {
   content: string;
   category: string;
   thumbnail?: string;
-  slug: string;
   pinned?: boolean;
 }
 
@@ -78,13 +80,14 @@ const PostsPage = () => {
   const [openPreviewDialog, setOpenPreviewDialog] = useState(false);
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [_, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
   const [formData, setFormData] = useState<BlogPostFormData>({
     title: "",
     description: "",
     content: "",
     category: categories[0],
     thumbnail: "",
-    slug: "",
     pinned: false,
   });
 
@@ -108,26 +111,23 @@ const PostsPage = () => {
   const posts = postsResponse?.data?.posts || [];
   const totalCount = postsResponse?.data?.total || 0;
 
-  // Generate slug from title
-  const generateSlug = (title: string) => {
-    return title
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[đĐ]/g, "d")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
-  };
+  // Handle image file selection
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
 
-  // Auto-generate slug when title changes
-  useEffect(() => {
-    if (formData.title && !isEditMode) {
-      setFormData((prev) => ({
-        ...prev,
-        slug: generateSlug(prev.title),
-      }));
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setImagePreview(base64String);
+        setFormData((prev) => ({ ...prev, thumbnail: base64String }));
+      };
+
+      reader.readAsDataURL(file);
     }
-  }, [formData.title, isEditMode]);
+  };
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -150,9 +150,9 @@ const PostsPage = () => {
         content: post.content || "",
         category: post.category || "",
         thumbnail: post.thumbnail,
-        slug: post.slug,
         pinned: post.pinned,
       });
+      setImagePreview(post.thumbnail || "");
     } else {
       setIsEditMode(false);
       setFormData({
@@ -161,11 +161,12 @@ const PostsPage = () => {
         content: "",
         category: categories[0],
         thumbnail: "",
-        slug: "",
         pinned: false,
       });
+      setImagePreview("");
     }
 
+    setImageFile(null);
     setOpenDialog(true);
   };
 
@@ -177,9 +178,10 @@ const PostsPage = () => {
       content: "",
       category: categories[0],
       thumbnail: "",
-      slug: "",
       pinned: false,
     });
+    setImageFile(null);
+    setImagePreview("");
   };
 
   const handleSubmit = async () => {
@@ -189,7 +191,6 @@ const PostsPage = () => {
         description: formData.description,
         content: formData.content,
         category: formData.category,
-        slug: formData.slug,
         thumbnail: formData.thumbnail || undefined,
         pinned: formData.pinned,
       };
@@ -469,7 +470,18 @@ const PostsPage = () => {
         fullWidth
       >
         <DialogTitle>
-          {isEditMode ? "Chỉnh sửa bài viết" : "Thêm bài viết mới"}
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <Typography variant="h6">
+              {isEditMode ? "Chỉnh sửa bài viết" : "Thêm bài viết mới"}
+            </Typography>
+            <IconButton onClick={handleCloseDialog} size="small" sx={{ ml: 2 }}>
+              <CloseIcon />
+            </IconButton>
+          </Stack>
         </DialogTitle>
         <DialogContent dividers>
           <Stack spacing={3} sx={{ mt: 1 }}>
@@ -481,17 +493,6 @@ const PostsPage = () => {
               onChange={(e) =>
                 setFormData({ ...formData, title: e.target.value })
               }
-            />
-
-            <TextField
-              label="Slug (URL)"
-              fullWidth
-              required
-              value={formData.slug}
-              onChange={(e) =>
-                setFormData({ ...formData, slug: e.target.value })
-              }
-              helperText="URL thân thiện cho bài viết (tự động tạo từ tiêu đề)"
             />
 
             <TextField
@@ -523,15 +524,54 @@ const PostsPage = () => {
               ))}
             </TextField>
 
-            <TextField
-              label="URL Ảnh thumbnail"
-              fullWidth
-              value={formData.thumbnail}
-              onChange={(e) =>
-                setFormData({ ...formData, thumbnail: e.target.value })
-              }
-              helperText="Để trống nếu không có ảnh"
-            />
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>
+                Ảnh thumbnail
+              </Typography>
+              <input
+                accept="image/*"
+                type="file"
+                onChange={handleImageChange}
+                style={{ display: "none" }}
+                id="thumbnail-upload"
+              />
+              <label htmlFor="thumbnail-upload">
+                <Button
+                  variant="outlined"
+                  component="span"
+                  startIcon={<UploadIcon />}
+                  fullWidth
+                >
+                  Chọn ảnh
+                </Button>
+              </label>
+              {imagePreview && (
+                <Box sx={{ mt: 2 }}>
+                  <Image
+                    src={imagePreview}
+                    alt="Preview"
+                    style={{
+                      width: "100%",
+                      maxHeight: 200,
+                      objectFit: "cover",
+                      borderRadius: 8,
+                    }}
+                  />
+                  <Button
+                    size="small"
+                    color="error"
+                    onClick={() => {
+                      setImageFile(null);
+                      setImagePreview("");
+                      setFormData((prev) => ({ ...prev, thumbnail: "" }));
+                    }}
+                    sx={{ mt: 1 }}
+                  >
+                    Xóa ảnh
+                  </Button>
+                </Box>
+              )}
+            </Box>
 
             <Box>
               <Typography variant="subtitle2" gutterBottom>
@@ -554,10 +594,7 @@ const PostsPage = () => {
             onClick={handleSubmit}
             variant="contained"
             disabled={
-              !formData.title ||
-              !formData.description ||
-              !formData.content ||
-              !formData.slug
+              !formData.title || !formData.description || !formData.content
             }
           >
             {isEditMode ? "Cập nhật" : "Tạo mới"}

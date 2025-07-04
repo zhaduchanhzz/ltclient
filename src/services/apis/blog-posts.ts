@@ -91,7 +91,7 @@ export const useDeleteBlogPostMutation = () => {
 export const usePinBlogPostMutation = () => {
   return useMutation({
     mutationFn: (id: number) => {
-      return HttpClient.patch<null, CommonResponse<BlogPost>>(
+      return HttpClient.put<null, CommonResponse<BlogPost>>(
         `${API_PATH.BLOG_POSTS}/${id}/pin`,
       );
     },
@@ -101,8 +101,8 @@ export const usePinBlogPostMutation = () => {
 export const useUnpinBlogPostMutation = () => {
   return useMutation({
     mutationFn: (id: number) => {
-      return HttpClient.patch<null, CommonResponse<BlogPost>>(
-        `${API_PATH.BLOG_POSTS}/${id}/pin`,
+      return HttpClient.put<null, CommonResponse<BlogPost>>(
+        `${API_PATH.BLOG_POSTS}/${id}/unpin`,
       );
     },
   });
