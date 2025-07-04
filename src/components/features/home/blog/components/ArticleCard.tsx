@@ -1,5 +1,5 @@
 "use client";
-import BasicCard from "@/components/base/MaterialUI-Basic/Card";
+import BasicCard from "@/components/base/MaterialUI-Basic/Card/Index";
 import BasicCardContent from "@/components/base/MaterialUI-Basic/Card/BasicCardContent";
 import BasicStack from "@/components/base/MaterialUI-Basic/Stack";
 import BasicTypography from "@/components/base/MaterialUI-Basic/Typography";
