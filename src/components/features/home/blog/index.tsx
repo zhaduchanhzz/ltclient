@@ -1,61 +1,67 @@
 "use client";
 import BasicBox from "@/components/base/MaterialUI-Basic/Box";
 import BasicContainer from "@/components/base/MaterialUI-Basic/Container";
-import BasicGrid from "@/components/base/MaterialUI-Basic/Grid";
 import BasicStack from "@/components/base/MaterialUI-Basic/Stack";
 import BasicTypography from "@/components/base/MaterialUI-Basic/Typography";
 import LoadingPageOverlay from "@/components/common/Overlay/LoadingPageOverlay";
 import { useGetBlogPostsQuery } from "@/services/apis/blog-posts";
-import { BlogPost, Pageable } from "@/services/types/blog-posts";
+import { useState, useMemo, useEffect } from "react";
+import ArticleCard from "./components/ArticleCard";
+import BlogPagination from "./components/BlogPagination";
+import BlogSearchBar from "./components/BlogSearchBar";
 import { LinearProgress } from "@mui/material";
-import { useCallback, useEffect, useState } from "react";
-import ArticleSearchBar from "./components/ArticleSearchBar";
-import ArticleCard from "../blog/components/ArticleCard";
-import ArticlePagination from "./components/ArticlePagination";
 
-type VstepArticleProps = {};
+const BlogList = () => {
+  // const [page, setPage] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredPage, setFilteredPage] = useState(0);
+  const pageSize = 100; // Load more posts for client-side filtering
+  const displayPageSize = 12;
 
-const VstepArticle = (_: VstepArticleProps) => {
-  const [filters, setFilters] = useState<Pageable>({
+  const { data, isLoading, error, isFetching } = useGetBlogPostsQuery({
     page: 0,
-    size: 10,
-    searchTerm: "",
+    size: pageSize,
+    sort: ["createdAt,desc"],
   });
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  // Main data for the grid
-  const { data, isLoading, error, isFetching } = useGetBlogPostsQuery(
-    filters,
-    true,
-  );
+  // Filter posts based on search term
+  const filteredPosts = useMemo(() => {
+    if (!data?.content) return [];
 
-  // Mark initial load as complete when data is first loaded
+    if (!searchTerm) return data.content;
+
+    const lowerSearchTerm = searchTerm.toLowerCase();
+    return data.content.filter(
+      (post) =>
+        post.title.toLowerCase().includes(lowerSearchTerm) ||
+        (post.summary && post.summary.toLowerCase().includes(lowerSearchTerm)),
+    );
+  }, [data?.content, searchTerm]);
+
+  // Paginate filtered results
+  const paginatedPosts = useMemo(() => {
+    const start = filteredPage * displayPageSize;
+    const end = start + displayPageSize;
+    return filteredPosts.slice(start, end);
+  }, [filteredPosts, filteredPage]);
+
+  const totalFilteredPages = Math.ceil(filteredPosts.length / displayPageSize);
+
+  // Reset page when search term changes
   useEffect(() => {
-    if (data && isInitialLoad) {
-      setIsInitialLoad(false);
-    }
-  }, [data, isInitialLoad]);
+    setFilteredPage(0);
+  }, [searchTerm]);
 
-  const handleSearch = useCallback((searchTerm: string) => {
-    setFilters((prev: Pageable) => ({
-      ...prev,
-      searchTerm: searchTerm,
-      page: 1,
-    }));
-  }, []);
-
-  const handlePageChange = useCallback((page: number) => {
-    setFilters((prev: Pageable) => ({
-      ...prev,
-      page,
-    }));
-
-    // Scroll to top when page changes
+  const handlePageChange = (newPage: number) => {
+    setFilteredPage(newPage);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+  };
 
-  // Only show full loading overlay on initial load
-  if (isLoading && isInitialLoad) {
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+  };
+
+  if (isLoading) {
     return (
       <BasicBox
         sx={{
@@ -71,7 +77,6 @@ const VstepArticle = (_: VstepArticleProps) => {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <BasicBox
@@ -101,11 +106,6 @@ const VstepArticle = (_: VstepArticleProps) => {
     );
   }
 
-  const blogPosts = data?.content || [];
-  const totalPages = data?.totalPages || 0;
-  const currentPage = data?.number || 1;
-  const totalPosts = data?.totalElements || 0;
-
   return (
     <BasicBox
       sx={{
@@ -132,14 +132,11 @@ const VstepArticle = (_: VstepArticleProps) => {
             </BasicTypography>
 
             {/* Search Bar */}
-            <ArticleSearchBar
-              onSearch={handleSearch}
-              initialValue={filters.searchTerm || ""}
-            />
+            <BlogSearchBar onSearch={handleSearch} initialValue={searchTerm} />
           </BasicStack>
 
-          {/* Loading indicator for search/pagination */}
-          {isFetching && !isInitialLoad && (
+          {/* Loading indicator for fetching */}
+          {isFetching && !isLoading && (
             <LinearProgress
               sx={{
                 width: "100%",
@@ -150,15 +147,13 @@ const VstepArticle = (_: VstepArticleProps) => {
             />
           )}
 
-          {/* Articles Grid */}
-          {blogPosts.length > 0 ? (
-            <BasicGrid container spacing={4}>
-              {blogPosts.map((article: BlogPost) => (
-                <BasicGrid key={article.id} size={{ xs: 12 }}>
-                  <ArticleCard article={article} />
-                </BasicGrid>
+          {/* Articles List */}
+          {paginatedPosts.length > 0 ? (
+            <BasicBox>
+              {paginatedPosts.map((article) => (
+                <ArticleCard key={article.id} article={article} />
               ))}
-            </BasicGrid>
+            </BasicBox>
           ) : (
             <BasicBox
               sx={{
@@ -173,41 +168,29 @@ const VstepArticle = (_: VstepArticleProps) => {
                   variant="h6"
                   sx={{ color: "white", opacity: 0.8 }}
                 >
-                  {filters.searchTerm
+                  {searchTerm
                     ? "Không tìm thấy bài viết nào"
                     : "Chưa có bài viết nào"}
                 </BasicTypography>
-                <BasicTypography
-                  variant="body2"
-                  sx={{ color: "white", opacity: 0.6 }}
-                >
-                  {filters.searchTerm
-                    ? "Thử thay đổi từ khóa tìm kiếm của bạn"
-                    : "Bài viết sẽ được cập nhật sớm nhất"}
-                </BasicTypography>
+                {searchTerm && (
+                  <BasicTypography
+                    variant="body2"
+                    sx={{ color: "white", opacity: 0.6 }}
+                  >
+                    Thử thay đổi từ khóa tìm kiếm của bạn
+                  </BasicTypography>
+                )}
               </BasicStack>
             </BasicBox>
           )}
 
           {/* Pagination */}
-          <ArticlePagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-          />
-
-          {/* Article Count Info */}
-          {totalPosts > 0 && (
-            <BasicBox sx={{ textAlign: "center" }}>
-              <BasicTypography
-                variant="body2"
-                sx={{ color: "rgba(255, 255, 255, 0.7)" }}
-              >
-                Hiển thị {(currentPage - 1) * (filters.size || 12) + 1}-
-                {Math.min(currentPage * (filters.size || 12), totalPosts)}{" "}
-                trong tổng số {totalPosts} bài viết
-              </BasicTypography>
-            </BasicBox>
+          {totalFilteredPages > 1 && (
+            <BlogPagination
+              currentPage={filteredPage + 1}
+              totalPages={totalFilteredPages}
+              onPageChange={(page) => handlePageChange(page - 1)}
+            />
           )}
         </BasicStack>
       </BasicContainer>
@@ -215,4 +198,4 @@ const VstepArticle = (_: VstepArticleProps) => {
   );
 };
 
-export default VstepArticle;
+export default BlogList;

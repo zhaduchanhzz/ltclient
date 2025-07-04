@@ -5,17 +5,17 @@ import { useTheme, InputAdornment, IconButton } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 
-type ArticleSearchBarProps = {
+type BlogSearchBarProps = {
   onSearch: (searchTerm: string) => void;
   placeholder?: string;
   initialValue?: string;
 };
 
-const ArticleSearchBar = ({
+const BlogSearchBar = ({
   onSearch,
   placeholder = "Tìm kiếm bài viết...",
   initialValue = "",
-}: ArticleSearchBarProps) => {
+}: BlogSearchBarProps) => {
   const theme = useTheme();
   const [searchTerm, setSearchTerm] = useState(initialValue);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -25,29 +25,15 @@ const ArticleSearchBar = ({
     setSearchTerm(initialValue);
   }, [initialValue]);
 
-  // Preserve focus during searches
-  useEffect(() => {
-    if (inputRef.current && document.activeElement === inputRef.current) {
-      const cursorPosition = inputRef.current.selectionStart;
-      requestAnimationFrame(() => {
-        if (inputRef.current) {
-          inputRef.current.focus();
-          inputRef.current.setSelectionRange(cursorPosition, cursorPosition);
-        }
-      });
-    }
-  }, [searchTerm]);
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
-    onSearch(value); // Immediate search without debounce
+    onSearch(value);
   };
 
   const handleClear = () => {
     setSearchTerm("");
     onSearch("");
-    // Keep focus on input after clearing
     inputRef.current?.focus();
   };
 
@@ -112,4 +98,4 @@ const ArticleSearchBar = ({
   );
 };
 
-export default ArticleSearchBar;
+export default BlogSearchBar;

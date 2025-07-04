@@ -7,8 +7,7 @@ import {
   useCreateBlogPostMutation,
   useDeleteBlogPostMutation,
   useGetBlogPostsQuery,
-  usePinBlogPostMutation,
-  useUnpinBlogPostMutation,
+  useTogglePinBlogPostMutation,
   useUpdateBlogPostMutation,
 } from "@/services/apis/blog-posts";
 import { BlogPost } from "@/services/types/blog-posts";
@@ -19,7 +18,6 @@ import {
   Edit as EditIcon,
   PushPin as PushPinIcon,
   Search as SearchIcon,
-  Upload as UploadIcon,
   Visibility as VisibilityIcon,
 } from "@mui/icons-material";
 import {
@@ -34,7 +32,6 @@ import {
   DialogTitle,
   IconButton,
   InputAdornment,
-  MenuItem,
   Paper,
   Stack,
   Table,
@@ -48,27 +45,16 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import Image from "next/image";
 import { useState } from "react";
 
 interface BlogPostFormData {
   id?: number;
   title: string;
-  description: string;
+  summary: string;
   content: string;
-  category: string;
-  thumbnail?: string;
   pinned?: boolean;
 }
 
-const categories = [
-  "Tin tức VSTEP",
-  "Hướng dẫn học tập",
-  "Kinh nghiệm thi",
-  "Lịch thi VSTEP",
-  "Tài liệu học tập",
-  "Mẹo làm bài",
-];
 
 const PostsPage = () => {
   const { updateAppState } = useAppContextHandle();
@@ -80,14 +66,10 @@ const PostsPage = () => {
   const [openPreviewDialog, setOpenPreviewDialog] = useState(false);
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [_, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>("");
   const [formData, setFormData] = useState<BlogPostFormData>({
     title: "",
-    description: "",
+    summary: "",
     content: "",
-    category: categories[0],
-    thumbnail: "",
     pinned: false,
   });
 
@@ -97,37 +79,18 @@ const PostsPage = () => {
     isLoading,
     refetch,
   } = useGetBlogPostsQuery({
-    page: page + 1,
-    limit: rowsPerPage,
-    search: searchQuery,
+    page: page,
+    size: rowsPerPage,
+    sort: ["createdAt,desc"],
   });
 
   const { mutateAsync: createPost } = useCreateBlogPostMutation();
   const { mutateAsync: updatePost } = useUpdateBlogPostMutation();
   const { mutateAsync: deletePost } = useDeleteBlogPostMutation();
-  const { mutateAsync: pinPost } = usePinBlogPostMutation();
-  const { mutateAsync: unpinPost } = useUnpinBlogPostMutation();
+  const { mutateAsync: togglePin } = useTogglePinBlogPostMutation();
 
-  const posts = postsResponse?.data?.posts || [];
-  const totalCount = postsResponse?.data?.total || 0;
-
-  // Handle image file selection
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setImagePreview(base64String);
-        setFormData((prev) => ({ ...prev, thumbnail: base64String }));
-      };
-
-      reader.readAsDataURL(file);
-    }
-  };
+  const posts = postsResponse?.content || [];
+  const totalCount = postsResponse?.totalElements || 0;
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
@@ -146,27 +109,20 @@ const PostsPage = () => {
       setFormData({
         id: post.id,
         title: post.title,
-        description: post.description || "",
+        summary: post.summary || "",
         content: post.content || "",
-        category: post.category || "",
-        thumbnail: post.thumbnail,
         pinned: post.pinned,
       });
-      setImagePreview(post.thumbnail || "");
     } else {
       setIsEditMode(false);
       setFormData({
         title: "",
-        description: "",
+        summary: "",
         content: "",
-        category: categories[0],
-        thumbnail: "",
         pinned: false,
       });
-      setImagePreview("");
     }
 
-    setImageFile(null);
     setOpenDialog(true);
   };
 
@@ -174,24 +130,18 @@ const PostsPage = () => {
     setOpenDialog(false);
     setFormData({
       title: "",
-      description: "",
+      summary: "",
       content: "",
-      category: categories[0],
-      thumbnail: "",
       pinned: false,
     });
-    setImageFile(null);
-    setImagePreview("");
   };
 
   const handleSubmit = async () => {
     try {
       const postData: any = {
         title: formData.title,
-        description: formData.description,
+        summary: formData.summary,
         content: formData.content,
-        category: formData.category,
-        thumbnail: formData.thumbnail || undefined,
         pinned: formData.pinned,
       };
 
@@ -251,24 +201,13 @@ const PostsPage = () => {
 
   const handleTogglePin = async (post: BlogPost) => {
     try {
-      if (post.pinned) {
-        await unpinPost(post.id);
-        updateAppState({
-          appAlertInfo: {
-            message: "Đã bỏ ghim bài viết",
-            severity: "success",
-          },
-        });
-      } else {
-        await pinPost(post.id);
-        updateAppState({
-          appAlertInfo: {
-            message: "Đã ghim bài viết",
-            severity: "success",
-          },
-        });
-      }
-
+      await togglePin(post.id);
+      updateAppState({
+        appAlertInfo: {
+          message: post.pinned ? "Đã bỏ ghim bài viết" : "Đã ghim bài viết",
+          severity: "success",
+        },
+      });
       refetch();
     } catch (error: any) {
       updateAppState({
@@ -340,7 +279,6 @@ const PostsPage = () => {
               <TableHead>
                 <TableRow>
                   <TableCell>Tiêu đề</TableCell>
-                  <TableCell>Danh mục</TableCell>
                   <TableCell>Trạng thái</TableCell>
                   <TableCell>Ngày tạo</TableCell>
                   <TableCell align="center">Thao tác</TableCell>
@@ -359,19 +297,9 @@ const PostsPage = () => {
                           color="text.secondary"
                           noWrap
                         >
-                          {post.description}
+                          {post.summary}
                         </Typography>
                       </Stack>
-                    </TableCell>
-                    <TableCell>
-                      {post.category && (
-                        <Chip
-                          label={post.category}
-                          size="small"
-                          color="primary"
-                          variant="outlined"
-                        />
-                      )}
                     </TableCell>
                     <TableCell>
                       {post.pinned && (
@@ -439,7 +367,7 @@ const PostsPage = () => {
                 ))}
                 {posts.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                    <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
                       <Typography variant="body2" color="text.secondary">
                         Không tìm thấy bài viết nào
                       </Typography>
@@ -496,82 +424,15 @@ const PostsPage = () => {
             />
 
             <TextField
-              label="Mô tả"
+              label="Tóm tắt"
               fullWidth
-              required
               multiline
               rows={2}
-              value={formData.description}
+              value={formData.summary}
               onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
+                setFormData({ ...formData, summary: e.target.value })
               }
             />
-
-            <TextField
-              label="Danh mục"
-              fullWidth
-              required
-              select
-              value={formData.category}
-              onChange={(e) =>
-                setFormData({ ...formData, category: e.target.value })
-              }
-            >
-              {categories.map((cat) => (
-                <MenuItem key={cat} value={cat}>
-                  {cat}
-                </MenuItem>
-              ))}
-            </TextField>
-
-            <Box>
-              <Typography variant="subtitle2" gutterBottom>
-                Ảnh thumbnail
-              </Typography>
-              <input
-                accept="image/*"
-                type="file"
-                onChange={handleImageChange}
-                style={{ display: "none" }}
-                id="thumbnail-upload"
-              />
-              <label htmlFor="thumbnail-upload">
-                <Button
-                  variant="outlined"
-                  component="span"
-                  startIcon={<UploadIcon />}
-                  fullWidth
-                >
-                  Chọn ảnh
-                </Button>
-              </label>
-              {imagePreview && (
-                <Box sx={{ mt: 2 }}>
-                  <Image
-                    src={imagePreview}
-                    alt="Preview"
-                    style={{
-                      width: "100%",
-                      maxHeight: 200,
-                      objectFit: "cover",
-                      borderRadius: 8,
-                    }}
-                  />
-                  <Button
-                    size="small"
-                    color="error"
-                    onClick={() => {
-                      setImageFile(null);
-                      setImagePreview("");
-                      setFormData((prev) => ({ ...prev, thumbnail: "" }));
-                    }}
-                    sx={{ mt: 1 }}
-                  >
-                    Xóa ảnh
-                  </Button>
-                </Box>
-              )}
-            </Box>
 
             <Box>
               <Typography variant="subtitle2" gutterBottom>
@@ -594,7 +455,7 @@ const PostsPage = () => {
             onClick={handleSubmit}
             variant="contained"
             disabled={
-              !formData.title || !formData.description || !formData.content
+              !formData.title || !formData.content
             }
           >
             {isEditMode ? "Cập nhật" : "Tạo mới"}
@@ -634,42 +495,18 @@ const PostsPage = () => {
               </Typography>
 
               {/* Meta info */}
-              <Stack direction="row" spacing={2} alignItems="center">
-                {selectedPost.category && (
-                  <Chip
-                    label={selectedPost.category}
-                    color="primary"
-                    size="small"
-                  />
-                )}
-                <Typography variant="caption" color="text.secondary">
-                  {formatDate(selectedPost.createdAt)}
-                </Typography>
-              </Stack>
+              <Typography variant="caption" color="text.secondary">
+                {formatDate(selectedPost.createdAt)}
+              </Typography>
 
-              {/* Thumbnail */}
-              {selectedPost.thumbnail && (
-                <Box
-                  component="img"
-                  src={selectedPost.thumbnail}
-                  alt={selectedPost.title}
-                  sx={{
-                    width: "100%",
-                    maxHeight: 400,
-                    objectFit: "cover",
-                    borderRadius: 1,
-                  }}
-                />
-              )}
-
-              {/* Description */}
-              {selectedPost.description && (
+              {/* Summary */}
+              {selectedPost.summary && (
                 <Typography
                   variant="h6"
                   color="text.secondary"
                   fontStyle="italic"
                 >
-                  {selectedPost.description}
+                  {selectedPost.summary}
                 </Typography>
               )}
 

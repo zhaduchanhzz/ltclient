@@ -2,17 +2,17 @@
 import BasicBox from "@/components/base/MaterialUI-Basic/Box";
 import BasicPagination from "@/components/base/MaterialUI-Basic/Pagination";
 
-type ArticlePaginationProps = {
+type BlogPaginationProps = {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
 };
 
-const ArticlePagination = ({
+const BlogPagination = ({
   currentPage,
   totalPages,
   onPageChange,
-}: ArticlePaginationProps) => {
+}: BlogPaginationProps) => {
   return (
     <BasicBox sx={{ display: "flex", justifyContent: "center" }}>
       <BasicPagination
@@ -42,4 +42,4 @@ const ArticlePagination = ({
   );
 };
 
-export default ArticlePagination;
+export default BlogPagination;

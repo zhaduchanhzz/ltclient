@@ -1,65 +1,57 @@
 import { API_PATH } from "@/consts/api-path";
-import { useMutation, useQuery } from "@tanstack/react-query";
 import HttpClient from "@/utils/axios-config";
-import { CommonResponse } from "@/types/common";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   BlogPost,
-  BlogPostsResponse,
-  BlogPostFilters,
-  BlogPostCategory,
+  PageBlogPost,
+  Pageable,
 } from "../types/blog-posts";
 
 export const useGetBlogPostsQuery = (
-  filters: BlogPostFilters = {},
+  pageable: Pageable = { page: 0, size: 10 },
   enabled = true,
 ) => {
-  const { search, category, page = 1, limit = 12 } = filters;
+  const { page = 0, size = 10, sort = [] } = pageable;
 
   return useQuery({
-    queryKey: [API_PATH.BLOG_POSTS, filters],
+    queryKey: [API_PATH.BLOG_POSTS, pageable],
     queryFn: () => {
       const params = new URLSearchParams();
-      if (search) params.append("search", search);
-      if (category) params.append("category", category);
       params.append("page", page.toString());
-      params.append("limit", limit.toString());
+      params.append("size", size.toString());
 
-      return HttpClient.get<null, CommonResponse<BlogPostsResponse>>(
+      if (sort.length > 0) {
+        sort.forEach((s) => params.append("sort", s));
+      }
+
+      return HttpClient.get<null, PageBlogPost>(
         `${API_PATH.BLOG_POSTS}?${params.toString()}`,
       );
     },
     enabled,
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    refetchOnMount: false, // Don't refetch on component mount if data exists
   });
 };
 
-export const useGetBlogPostCategoriesQuery = (enabled = true) => {
+export const useGetBlogPostByIdQuery = (id: number, enabled = true) => {
   return useQuery({
-    queryKey: [`${API_PATH.BLOG_POSTS}/categories`],
+    queryKey: [API_PATH.BLOG_POSTS, id],
     queryFn: () => {
-      return HttpClient.get<null, CommonResponse<BlogPostCategory[]>>(
-        `${API_PATH.BLOG_POSTS}/categories`,
+      return HttpClient.get<null, BlogPost>(
+        `${API_PATH.BLOG_POSTS}/${id}`,
       );
     },
-    enabled,
-  });
-};
-
-export const useGetBlogPostBySlugQuery = (slug: string, enabled = true) => {
-  return useQuery({
-    queryKey: [`${API_PATH.BLOG_POSTS}/slug`, slug],
-    queryFn: () => {
-      return HttpClient.get<null, CommonResponse<BlogPost>>(
-        `${API_PATH.BLOG_POSTS}/slug/${slug}`,
-      );
-    },
-    enabled: enabled && !!slug,
+    enabled: enabled && !!id,
   });
 };
 
 export const useCreateBlogPostMutation = () => {
   return useMutation({
     mutationFn: (data: Partial<BlogPost>) => {
-      return HttpClient.post<Partial<BlogPost>, CommonResponse<BlogPost>>(
+      return HttpClient.post<Partial<BlogPost>, BlogPost>(
         API_PATH.BLOG_POSTS,
         data,
       );
@@ -70,7 +62,7 @@ export const useCreateBlogPostMutation = () => {
 export const useUpdateBlogPostMutation = () => {
   return useMutation({
     mutationFn: ({ id, ...data }: Partial<BlogPost> & { id: number }) => {
-      return HttpClient.put<Partial<BlogPost>, CommonResponse<BlogPost>>(
+      return HttpClient.put<Partial<BlogPost>, BlogPost>(
         `${API_PATH.BLOG_POSTS}/${id}`,
         data,
       );
@@ -81,28 +73,18 @@ export const useUpdateBlogPostMutation = () => {
 export const useDeleteBlogPostMutation = () => {
   return useMutation({
     mutationFn: (id: number) => {
-      return HttpClient.delete<null, CommonResponse<null>>(
+      return HttpClient.delete<null, void>(
         `${API_PATH.BLOG_POSTS}/${id}`,
       );
     },
   });
 };
 
-export const usePinBlogPostMutation = () => {
+export const useTogglePinBlogPostMutation = () => {
   return useMutation({
     mutationFn: (id: number) => {
-      return HttpClient.put<null, CommonResponse<BlogPost>>(
+      return HttpClient.put<null, BlogPost>(
         `${API_PATH.BLOG_POSTS}/${id}/pin`,
-      );
-    },
-  });
-};
-
-export const useUnpinBlogPostMutation = () => {
-  return useMutation({
-    mutationFn: (id: number) => {
-      return HttpClient.put<null, CommonResponse<BlogPost>>(
-        `${API_PATH.BLOG_POSTS}/${id}/unpin`,
       );
     },
   });
