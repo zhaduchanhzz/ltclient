@@ -58,8 +58,8 @@ export const useGetBlogPostBySlugQuery = (slug: string, enabled = true) => {
 
 export const useCreateBlogPostMutation = () => {
   return useMutation({
-    mutationFn: (data: BlogPost) => {
-      return HttpClient.post<BlogPost, CommonResponse<BlogPost>>(
+    mutationFn: (data: Partial<BlogPost>) => {
+      return HttpClient.post<Partial<BlogPost>, CommonResponse<BlogPost>>(
         API_PATH.BLOG_POSTS,
         data,
       );
@@ -69,9 +69,9 @@ export const useCreateBlogPostMutation = () => {
 
 export const useUpdateBlogPostMutation = () => {
   return useMutation({
-    mutationFn: (data: BlogPost) => {
-      return HttpClient.put<BlogPost, CommonResponse<BlogPost>>(
-        API_PATH.BLOG_POSTS,
+    mutationFn: ({ id, ...data }: Partial<BlogPost> & { id: number }) => {
+      return HttpClient.put<Partial<BlogPost>, CommonResponse<BlogPost>>(
+        `${API_PATH.BLOG_POSTS}/${id}`,
         data,
       );
     },
@@ -80,7 +80,7 @@ export const useUpdateBlogPostMutation = () => {
 
 export const useDeleteBlogPostMutation = () => {
   return useMutation({
-    mutationFn: (id: string) => {
+    mutationFn: (id: number) => {
       return HttpClient.delete<null, CommonResponse<null>>(
         `${API_PATH.BLOG_POSTS}/${id}`,
       );
@@ -90,8 +90,8 @@ export const useDeleteBlogPostMutation = () => {
 
 export const usePinBlogPostMutation = () => {
   return useMutation({
-    mutationFn: (id: string) => {
-      return HttpClient.put<null, CommonResponse<null>>(
+    mutationFn: (id: number) => {
+      return HttpClient.patch<null, CommonResponse<BlogPost>>(
         `${API_PATH.BLOG_POSTS}/${id}/pin`,
       );
     },
@@ -100,9 +100,9 @@ export const usePinBlogPostMutation = () => {
 
 export const useUnpinBlogPostMutation = () => {
   return useMutation({
-    mutationFn: (id: string) => {
-      return HttpClient.put<null, CommonResponse<null>>(
-        `${API_PATH.BLOG_POSTS}/${id}/unpin`,
+    mutationFn: (id: number) => {
+      return HttpClient.patch<null, CommonResponse<BlogPost>>(
+        `${API_PATH.BLOG_POSTS}/${id}/pin`,
       );
     },
   });

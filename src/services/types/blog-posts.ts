@@ -1,14 +1,16 @@
 export type BlogPost = {
-  id: string;
+  id: number;
   title: string;
   content: string;
-  description: string;
+  description?: string;
+  summary?: string;
   thumbnail?: string;
-  category: string;
+  category?: string;
   slug: string;
-  featured?: boolean;
+  pinned?: boolean;
   createdAt: string;
   updatedAt: string;
+  relatedBlogPosts?: BlogPost[];
 };
 
 export type BlogPostCategory = {
