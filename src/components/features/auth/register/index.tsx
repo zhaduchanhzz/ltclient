@@ -74,7 +74,15 @@ const RegisterPage = (_: RegisterPageProps) => {
       onFinish={onFinish}
       onError={() => {}}
     >
-      <BasicGrid container spacing={4} sx={{ width: 450 }}>
+      <BasicGrid
+        container
+        spacing={4}
+        sx={{
+          width: { xs: "100%", sm: 450 },
+          maxWidth: "100%",
+          px: { xs: 2, sm: 0 },
+        }}
+      >
         <BasicGrid
           container
           size={{ xs: 12 }}
