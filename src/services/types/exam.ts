@@ -217,3 +217,17 @@ export type ExamTermSession = {
   timeLimit: number;
   isCompleted: boolean;
 };
+
+export type GradingRequestDto = {
+  termId: number;
+  examId: number;
+};
+
+export type GradingResponseDto = {
+  requestId: number;
+  termId: number;
+  examId: number;
+  userId: number;
+  status: string;
+  requestedAt: string;
+};

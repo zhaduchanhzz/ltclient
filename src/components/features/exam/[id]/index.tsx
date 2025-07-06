@@ -25,6 +25,7 @@ import {
   DialogContent,
   DialogTitle,
   Grid2,
+  LinearProgress,
   Paper,
   Slide,
   Stack,
@@ -37,6 +38,7 @@ import NavigationControls from "./components/NavigationControls";
 import QuestionCard from "./components/QuestionCard";
 import { useExamLogic } from "./hooks/useExamLogic";
 import { useGradingRequestMutation } from "@/services/apis/exam";
+import { useState } from "react";
 
 const EXAM_TIME_LIMITS = {
   LISTENING: 47,
@@ -89,6 +91,12 @@ export default function ExamPage() {
   } = useExamLogic();
 
   const gradingRequestMutation = useGradingRequestMutation();
+  const [gradingProgress, setGradingProgress] = useState<{
+    isGrading: boolean;
+    current: number;
+    total: number;
+    currentExamType?: string;
+  }>({ isGrading: false, current: 0, total: 0 });
 
   const calculateExamResultsByType = () => {
     if (!session || !allExams) return {};
@@ -167,14 +175,74 @@ export default function ExamPage() {
   const examResultsByType = calculateExamResultsByType();
 
   const handleGradingRequest = async () => {
-    if (!session?.termId) return;
+    if (!session?.termId || !allExams) return;
 
-    try {
-      await gradingRequestMutation.mutateAsync({ termId: session.termId });
-      alert("Grading request submitted successfully!");
-    } catch (error) {
-      console.error("Failed to submit grading request:", error);
-      alert("Failed to submit grading request. Please try again.");
+    // Find all WRITING and SPEAKING exams that need grading
+    const gradableExams = allExams.filter(
+      (exam) => exam.examType === "WRITING" || exam.examType === "SPEAKING",
+    );
+
+    if (gradableExams.length === 0) {
+      alert("No exams available for grading request.");
+      return;
+    }
+
+    // Initialize progress
+    setGradingProgress({
+      isGrading: true,
+      current: 0,
+      total: gradableExams.length,
+    });
+
+    let successCount = 0;
+    let failedCount = 0;
+    const errors: string[] = [];
+
+    // Submit grading request for each WRITING and SPEAKING exam
+    for (let i = 0; i < gradableExams.length; i++) {
+      const exam = gradableExams[i];
+      
+      // Update progress
+      setGradingProgress({
+        isGrading: true,
+        current: i + 1,
+        total: gradableExams.length,
+        currentExamType: exam.examType,
+      });
+
+      try {
+        await gradingRequestMutation.mutateAsync({
+          termId: session.termId,
+          examId: exam.id,
+        });
+        successCount++;
+      } catch (error) {
+        failedCount++;
+        errors.push(`${exam.examType} exam (ID: ${exam.id})`);
+        console.error(`Failed to submit grading request for ${exam.examType}:`, error);
+      }
+    }
+
+    // Reset progress
+    setGradingProgress({
+      isGrading: false,
+      current: 0,
+      total: 0,
+    });
+
+    // Show result message
+    if (successCount > 0 && failedCount === 0) {
+      alert(
+        `Successfully submitted ${successCount} grading request${successCount > 1 ? 's' : ''}!`
+      );
+    } else if (successCount > 0 && failedCount > 0) {
+      alert(
+        `Partially successful: ${successCount} grading request${successCount > 1 ? 's' : ''} submitted, ${failedCount} failed.\nFailed exams: ${errors.join(', ')}`
+      );
+    } else {
+      alert(
+        `Failed to submit all grading requests. Please try again.\nFailed exams: ${errors.join(', ')}`
+      );
     }
   };
 
@@ -574,6 +642,22 @@ export default function ExamPage() {
               và nói • Quay lại phòng thi để làm thêm bài thi thử
             </Typography>
           </Box>
+          
+          {gradingProgress.isGrading && (
+            <Box sx={{ mt: 2, p: 2, bgcolor: "info.light", borderRadius: 1 }}>
+              <Typography variant="body2" sx={{ color: "info.main", fontWeight: "medium" }}>
+                Đang gửi yêu cầu chấm điểm cho bài thi {gradingProgress.currentExamType}...
+              </Typography>
+              <Typography variant="caption" sx={{ color: "info.main" }}>
+                Tiến trình: {gradingProgress.current}/{gradingProgress.total}
+              </Typography>
+              <LinearProgress 
+                variant="determinate" 
+                value={(gradingProgress.current / gradingProgress.total) * 100}
+                sx={{ mt: 1 }}
+              />
+            </Box>
+          )}
         </DialogContent>
         <DialogActions sx={{ p: 3, gap: 1 }}>
           <Button
@@ -587,12 +671,12 @@ export default function ExamPage() {
             onClick={handleGradingRequest}
             variant="contained"
             startIcon={<School />}
-            disabled={gradingRequestMutation.isPending}
+            disabled={gradingProgress.isGrading}
             fullWidth
             sx={{ fontSize: "0.9rem" }}
           >
-            {gradingRequestMutation.isPending
-              ? "Đang yêu cầu..."
+            {gradingProgress.isGrading
+              ? `Đang gửi yêu cầu... (${gradingProgress.current}/${gradingProgress.total})`
               : "Yêu cầu chấm điểm"}
           </Button>
         </DialogActions>

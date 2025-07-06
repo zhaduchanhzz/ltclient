@@ -9,6 +9,8 @@ import {
   ExamsDetail,
   ExamSubmitRequest,
   ExamSubmitResponse,
+  GradingRequestDto,
+  GradingResponseDto,
   SimulationExam,
   TakeExamResponse,
   UserHistory,
@@ -152,10 +154,10 @@ export const useSubmitExamMutation = () => {
 
 export const useGradingRequestMutation = () => {
   return useMutation({
-    mutationFn: (data: { termId: number }) => {
+    mutationFn: (data: GradingRequestDto) => {
       return HttpClient.post<
-        { termId: number },
-        CommonResponse<{ message: string }>
+        GradingRequestDto,
+        CommonResponse<GradingResponseDto>
       >(API_PATH.GRADING_REQUEST, data);
     },
   });
