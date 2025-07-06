@@ -201,7 +201,7 @@ export default function ExamPage() {
     // Submit grading request for each WRITING and SPEAKING exam
     for (let i = 0; i < gradableExams.length; i++) {
       const exam = gradableExams[i];
-      
+
       // Update progress
       setGradingProgress({
         isGrading: true,
@@ -219,7 +219,10 @@ export default function ExamPage() {
       } catch (error) {
         failedCount++;
         errors.push(`${exam.examType} exam (ID: ${exam.id})`);
-        console.error(`Failed to submit grading request for ${exam.examType}:`, error);
+        console.error(
+          `Failed to submit grading request for ${exam.examType}:`,
+          error,
+        );
       }
     }
 
@@ -233,19 +236,19 @@ export default function ExamPage() {
     // Show result message and redirect
     if (successCount > 0 && failedCount === 0) {
       alert(
-        `Successfully submitted ${successCount} grading request${successCount > 1 ? 's' : ''}!`
+        `Successfully submitted ${successCount} grading request${successCount > 1 ? "s" : ""}!`,
       );
       // Redirect to homepage after successful grading request
-      router.push('/');
+      router.push("/");
     } else if (successCount > 0 && failedCount > 0) {
       alert(
-        `Partially successful: ${successCount} grading request${successCount > 1 ? 's' : ''} submitted, ${failedCount} failed.\nFailed exams: ${errors.join(', ')}`
+        `Partially successful: ${successCount} grading request${successCount > 1 ? "s" : ""} submitted, ${failedCount} failed.\nFailed exams: ${errors.join(", ")}`,
       );
       // Redirect to homepage even with partial success
-      router.push('/');
+      router.push("/");
     } else {
       alert(
-        `Failed to submit all grading requests. Please try again.\nFailed exams: ${errors.join(', ')}`
+        `Failed to submit all grading requests. Please try again.\nFailed exams: ${errors.join(", ")}`,
       );
     }
   };
@@ -646,17 +649,21 @@ export default function ExamPage() {
               và nói • Quay lại phòng thi để làm thêm bài thi thử
             </Typography>
           </Box>
-          
+
           {gradingProgress.isGrading && (
             <Box sx={{ mt: 2, p: 2, bgcolor: "info.light", borderRadius: 1 }}>
-              <Typography variant="body2" sx={{ color: "info.main", fontWeight: "medium" }}>
-                Đang gửi yêu cầu chấm điểm cho bài thi {gradingProgress.currentExamType}...
+              <Typography
+                variant="body2"
+                sx={{ color: "info.main", fontWeight: "medium" }}
+              >
+                Đang gửi yêu cầu chấm điểm cho bài thi{" "}
+                {gradingProgress.currentExamType}...
               </Typography>
               <Typography variant="caption" sx={{ color: "info.main" }}>
                 Tiến trình: {gradingProgress.current}/{gradingProgress.total}
               </Typography>
-              <LinearProgress 
-                variant="determinate" 
+              <LinearProgress
+                variant="determinate"
                 value={(gradingProgress.current / gradingProgress.total) * 100}
                 sx={{ mt: 1 }}
               />
