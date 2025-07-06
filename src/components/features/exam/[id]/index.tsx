@@ -230,15 +230,19 @@ export default function ExamPage() {
       total: 0,
     });
 
-    // Show result message
+    // Show result message and redirect
     if (successCount > 0 && failedCount === 0) {
       alert(
         `Successfully submitted ${successCount} grading request${successCount > 1 ? 's' : ''}!`
       );
+      // Redirect to homepage after successful grading request
+      router.push('/');
     } else if (successCount > 0 && failedCount > 0) {
       alert(
         `Partially successful: ${successCount} grading request${successCount > 1 ? 's' : ''} submitted, ${failedCount} failed.\nFailed exams: ${errors.join(', ')}`
       );
+      // Redirect to homepage even with partial success
+      router.push('/');
     } else {
       alert(
         `Failed to submit all grading requests. Please try again.\nFailed exams: ${errors.join(', ')}`
