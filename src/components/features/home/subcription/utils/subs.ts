@@ -2,7 +2,7 @@ import { useGetPackagesQuery } from "@/services/apis/package";
 import { PackageType, VipPackage } from "@/services/types/package";
 
 export type Subscription = {
-  id: string;
+  id: number;
   packageType: PackageType;
   title: string;
   price: number;
@@ -48,19 +48,8 @@ const transformPackageToSubscription = (
     { label: "Truy cập không giới hạn lượt thi", checked: true },
   ];
 
-  const getPackagePrefix = (type: PackageType): string => {
-    switch (type) {
-      case "DE_THI_VIP":
-        return "vip";
-      case "CHAM_TU_LUAN":
-        return "essay";
-      case "COMBO_UU_DAI":
-        return "combo";
-    }
-  };
-
   const baseSub: Omit<Subscription, "features" | "icon" | "saving"> = {
-    id: `${getPackagePrefix(pkg.packageType)}-${pkg.id}`,
+    id: pkg.id,
     packageType: pkg.packageType,
     title: pkg.name,
     price: pkg.price,
@@ -156,130 +145,3 @@ export const useSubscriptions = () => {
 };
 
 // Keeping these for reference of the structure, but they should not be used anymore
-// export const VIP_SUBSCRIPTIONS = [
-//   {
-//     id: "vip-7",
-//     type: "vip",
-//     title: "VIP 7 NGÀY",
-//     price: 40000,
-//     priceUnit: "VND",
-//     features: [
-//       { label: "Truy cập không giới hạn đề thi", checked: true },
-//       { label: "Truy cập không giới hạn lượt thi", checked: true },
-//       { label: "Thời gian", value: "7 ngày" },
-//     ],
-//     button: "Thanh toán ngay",
-//     icon: "\uD83D\uDCC5",
-//   },
-//   {
-//     id: "vip-30",
-//     type: "vip",
-//     title: "VIP 30 NGÀY",
-//     price: 50000,
-//     priceUnit: "VND",
-//     features: [
-//       { label: "Truy cập không giới hạn đề thi", checked: true },
-//       { label: "Truy cập không giới hạn lượt thi", checked: true },
-//       { label: "Thời gian", value: "30 ngày" },
-//       { label: "Tiết kiệm hơn", value: "250%" },
-//     ],
-//     button: "Thanh toán ngay",
-//     icon: "\uD83D\uDCC5",
-//   },
-//   {
-//     id: "vip-90",
-//     type: "vip",
-//     title: "VIP 90 NGÀY",
-//     price: 120000,
-//     priceUnit: "VND",
-//     features: [
-//       { label: "Truy cập không giới hạn đề thi", checked: true },
-//       { label: "Truy cập không giới hạn lượt thi", checked: true },
-//       { label: "Thời gian", value: "90 ngày" },
-//       { label: "Tiết kiệm hơn", value: "400%" },
-//     ],
-//     button: "Thanh toán ngay",
-//     icon: "\uD83D\uDCC5",
-//   },
-// ];
-
-// export const MARK_SUBSCRIPTIONS = [
-//   {
-//     id: "essay-1",
-//     type: "essay",
-//     title: "CHẤM TỰ LUẬN 1 LƯỢT",
-//     price: 40000,
-//     priceUnit: "VND",
-//     features: [
-//       { label: "Nhận điểm thi từng tiêu chí VSTEP", checked: true },
-//       { label: "Nhận phản hồi chi tiết từ giám khảo", checked: true },
-//       { label: "Thời gian nhận kết quả", value: "1-3 ngày" },
-//       { label: "Lượt đăng ký chấm tự luận", value: "1 lượt" },
-//     ],
-//     button: "Thanh toán ngay",
-//     icon: "\uD83D\uDC4C",
-//   },
-//   {
-//     id: "essay-5",
-//     type: "essay",
-//     title: "CHẤM TỰ LUẬN 5 LƯỢT",
-//     price: 150000,
-//     priceUnit: "VND",
-//     features: [
-//       { label: "Nhận điểm thi từng tiêu chí VSTEP", checked: true },
-//       { label: "Nhận phản hồi chi tiết từ giám khảo", checked: true },
-//       { label: "Thời gian nhận kết quả", value: "1-3 ngày" },
-//       { label: "Lượt đăng ký chấm tự luận", value: "5 lượt" },
-//       { label: "Tiết kiệm hơn", value: "130%" },
-//     ],
-//     button: "Thanh toán ngay",
-//     icon: "\uD83D\uDC4C",
-//   },
-//   {
-//     id: "essay-10",
-//     type: "essay",
-//     title: "CHẤM TỰ LUẬN 10 LƯỢT",
-//     price: 250000,
-//     priceUnit: "VND",
-//     features: [
-//       { label: "Nhận điểm thi từng tiêu chí VSTEP", checked: true },
-//       { label: "Nhận phản hồi chi tiết từ giám khảo", checked: true },
-//       { label: "Thời gian nhận kết quả", value: "1-3 ngày" },
-//       { label: "Lượt đăng ký chấm tự luận", value: "10 lượt" },
-//       { label: "Tiết kiệm hơn", value: "160%" },
-//     ],
-//     button: "Thanh toán ngay",
-//     icon: "\uD83D\uDC4C",
-//   },
-// ];
-
-// export const COMBO_SUBSCRIPTIONS = [
-//   {
-//     id: "combo-30-5",
-//     type: "combo",
-//     title: "ĐỀ VIP 30 NGÀY + CHẤM TỰ LUẬN 5 LƯỢT",
-//     price: 180000,
-//     priceUnit: "VND",
-//     features: [
-//       { label: "Toàn bộ quyền lợi gói đề thi VIP", checked: true },
-//       { label: "Toàn bộ quyền lợi gói chấm tự luận", checked: true },
-//       { label: "Tiết kiệm hơn", value: "200%" },
-//     ],
-//     button: "Thanh toán ngay",
-//     icon: "🚀",
-//   },
-//   {
-//     id: "combo-90-10",
-//     type: "combo",
-//     title: "ĐỀ VIP 90 NGÀY + CHẤM TỰ LUẬN 10 LƯỢT",
-//     price: 330000,
-//     priceUnit: "VND",
-//     features: [
-//       { label: "Toàn bộ quyền lợi gói đề thi VIP", checked: true },
-//       { label: "Toàn bộ quyền lợi gói chấm tự luận", checked: true },
-//       { label: "Tiết kiệm hơn", value: "275%" },
-//     ],
-//     button: "Thanh toán ngay",
-//     icon: "🚀",
-//   },
-// ];

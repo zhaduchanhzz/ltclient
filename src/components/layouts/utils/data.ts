@@ -8,7 +8,7 @@ export const navLinks: { href: string; name: string }[] = [
 ];
 
 export const articleMenuLinks: { href: string; name: string }[] = [
-  { name: "Tất cả bài viết", href: APP_ROUTE.VSTEP_ARTICLE },
+  { name: "Tất cả bài viết", href: APP_ROUTE.BLOG },
   { name: "VSTEP là gì", href: APP_ROUTE.WHAT_IS_VSTEP },
   { name: "Tìm hiểu về VSTEP", href: APP_ROUTE.LEARN_ABOUT_VSTEP },
   { name: "Lịch thi VSTEP", href: APP_ROUTE.EXAM_SCHEDULE },

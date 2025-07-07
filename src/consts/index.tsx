@@ -22,6 +22,11 @@ export const APP_LOCAL_STORAGE_KEY = {
   IS_AUTHENTICATED: "isAuthenticated",
 };
 
+export const APP_COOKIE_KEY = {
+  ACCESS_TOKEN: "access_token",
+  IS_AUTHENTICATED: "isAuthenticated",
+};
+
 export const SERVICES = [
   {
     title: "Phần mềm thi thử VSTEP",

@@ -41,7 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 # postman collection
-chinhphucvstep.postman_collection.json
+api-docs (2).json
 
 # cursor-rules
 .cursor/*

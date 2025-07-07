@@ -52,7 +52,7 @@ export const APP_ROUTE = {
   USER_SPEAKING: "/user/speaking",
   USER_WRITING: "/user/writing",
 
-  VSTEP_ARTICLE: "/vstep-article",
+  BLOG: "/blog",
 
   LEARN_ABOUT_VSTEP: "/learn-about-vstep",
 

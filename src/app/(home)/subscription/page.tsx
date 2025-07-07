@@ -1,11 +1,10 @@
 import Subcription from "@/components/features/home/subcription";
+import { constructMetadata } from "@/utils/metadata";
 
-import { Metadata } from "next";
-
-export const metadata: Metadata = {
+export const metadata = constructMetadata({
   title: "Gói ôn luyện và chấm thi VSTEP",
-  description: "Gói ôn luyện và chấm thi VSTEP",
-};
+  description: "Các gói ôn luyện VSTEP từ cơ bản đến nâng cao. Chấm thi Speaking & Writing bằng AI. Cam kết đạu chứng chỉ hoặc hoàn tiền.",
+});
 
 type SubcriptionPageProps = {};
 

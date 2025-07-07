@@ -17,6 +17,47 @@ export type ExamDetailRequest = {
   examId: string;
 };
 
+export type CreateExamRequest = {
+  examType: "LISTENING" | "READING" | "WRITING" | "SPEAKING";
+  title: string;
+  description: string;
+  isNeedVip: boolean;
+  questions: CreateExamQuestion[];
+};
+
+export type CreateExamQuestion = {
+  questionText: string;
+  audioFile?: string; // Base64 audio for LISTENING exams
+  answers?: CreateExamAnswer[]; // Optional - not used for SPEAKING
+};
+
+export type CreateExamAnswer = {
+  answerText: string;
+  isCorrect: boolean;
+};
+
+export type ExamResponse = {
+  id: number;
+  examType: "LISTENING" | "READING" | "WRITING" | "SPEAKING";
+  title: string;
+  description: string;
+  isNeedVip: boolean;
+  questions: ExamQuestionResponse[];
+};
+
+export type ExamQuestionResponse = {
+  id: number;
+  questionText: string;
+  audioFile?: string; // Base64 audio for LISTENING exams
+  answers?: ExamAnswerResponse[]; // Optional - not used for SPEAKING
+};
+
+export type ExamAnswerResponse = {
+  id: number;
+  answerText: string;
+  isCorrect: boolean;
+};
+
 export type Exam = {
   id: string;
   name: string;
@@ -146,12 +187,9 @@ export type SimulationSession = {
 };
 
 export type ExamSubmitRequest = {
-  request: {
-    examId: number;
-    responses: Record<string, string>;
-    termId: number;
-    speakingFile?: string;
-  };
+  examId: number;
+  responses: Record<string, string>;
+  termId: number;
   speakingFile?: string;
 };
 
@@ -178,4 +216,18 @@ export type ExamTermSession = {
   startTime: number;
   timeLimit: number;
   isCompleted: boolean;
+};
+
+export type GradingRequestDto = {
+  termId: number;
+  examId: number;
+};
+
+export type GradingResponseDto = {
+  requestId: number;
+  termId: number;
+  examId: number;
+  userId: number;
+  status: string;
+  requestedAt: string;
 };

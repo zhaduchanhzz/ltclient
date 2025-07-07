@@ -1,14 +1,33 @@
 "use client";
 
 import {
+  useCreateExamMutation,
+  useGetAllExamsQuery,
+} from "@/services/apis/exam";
+import { CreateExamRequest } from "@/services/types/exam";
+import {
+  Add as AddIcon,
+  ExpandMore as ExpandMoreIcon,
+  Remove as RemoveIcon,
+  Search as SearchIcon,
+} from "@mui/icons-material";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   Button,
   Card,
+  Checkbox,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
+  FormControlLabel,
   IconButton,
+  MenuItem,
   Paper,
   Stack,
   Table,
@@ -20,79 +39,72 @@ import {
   TableRow,
   TextField,
   Typography,
-  Chip,
-  MenuItem,
+  CircularProgress,
 } from "@mui/material";
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Search as SearchIcon,
-} from "@mui/icons-material";
 import { useState } from "react";
 
-interface Exam {
-  id: string;
+interface ExamFormData {
+  id?: number;
   title: string;
-  type: "Speaking" | "Writing";
-  difficulty: "Easy" | "Medium" | "Hard";
-  duration: number; // in minutes
-  status: "draft" | "published" | "archived";
-  createdAt: string;
-}
-
-const mockExams: Exam[] = [
-  {
-    id: "1",
-    title: "TOEIC Practice Test 1",
-    type: "Speaking",
-    difficulty: "Medium",
-    duration: 120,
-    status: "published",
-    createdAt: "2024-01-01",
-  },
-  {
-    id: "2",
-    title: "IELTS Academic Writing",
-    type: "Writing",
-    difficulty: "Hard",
-    duration: 60,
-    status: "published",
-    createdAt: "2024-01-02",
-  },
-  {
-    id: "3",
-    title: "VSTEP Reading Test",
-    type: "Speaking",
-    difficulty: "Easy",
-    duration: 45,
-    status: "draft",
-    createdAt: "2024-01-03",
-  },
-];
-
-interface FormData {
-  title: string;
-  type: Exam["type"];
-  difficulty: Exam["difficulty"];
-  duration: number;
-  status: Exam["status"];
+  examType: "LISTENING" | "READING" | "WRITING" | "SPEAKING";
+  description: string;
+  isNeedVip: boolean;
+  questions: Array<{
+    questionText: string;
+    audioFile?: string;
+    answers?: Array<{
+      answerText: string;
+      isCorrect: boolean;
+    }>;
+  }>;
 }
 
 const ExamsPage = () => {
-  const [exams, setExams] = useState<Exam[]>(mockExams);
+  const { data: examsResponse, isLoading, error } = useGetAllExamsQuery(true);
+  const createExamMutation = useCreateExamMutation();
+
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [searchQuery, setSearchQuery] = useState("");
   const [openDialog, setOpenDialog] = useState(false);
-  const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<ExamFormData>({
     title: "",
-    type: "Speaking",
-    difficulty: "Medium",
-    duration: 60,
-    status: "draft",
+    examType: "LISTENING",
+    description: "",
+    isNeedVip: false,
+    questions: [getInitialQuestionForType("LISTENING")],
   });
+
+  function getInitialQuestionForType(examType: ExamFormData["examType"]) {
+    switch (examType) {
+      case "LISTENING":
+        return {
+          questionText: "",
+          audioFile: "",
+          answers: [
+            { answerText: "", isCorrect: false },
+            { answerText: "", isCorrect: false },
+          ],
+        };
+      case "SPEAKING":
+      case "WRITING":
+        return {
+          questionText: "",
+          // No answers for speaking and writing (users provide text/audio responses)
+        };
+      case "READING":
+      default:
+        return {
+          questionText: "",
+          answers: [
+            { answerText: "", isCorrect: false },
+            { answerText: "", isCorrect: false },
+          ],
+        };
+    }
+  }
+
+  const exams = examsResponse?.data || [];
 
   const handleChangePage = (_: unknown, newPage: number) => {
     setPage(newPage);
@@ -114,85 +126,173 @@ const ExamsPage = () => {
     exam.title.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const handleOpenDialog = (exam?: Exam) => {
-    if (exam) {
-      setSelectedExam(exam);
-      setFormData({
-        title: exam.title,
-        type: exam.type,
-        difficulty: exam.difficulty,
-        duration: exam.duration,
-        status: exam.status,
-      });
-    } else {
-      setSelectedExam(null);
-      setFormData({
-        title: "",
-        type: "Speaking",
-        difficulty: "Medium",
-        duration: 60,
-        status: "draft",
-      });
-    }
-
+  const handleOpenDialog = () => {
+    const initialQuestion = getInitialQuestionForType("LISTENING");
+    setFormData({
+      title: "",
+      examType: "LISTENING",
+      description: "",
+      isNeedVip: false,
+      questions: [initialQuestion],
+    });
     setOpenDialog(true);
   };
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
-    setSelectedExam(null);
   };
 
-  const handleSubmit = () => {
-    if (selectedExam) {
-      setExams(
-        exams.map((exam) =>
-          exam.id === selectedExam.id ? { ...exam, ...formData } : exam,
-        ),
-      );
-    } else {
-      const newExam: Exam = {
-        id: crypto.randomUUID(),
-        ...formData,
-        createdAt: new Date().toISOString().split("T")[0],
+  const handleSubmit = async () => {
+    try {
+      const submitData: CreateExamRequest = {
+        title: formData.title,
+        examType: formData.examType,
+        description: formData.description,
+        isNeedVip: formData.isNeedVip,
+        questions: formData.questions,
       };
-      setExams([...exams, newExam]);
-    }
 
-    handleCloseDialog();
-  };
-
-  const handleDelete = (id: string) => {
-    if (window.confirm("Are you sure you want to delete this exam?")) {
-      setExams(exams.filter((exam) => exam.id !== id));
+      await createExamMutation.mutateAsync(submitData);
+      handleCloseDialog();
+      // TODO: Refresh the exam list after successful creation
+    } catch (error) {
+      console.error("Error creating exam:", error);
     }
   };
 
-  const getDifficultyColor = (difficulty: Exam["difficulty"]) => {
-    switch (difficulty) {
-      case "Easy":
+  const addQuestion = () => {
+    const newQuestion = getInitialQuestionForType(formData.examType);
+    setFormData({
+      ...formData,
+      questions: [...formData.questions, newQuestion],
+    });
+  };
+
+  const removeQuestion = (questionIndex: number) => {
+    setFormData({
+      ...formData,
+      questions: formData.questions.filter(
+        (_, index) => index !== questionIndex,
+      ),
+    });
+  };
+
+  const updateQuestion = (
+    questionIndex: number,
+    field: string,
+    value: string,
+  ) => {
+    const updatedQuestions = [...formData.questions];
+    updatedQuestions[questionIndex] = {
+      ...updatedQuestions[questionIndex],
+      [field]: value,
+    };
+    setFormData({ ...formData, questions: updatedQuestions });
+  };
+
+  const handleAudioFileUpload = (
+    questionIndex: number,
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+
+    if (file) {
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        const base64 = e.target?.result as string;
+        updateQuestion(questionIndex, "audioFile", base64);
+      };
+
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const addAnswer = (questionIndex: number) => {
+    const updatedQuestions = [...formData.questions];
+
+    if (updatedQuestions[questionIndex].answers) {
+      updatedQuestions[questionIndex].answers!.push({
+        answerText: "",
+        isCorrect: false,
+      });
+      setFormData({ ...formData, questions: updatedQuestions });
+    }
+  };
+
+  const removeAnswer = (questionIndex: number, answerIndex: number) => {
+    const updatedQuestions = [...formData.questions];
+
+    if (updatedQuestions[questionIndex].answers) {
+      updatedQuestions[questionIndex].answers = updatedQuestions[
+        questionIndex
+      ].answers!.filter((_, index) => index !== answerIndex);
+      setFormData({ ...formData, questions: updatedQuestions });
+    }
+  };
+
+  const updateAnswer = (
+    questionIndex: number,
+    answerIndex: number,
+    field: string,
+    value: string | boolean,
+  ) => {
+    const updatedQuestions = [...formData.questions];
+
+    if (updatedQuestions[questionIndex].answers) {
+      updatedQuestions[questionIndex].answers![answerIndex] = {
+        ...updatedQuestions[questionIndex].answers![answerIndex],
+        [field]: value,
+      };
+      setFormData({ ...formData, questions: updatedQuestions });
+    }
+  };
+
+  const getStatusColor = (isNeedVip: boolean) => {
+    return isNeedVip ? "warning" : "success";
+  };
+
+  const getExamTypeColor = (examType: string) => {
+    switch (examType) {
+      case "LISTENING":
+        return "info";
+      case "READING":
         return "success";
-      case "Medium":
+      case "WRITING":
         return "warning";
-      case "Hard":
+      case "SPEAKING":
         return "error";
       default:
         return "default";
     }
   };
 
-  const getStatusColor = (status: Exam["status"]) => {
-    switch (status) {
-      case "published":
-        return "success";
-      case "draft":
-        return "warning";
-      case "archived":
-        return "default";
-      default:
-        return "default";
-    }
-  };
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          p: 3,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "400px",
+        }}
+      >
+        <CircularProgress />
+        <Typography sx={{ ml: 2 }}>Đang tải đề thi...</Typography>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography color="error">
+          Lỗi tải đề thi. Vui lòng thử lại.
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ p: 3 }}>
@@ -203,14 +303,14 @@ const ExamsPage = () => {
         sx={{ mb: 3 }}
       >
         <Typography variant="h4" component="h1" sx={{ fontWeight: "bold" }}>
-          Exam Management
+          Quản lý đề thi
         </Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => handleOpenDialog()}
         >
-          Add Exam
+          Thêm đề thi
         </Button>
       </Stack>
 
@@ -219,7 +319,7 @@ const ExamsPage = () => {
           <TextField
             fullWidth
             variant="outlined"
-            placeholder="Search exams..."
+            placeholder="Tìm kiếm đề thi..."
             value={searchQuery}
             onChange={handleSearch}
             InputProps={{
@@ -235,13 +335,12 @@ const ExamsPage = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Title</TableCell>
-                <TableCell>Type</TableCell>
-                <TableCell>Difficulty</TableCell>
-                <TableCell>Duration</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Created At</TableCell>
-                <TableCell align="right">Actions</TableCell>
+                <TableCell>Tiêu đề</TableCell>
+                <TableCell>Loại đề thi</TableCell>
+                <TableCell>Mô tả</TableCell>
+                <TableCell>Câu hỏi</TableCell>
+                <TableCell>Yêu cầu VIP</TableCell>
+                <TableCell align="right">Hành động</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -251,39 +350,27 @@ const ExamsPage = () => {
                   <TableRow key={exam.id}>
                     <TableCell>{exam.title}</TableCell>
                     <TableCell>
-                      <Chip label={exam.type} color="primary" size="small" />
-                    </TableCell>
-                    <TableCell>
                       <Chip
-                        label={exam.difficulty}
-                        color={getDifficultyColor(exam.difficulty)}
+                        label={exam.examType}
+                        color={getExamTypeColor(exam.examType)}
                         size="small"
                       />
                     </TableCell>
-                    <TableCell>{exam.duration} minutes</TableCell>
+                    <TableCell>
+                      {exam.description.length > 50
+                        ? `${exam.description.substring(0, 50)}...`
+                        : exam.description}
+                    </TableCell>
+                    <TableCell>{exam.questions.length} câu hỏi</TableCell>
                     <TableCell>
                       <Chip
-                        label={exam.status.toUpperCase()}
-                        color={getStatusColor(exam.status)}
+                        label={exam.isNeedVip ? "VIP" : "FREE"}
+                        color={getStatusColor(exam.isNeedVip)}
                         size="small"
                       />
                     </TableCell>
-                    <TableCell>{exam.createdAt}</TableCell>
                     <TableCell align="right">
-                      <IconButton
-                        color="primary"
-                        onClick={() => handleOpenDialog(exam)}
-                        size="small"
-                      >
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton
-                        color="error"
-                        onClick={() => handleDelete(exam.id)}
-                        size="small"
-                      >
-                        <DeleteIcon />
-                      </IconButton>
+                      <Chip label="View Only" size="small" variant="outlined" />
                     </TableCell>
                   </TableRow>
                 ))}
@@ -304,87 +391,230 @@ const ExamsPage = () => {
       <Dialog
         open={openDialog}
         onClose={handleCloseDialog}
-        maxWidth="sm"
+        maxWidth="md"
         fullWidth
       >
-        <DialogTitle>{selectedExam ? "Edit Exam" : "Add New Exam"}</DialogTitle>
+        <DialogTitle>Thêm đề thi mới</DialogTitle>
         <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
+          <Stack spacing={3} sx={{ mt: 1 }}>
             <TextField
               fullWidth
-              label="Title"
+              label="Tiêu đề"
               value={formData.title}
               onChange={(e) =>
                 setFormData({ ...formData, title: e.target.value })
               }
             />
+
             <TextField
               fullWidth
               select
-              label="Type"
-              value={formData.type}
-              onChange={(e) =>
+              label="Loại đề thi"
+              value={formData.examType}
+              onChange={(e) => {
+                const newExamType = e.target.value as ExamFormData["examType"];
+                const initialQuestion = getInitialQuestionForType(newExamType);
                 setFormData({
                   ...formData,
-                  type: e.target.value as Exam["type"],
-                })
-              }
+                  examType: newExamType,
+                  questions: [initialQuestion],
+                });
+              }}
             >
-              <MenuItem value="TOEIC">TOEIC</MenuItem>
-              <MenuItem value="IELTS">IELTS</MenuItem>
-              <MenuItem value="VSTEP">VSTEP</MenuItem>
+              <MenuItem value="LISTENING">LISTENING</MenuItem>
+              <MenuItem value="READING">READING</MenuItem>
+              <MenuItem value="WRITING">WRITING</MenuItem>
+              <MenuItem value="SPEAKING">SPEAKING</MenuItem>
             </TextField>
+
             <TextField
               fullWidth
-              select
-              label="Difficulty"
-              value={formData.difficulty}
+              multiline
+              rows={3}
+              label="Mô tả"
+              value={formData.description}
               onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  difficulty: e.target.value as Exam["difficulty"],
-                })
+                setFormData({ ...formData, description: e.target.value })
               }
-            >
-              <MenuItem value="Easy">Easy</MenuItem>
-              <MenuItem value="Medium">Medium</MenuItem>
-              <MenuItem value="Hard">Hard</MenuItem>
-            </TextField>
-            <TextField
-              fullWidth
-              type="number"
-              label="Duration (minutes)"
-              value={formData.duration}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  duration: parseInt(e.target.value, 10) || 0,
-                })
-              }
-              inputProps={{ min: 0 }}
             />
-            <TextField
-              fullWidth
-              select
-              label="Status"
-              value={formData.status}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  status: e.target.value as Exam["status"],
-                })
+
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={formData.isNeedVip}
+                  onChange={(e) =>
+                    setFormData({ ...formData, isNeedVip: e.target.checked })
+                  }
+                />
               }
-            >
-              <MenuItem value="draft">Draft</MenuItem>
-              <MenuItem value="published">Published</MenuItem>
-              <MenuItem value="archived">Archived</MenuItem>
-            </TextField>
+              label="VIP Required"
+            />
+
+            <Divider />
+
+            <Box>
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+              >
+                <Typography variant="h6">Câu hỏi</Typography>
+                <Button
+                  variant="outlined"
+                  startIcon={<AddIcon />}
+                  onClick={addQuestion}
+                  size="small"
+                >
+                  Thêm câu hỏi
+                </Button>
+              </Stack>
+
+              {formData.questions.map((question, questionIndex) => (
+                <Accordion key={questionIndex} sx={{ mt: 2 }}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Stack
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      sx={{ width: "100%" }}
+                    >
+                      <Typography>
+                        Câu hỏi {questionIndex + 1}:{" "}
+                        {question.questionText || "Chưa có câu hỏi"}
+                      </Typography>
+                      {formData.questions.length > 1 && (
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeQuestion(questionIndex);
+                          }}
+                        >
+                          <RemoveIcon />
+                        </IconButton>
+                      )}
+                    </Stack>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Stack spacing={2}>
+                      <TextField
+                        fullWidth
+                        label="Câu hỏi"
+                        value={question.questionText}
+                        onChange={(e) =>
+                          updateQuestion(
+                            questionIndex,
+                            "questionText",
+                            e.target.value,
+                          )
+                        }
+                        multiline
+                        rows={2}
+                      />
+
+                      {formData.examType === "LISTENING" && (
+                        <TextField
+                          fullWidth
+                          label="File âm thanh"
+                          value={question.audioFile}
+                          onChange={(e) =>
+                            handleAudioFileUpload(
+                              questionIndex,
+                              e as React.ChangeEvent<HTMLInputElement>,
+                            )
+                          }
+                          InputProps={{
+                            type: "file",
+                          }}
+                        />
+                      )}
+
+                      {/* Show answers section only for LISTENING and READING */}
+                      {(formData.examType === "LISTENING" ||
+                        formData.examType === "READING") && (
+                        <>
+                          <Stack
+                            direction="row"
+                            justifyContent="space-between"
+                            alignItems="center"
+                          >
+                            <Typography variant="subtitle2">
+                              Câu trả lời
+                            </Typography>
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              startIcon={<AddIcon />}
+                              onClick={() => addAnswer(questionIndex)}
+                            >
+                              Thêm câu trả lời
+                            </Button>
+                          </Stack>
+
+                          {question.answers?.map((answer, answerIndex) => (
+                            <Stack
+                              key={answerIndex}
+                              direction="row"
+                              spacing={2}
+                              alignItems="center"
+                            >
+                              <TextField
+                                fullWidth
+                                label={`Câu trả lời ${answerIndex + 1}`}
+                                value={answer.answerText}
+                                onChange={(e) =>
+                                  updateAnswer(
+                                    questionIndex,
+                                    answerIndex,
+                                    "answerText",
+                                    e.target.value,
+                                  )
+                                }
+                              />
+                              <FormControlLabel
+                                control={
+                                  <Checkbox
+                                    checked={answer.isCorrect}
+                                    onChange={(e) =>
+                                      updateAnswer(
+                                        questionIndex,
+                                        answerIndex,
+                                        "isCorrect",
+                                        e.target.checked,
+                                      )
+                                    }
+                                  />
+                                }
+                                label="Đúng"
+                              />
+                              {question.answers?.length &&
+                                question.answers?.length > 2 && (
+                                  <IconButton
+                                    size="small"
+                                    color="error"
+                                    onClick={() =>
+                                      removeAnswer(questionIndex, answerIndex)
+                                    }
+                                  >
+                                    <RemoveIcon />
+                                  </IconButton>
+                                )}
+                            </Stack>
+                          ))}
+                        </>
+                      )}
+                    </Stack>
+                  </AccordionDetails>
+                </Accordion>
+              ))}
+            </Box>
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleCloseDialog}>Hủy</Button>
           <Button variant="contained" onClick={handleSubmit}>
-            {selectedExam ? "Update" : "Add"}
+            Tạo đề thi
           </Button>
         </DialogActions>
       </Dialog>

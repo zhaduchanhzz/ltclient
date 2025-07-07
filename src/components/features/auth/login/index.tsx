@@ -6,7 +6,8 @@ import BasicTypography from "@/components/base/MaterialUI-Basic/Typography";
 import HookForm from "@/components/base/MaterialUI-HookForm/HookForm";
 import TextFieldHookForm from "@/components/base/MaterialUI-HookForm/TextFieldHookForm/Index";
 import DarkNightChange from "@/components/common/DarkNightChange";
-import { APP_LOCAL_STORAGE_KEY } from "@/consts";
+import { APP_COOKIE_KEY } from "@/consts";
+import CookieStorage from "@/utils/cookie-storage";
 import { APP_ROUTE } from "@/consts/app-route";
 import { useAppContextHandle } from "@/contexts/AppContext";
 import { useLoginMutation, useProfileQuery } from "@/services/apis/auth";
@@ -15,6 +16,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { loginValidate } from "./utils/schema";
+import { CircularProgress } from "@mui/material";
 
 const LoginPage = () => {
   const { push } = useRouter();
@@ -27,6 +29,9 @@ const LoginPage = () => {
     defaultValues: loginValidate().getDefault(),
   });
 
+  // Get loading state from mutation
+  const isLoading = loginMutation.isPending;
+
   const onFinish = (data: LoginRequest) => {
     loginMutation.mutate(data, {
       onSuccess: (response) => {
@@ -37,14 +42,11 @@ const LoginPage = () => {
               severity: "success",
             },
           });
-          localStorage.setItem(
-            APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN,
+          CookieStorage.set(
+            APP_COOKIE_KEY.ACCESS_TOKEN,
             response.data.accessToken,
           );
-          localStorage.setItem(
-            APP_LOCAL_STORAGE_KEY.IS_AUTHENTICATED,
-            "true",
-          );
+          CookieStorage.setBoolean(APP_COOKIE_KEY.IS_AUTHENTICATED, true);
           profileQuery.refetch();
           push(APP_ROUTE.HOME);
           return;
@@ -72,7 +74,15 @@ const LoginPage = () => {
 
   return (
     <HookForm form={form} onFinish={onFinish}>
-      <BasicGrid container spacing={4} sx={{ width: 450 }}>
+      <BasicGrid
+        container
+        spacing={4}
+        sx={{
+          width: { xs: "100%", sm: 450 },
+          maxWidth: "100%",
+          px: { xs: 2, sm: 0 },
+        }}
+      >
         <BasicGrid
           container
           size={{ xs: 12 }}
@@ -99,6 +109,7 @@ const LoginPage = () => {
               id="login-form-username"
               name="username"
               placeholder="Enter Username"
+              disabled={isLoading}
             />
           </BasicGrid>
         </BasicGrid>
@@ -112,6 +123,8 @@ const LoginPage = () => {
               id="login-form-password"
               name="password"
               placeholder="Enter Password"
+              autoComplete="off"
+              disabled={isLoading}
             />
           </BasicGrid>
         </BasicGrid>
@@ -127,8 +140,14 @@ const LoginPage = () => {
             variant="contained"
             fullWidth
             size="large"
+            disabled={isLoading}
+            startIcon={
+              isLoading ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : undefined
+            }
           >
-            Đăng nhập
+            {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
           </BasicButton>
         </BasicGrid>
         <BasicGrid size={{ xs: 12 }}>

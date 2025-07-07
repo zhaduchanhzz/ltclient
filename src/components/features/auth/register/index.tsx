@@ -15,6 +15,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { registerValidate } from "./utils/schema";
+import { CircularProgress } from "@mui/material";
 
 type RegisterPageProps = {};
 
@@ -27,6 +28,9 @@ const RegisterPage = (_: RegisterPageProps) => {
     resolver: yupResolver(registerValidate()),
     defaultValues: registerValidate().getDefault(),
   });
+
+  // Get loading state from mutation
+  const isLoading = registerMutation.isPending;
 
   const onFinish = (data: RegisterRequest) => {
     registerMutation.mutate(data, {
@@ -70,7 +74,15 @@ const RegisterPage = (_: RegisterPageProps) => {
       onFinish={onFinish}
       onError={() => {}}
     >
-      <BasicGrid container spacing={4} sx={{ width: 450 }}>
+      <BasicGrid
+        container
+        spacing={4}
+        sx={{
+          width: { xs: "100%", sm: 450 },
+          maxWidth: "100%",
+          px: { xs: 2, sm: 0 },
+        }}
+      >
         <BasicGrid
           container
           size={{ xs: 12 }}
@@ -96,6 +108,7 @@ const RegisterPage = (_: RegisterPageProps) => {
               id="register-form-fullname"
               name="fullName"
               placeholder="Nhập tên người dùng"
+              disabled={isLoading}
             />
           </BasicGrid>
         </BasicGrid>
@@ -108,6 +121,7 @@ const RegisterPage = (_: RegisterPageProps) => {
               id="register-form-username"
               name="username"
               placeholder="Nhập tài khoản"
+              disabled={isLoading}
             />
           </BasicGrid>
         </BasicGrid>
@@ -120,6 +134,7 @@ const RegisterPage = (_: RegisterPageProps) => {
               id="register-form-email"
               name="email"
               placeholder="Nhập địa chỉ Email"
+              disabled={isLoading}
             />
           </BasicGrid>
         </BasicGrid>
@@ -132,6 +147,7 @@ const RegisterPage = (_: RegisterPageProps) => {
               id="register-form-phone-number"
               name="phoneNumber"
               placeholder="Nhập số điện thoại"
+              disabled={isLoading}
             />
           </BasicGrid>
         </BasicGrid>
@@ -145,6 +161,7 @@ const RegisterPage = (_: RegisterPageProps) => {
               name="password"
               type="password"
               placeholder="Nhập mật khẩu"
+              disabled={isLoading}
             />
           </BasicGrid>
         </BasicGrid>
@@ -159,8 +176,14 @@ const RegisterPage = (_: RegisterPageProps) => {
             variant="contained"
             fullWidth
             size="large"
+            disabled={isLoading}
+            startIcon={
+              isLoading ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : undefined
+            }
           >
-            Đăng ký
+            {isLoading ? "Đang đăng ký..." : "Đăng ký"}
           </BasicButton>
         </BasicGrid>
         <BasicGrid size={{ xs: 12 }}>

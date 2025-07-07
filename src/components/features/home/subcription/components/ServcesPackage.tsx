@@ -20,6 +20,14 @@ type ServcesPackageProps = {
 };
 
 const ServcesPackage = ({ id }: ServcesPackageProps) => {
+  const handleScrollToPriceList = () => {
+    const el = document.getElementById("gia-goi-dich-vu-vstep");
+
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
     <Box sx={{ minHeight: "100vh", py: 6 }} id={id}>
       <Typography
@@ -65,7 +73,6 @@ const ServcesPackage = ({ id }: ServcesPackageProps) => {
               display: "flex",
               flexDirection: "column",
               alignItems: "stretch",
-              // height: "100%",
             }}
           >
             <CardContent sx={{ p: 0 }}>
@@ -132,6 +139,7 @@ const ServcesPackage = ({ id }: ServcesPackageProps) => {
                   color: "#fff",
                 },
               }}
+              onClick={handleScrollToPriceList}
             >
               {pkg.button}
             </Button>

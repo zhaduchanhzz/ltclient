@@ -15,7 +15,7 @@ import { navLinks } from "../utils/data";
 import ArticleMenuPopper from "./ArticleMenuPopper";
 import DrawerMobile from "./DrawerMobile";
 import UserMenuPopper from "./UserMenuPopper";
-import LocalStorage from "@/utils/local-storage";
+import CookieStorage from "@/utils/cookie-storage";
 import { APP_LOCAL_STORAGE_KEY } from "@/consts";
 
 const Header = () => {
@@ -27,8 +27,6 @@ const Header = () => {
   const toggleDrawer = () => {
     setDrawerOpen(!drawerOpen);
   };
-
-
 
   return (
     <BasicBox
@@ -79,7 +77,7 @@ const Header = () => {
                       variant="body2"
                       component="span"
                       onClick={() => {
-                        if (nav.href === APP_ROUTE.EXAM_ROOM && !LocalStorage.get(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN)) {
+                        if (nav.href === APP_ROUTE.EXAM_ROOM && !CookieStorage.get(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN)) {
                           push(APP_ROUTE.LOGIN);
                         } else {
                           push(nav.href);

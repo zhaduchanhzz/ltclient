@@ -17,8 +17,8 @@ import { useRouter } from "next/navigation";
 import { Fragment, SyntheticEvent, useEffect, useRef, useState } from "react";
 import { guestMenuLinks, userMenuLinks } from "../utils/data";
 import BasicTypography from "@/components/base/MaterialUI-Basic/Typography";
-import { APP_LOCAL_STORAGE_KEY } from "@/consts";
-import LocalStorage from "@/utils/local-storage";
+import { APP_COOKIE_KEY } from "@/consts";
+import CookieStorage from "@/utils/cookie-storage";
 
 type UserMenuPopperProps = {};
 
@@ -33,7 +33,7 @@ const UserMenuPopper = (_: UserMenuPopperProps) => {
   const router = useRouter();
 
   const isAuthenticated = Boolean(
-    LocalStorage.get(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN),
+    CookieStorage.get(APP_COOKIE_KEY.ACCESS_TOKEN),
   );
 
   useEffect(() => {
@@ -66,7 +66,8 @@ const UserMenuPopper = (_: UserMenuPopperProps) => {
   const handleLogout = (event: SyntheticEvent) => {
     handleCloseUserMenu(event);
 
-    LocalStorage.remove(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN);
+    CookieStorage.remove(APP_COOKIE_KEY.ACCESS_TOKEN);
+    CookieStorage.remove(APP_COOKIE_KEY.IS_AUTHENTICATED);
     // profileQuery.refetch();
     setOpenAlert(true);
 

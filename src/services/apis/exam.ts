@@ -3,11 +3,14 @@ import { CommonResponse } from "@/types/common";
 import HttpClient from "@/utils/axios-config";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
+  CreateExamRequest,
   Exam,
   ExamFilterParams,
   ExamsDetail,
   ExamSubmitRequest,
   ExamSubmitResponse,
+  GradingRequestDto,
+  GradingResponseDto,
   SimulationExam,
   TakeExamResponse,
   UserHistory,
@@ -54,8 +57,11 @@ export const useGetFilteredExamsQuery = (
 
 export const useCreateExamMutation = () => {
   return useMutation({
-    mutationFn: (data: Exam) => {
-      return HttpClient.post<Exam, CommonResponse<Exam>>(API_PATH.EXAMS, data);
+    mutationFn: (data: CreateExamRequest) => {
+      return HttpClient.post<CreateExamRequest, CommonResponse<Exam>>(
+        API_PATH.EXAMS,
+        data,
+      );
     },
   });
 };
@@ -142,6 +148,17 @@ export const useSubmitExamMutation = () => {
         ExamSubmitRequest,
         CommonResponse<ExamSubmitResponse>
       >(API_PATH.EXAMS + "/submit", data);
+    },
+  });
+};
+
+export const useGradingRequestMutation = () => {
+  return useMutation({
+    mutationFn: (data: GradingRequestDto) => {
+      return HttpClient.post<
+        GradingRequestDto,
+        CommonResponse<GradingResponseDto>
+      >(API_PATH.GRADING_REQUEST, data);
     },
   });
 };

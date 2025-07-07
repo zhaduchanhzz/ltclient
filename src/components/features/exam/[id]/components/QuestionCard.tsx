@@ -7,7 +7,6 @@ import {
   FormControl,
   FormControlLabel,
   FormGroup,
-  FormLabel,
   LinearProgress,
   Paper,
   Radio,
@@ -86,6 +85,61 @@ export default function QuestionCard({
     }
   }, [currentQuestion, session.currentExamType]);
 
+  // Reset audio recording state when question changes for SPEAKING
+  useEffect(() => {
+    if (session.currentExamType === "SPEAKING") {
+      // Stop any ongoing recording
+      if (
+        mediaRecorder.current &&
+        mediaRecorder.current.state === "recording"
+      ) {
+        mediaRecorder.current.stop();
+      }
+
+      // Check if there's existing audio for this question
+      const existingAudio = session.answers[currentQuestion.id]?.[0];
+
+      if (existingAudio) {
+        // Preserve existing audio for review
+        try {
+          // Convert base64 back to blob URL for playback
+          const byteCharacters = atob(existingAudio);
+          const byteNumbers = new Array(byteCharacters.length);
+
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+
+          const byteArray = new Uint8Array(byteNumbers);
+          const audioBlob = new Blob([byteArray], { type: "audio/mp3" });
+          const url = URL.createObjectURL(audioBlob);
+
+          setAudioURL(url);
+        } catch (error) {
+          console.error(
+            "Error recreating audio URL from existing data:",
+            error,
+          );
+          setAudioURL(null);
+        }
+      } else {
+        // Reset audio state for new question without existing audio
+        setAudioURL((prevAudioURL) => {
+          // Clear previous audio URL and cleanup
+          if (prevAudioURL) {
+            URL.revokeObjectURL(prevAudioURL);
+          }
+
+          return null;
+        });
+      }
+
+      // Always reset recording state
+      setIsRecording(false);
+      audioChunks.current = [];
+    }
+  }, [currentQuestion.id, session.currentExamType, session.answers]);
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -144,13 +198,13 @@ export default function QuestionCard({
               variant="h6"
               sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}
             >
-              <VolumeUp /> Listen to the audio and answer the question
+              <VolumeUp /> Nghe đoạn âm thanh và trả lời câu hỏi
             </Typography>
             {audioSrc && (
               <Box sx={{ mb: 2 }}>
                 <audio controls style={{ width: "100%" }}>
                   <source src={audioSrc} type="audio/mp3" />
-                  Your browser does not support the audio element.
+                  Trình duyệt của bạn không hỗ trợ phát âm thanh.
                 </audio>
               </Box>
             )}
@@ -236,7 +290,9 @@ export default function QuestionCard({
               {audioURL && (
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="caption" color="success.main">
-                    ✓ Recording saved successfully
+                    {session.answers[currentQuestion.id]?.[0]
+                      ? "✓ Audio available for review (will be submitted when you navigate)"
+                      : "✓ Recording saved successfully"}
                   </Typography>
                 </Box>
               )}
@@ -264,18 +320,10 @@ export default function QuestionCard({
 
     return (
       <FormControl component="fieldset" sx={{ width: "100%" }}>
-        <FormLabel
-          component="legend"
-          sx={{
-            fontSize: "1.1rem",
-            fontWeight: "medium",
-            mb: 2,
-            color: "text.primary",
-          }}
-        >
-          Select your answer:
-        </FormLabel>
-
+        <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+          Câu hỏi {session.currentQuestionIndex + 1}:{" "}
+          {currentQuestion.questionText}
+        </Typography>
         {session.currentExamType === "READING" ||
         session.currentExamType === "LISTENING" ? (
           // Radio buttons for single answer questions
@@ -421,7 +469,7 @@ export default function QuestionCard({
             sx={{ mb: 2 }}
           >
             <Typography variant="h6" fontWeight="bold">
-              Question {session.currentQuestionIndex + 1} of{" "}
+              Câu hỏi {session.currentQuestionIndex + 1} trên{" "}
               {currentExam.questions.length}
             </Typography>
           </Stack>

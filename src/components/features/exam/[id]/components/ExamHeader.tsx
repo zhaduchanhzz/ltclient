@@ -1,7 +1,4 @@
-import {
-  AccessTime,
-  Menu,
-} from "@mui/icons-material";
+import { AccessTime, Menu } from "@mui/icons-material";
 import {
   AppBar,
   Chip,
@@ -21,13 +18,12 @@ const EXAM_TIME_LIMITS = {
 
 const ExamTypeColors = {
   LISTENING: "#2196f3",
-  READING: "#4caf50", 
+  READING: "#4caf50",
   WRITING: "#ff9800",
   SPEAKING: "#9c27b0",
 };
 
 interface ExamHeaderProps {
-  examId: string;
   session: ExamTermSession;
   sidebarOpen: boolean;
   currentSectionTimeRemaining: number;
@@ -42,7 +38,6 @@ const formatTime = (seconds: number) => {
 };
 
 export default function ExamHeader({
-  examId,
   session,
   sidebarOpen,
   currentSectionTimeRemaining,
@@ -59,11 +54,7 @@ export default function ExamHeader({
     >
       <Toolbar>
         {!sidebarOpen && (
-          <IconButton
-            color="inherit"
-            onClick={onToggleSidebar}
-            sx={{ mr: 2 }}
-          >
+          <IconButton color="inherit" onClick={onToggleSidebar} sx={{ mr: 2 }}>
             <Menu />
           </IconButton>
         )}
@@ -75,13 +66,8 @@ export default function ExamHeader({
           sx={{ flexGrow: 1 }}
         >
           <Typography variant="h6" fontWeight="bold">
-            VSTEP Exam #{examId}
+            VSTEP Exam
           </Typography>
-          <Chip
-            label={`Term: ${session.termId}`}
-            size="small"
-            sx={{ bgcolor: "rgba(255,255,255,0.2)", color: "white" }}
-          />
         </Stack>
 
         <Stack direction="row" alignItems="center" spacing={2}>
@@ -108,7 +94,7 @@ export default function ExamHeader({
             }}
           />
           <Chip
-            label={`${EXAM_TIME_LIMITS[session.currentExamType as keyof typeof EXAM_TIME_LIMITS]}min limit`}
+            label={`${EXAM_TIME_LIMITS[session.currentExamType as keyof typeof EXAM_TIME_LIMITS]} phút`}
             size="small"
             sx={{
               bgcolor: "rgba(255,255,255,0.15)",
