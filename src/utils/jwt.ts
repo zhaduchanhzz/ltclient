@@ -1,7 +1,7 @@
 import { jwtDecode } from "jwt-decode";
 
 export const decodeToken = (token: string) => {
-  return jwtDecode<{ id: string; exp: number }>(token);
+  return jwtDecode<{ id: string; exp: number; user_roles?: string }>(token);
 };
 
 export const isTokenExpired = (token: string): boolean => {
@@ -17,5 +17,15 @@ export const isTokenExpired = (token: string): boolean => {
   } catch (error) {
     console.error("Error decoding token:", error);
     return true;
+  }
+};
+
+export const isAdminUser = (token: string): boolean => {
+  try {
+    const decoded = decodeToken(token);
+    return decoded.user_roles === "ADMIN";
+  } catch (error) {
+    console.error("Error checking admin role:", error);
+    return false;
   }
 };
