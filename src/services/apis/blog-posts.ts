@@ -1,11 +1,7 @@
 import { API_PATH } from "@/consts/api-path";
 import HttpClient from "@/utils/axios-config";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import {
-  BlogPost,
-  PageBlogPost,
-  Pageable,
-} from "../types/blog-posts";
+import { BlogPost, PageBlogPost, Pageable } from "../types/blog-posts";
 
 export const useGetBlogPostsQuery = (
   pageable: Pageable = { page: 0, size: 10 },
@@ -40,9 +36,7 @@ export const useGetBlogPostByIdQuery = (id: number, enabled = true) => {
   return useQuery({
     queryKey: [API_PATH.BLOG_POSTS, id],
     queryFn: () => {
-      return HttpClient.get<null, BlogPost>(
-        `${API_PATH.BLOG_POSTS}/${id}`,
-      );
+      return HttpClient.get<null, BlogPost>(`${API_PATH.BLOG_POSTS}/${id}`);
     },
     enabled: enabled && !!id,
   });
@@ -73,9 +67,7 @@ export const useUpdateBlogPostMutation = () => {
 export const useDeleteBlogPostMutation = () => {
   return useMutation({
     mutationFn: (id: number) => {
-      return HttpClient.delete<null, void>(
-        `${API_PATH.BLOG_POSTS}/${id}`,
-      );
+      return HttpClient.delete<null, void>(`${API_PATH.BLOG_POSTS}/${id}`);
     },
   });
 };
@@ -83,7 +75,7 @@ export const useDeleteBlogPostMutation = () => {
 export const useTogglePinBlogPostMutation = () => {
   return useMutation({
     mutationFn: (id: number) => {
-      return HttpClient.put<null, BlogPost>(
+      return HttpClient.patch<null, BlogPost>(
         `${API_PATH.BLOG_POSTS}/${id}/pin`,
       );
     },

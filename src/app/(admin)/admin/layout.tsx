@@ -31,6 +31,7 @@ export default function AdminLayout({
 
     if (isAuthenticated) {
       const accessToken = CookieStorage.get(APP_COOKIE_KEY.ACCESS_TOKEN);
+      
       if (accessToken) {
         const hasAdminRole = isAdminUser(accessToken);
         setIsAdmin(hasAdminRole);
