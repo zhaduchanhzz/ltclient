@@ -1,7 +1,7 @@
 
-FROM node:22.12.0-alpine3.21 AS builder
+FROM node:22-alpine AS builder
 
-LABEL maintainer="Duong Cong Chien"
+LABEL maintainer="ZenoByte"
 
 WORKDIR /app
 
@@ -16,7 +16,7 @@ COPY . .
 
 RUN yarn build
 
-FROM node:22.12.0-alpine3.21 AS runner
+FROM node:22-alpine AS runner
 
 ENV NODE_ENV=production
 

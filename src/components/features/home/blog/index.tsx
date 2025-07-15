@@ -86,7 +86,7 @@ const BlogList = () => {
           py: 6,
         }}
       >
-        <BasicContainer maxWidth="lg">
+        <BasicContainer maxWidth="lg_1200">
           <BasicStack spacing={4} alignItems="center">
             <BasicTypography
               variant="h4"
@@ -114,7 +114,7 @@ const BlogList = () => {
         py: 6,
       }}
     >
-      <BasicContainer maxWidth="lg">
+      <BasicContainer maxWidth="lg_1200">
         <BasicStack spacing={6}>
           {/* Header */}
           <BasicStack spacing={4} alignItems="center">

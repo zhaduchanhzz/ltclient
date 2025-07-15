@@ -11,4 +11,9 @@ export const API_PATH = {
   TAKE_EXAM: "/take-exam",
   GRADING_REQUEST: "/grading-request",
   PAYMENT: "/payment",
+  SETTINGS: "/settings",
+  ADMIN_USERS: "/admin/users",
+  ADMIN_CREATE_USER: "/admin/create/user",
+  ADMIN_UPDATE_USER: "/admin/update/user",
+  ADMIN_DELETE_USER: "/admin/delete/user",
 };

@@ -133,6 +133,15 @@ class Axios {
     this.useInterceptor();
     return this.Instance.delete<Type, Resposnse>(url, config);
   }
+
+  public patch<Type = any, Resposnse = Type>(
+    url: string,
+    data?: Type,
+    config?: AxiosRequestConfig,
+  ): Promise<Resposnse> {
+    this.useInterceptor();
+    return this.Instance.patch<Type, Resposnse>(url, data, config);
+  }
 }
 
 const HttpClient = new Axios();
