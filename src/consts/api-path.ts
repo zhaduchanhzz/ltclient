@@ -7,6 +7,8 @@ export const API_PATH = {
   ORDERS: "/orders",
   EXAMS: "/exams",
   EXAM_SCHEDULES: "/exam-schedules",
+  EXAM_SCHEDULES_RECENT: "/exam-schedules/recent",
+  EXAM_SCHEDULES_FILTER: "/exam-schedules/filter",
   BLOG_POSTS: "/blogposts",
   TAKE_EXAM: "/take-exam",
   GRADING_REQUEST: "/grading-request",

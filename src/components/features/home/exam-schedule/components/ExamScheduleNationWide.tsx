@@ -10,18 +10,40 @@ import TableCellCustom from "@/components/base/MaterialUI-Table/TableCell";
 import TablePaginationCustom from "@/components/base/MaterialUI-Table/TablePagination";
 import LoadingOverlay from "@/components/common/Overlay/LoadingOverlay";
 import NoDataOverlay from "@/components/common/Overlay/NoDataOverlay";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import useExamScheduleFilter from "../hooks/useExamScheduleFilter";
 import { getExamScheduleTableColumns } from "../utils/columns";
-import { examScheduleSample } from "../utils/data";
 import BasicTextField from "@/components/base/MaterialUI-Basic/TextField";
+import { useFilterSchedulesQuery } from "@/services/apis/exam-schedules";
+import { InputAdornment } from "@mui/material";
+import { Search as SearchIcon } from "@mui/icons-material";
 
 type ExamScheduleNationWideProps = {};
 
 const ExamScheduleNationWide = (_: ExamScheduleNationWideProps) => {
   const columns = useMemo(() => getExamScheduleTableColumns(), []);
-  const [totalItems, __] = useState<number>(0);
   const { onPageChange, onPageSizeChange, filter } = useExamScheduleFilter();
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
+
+  // Simple debounce implementation
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Fetch data using React Query
+  const { data, isLoading, error } = useFilterSchedulesQuery({
+    organization: debouncedSearchTerm || undefined,
+    page: filter.pageNumber,
+    size: filter.pageSize,
+  });
+
+  const examSchedules = data?.data?.content || [];
+  const totalItems = data?.data?.totalElements || 0;
 
   return (
     <BasicStack spacing={2}>
@@ -36,7 +58,19 @@ const ExamScheduleNationWide = (_: ExamScheduleNationWideProps) => {
           <BasicTypography variant="body2" sx={{ minWidth: 70 }}>
             Tìm kiếm:
           </BasicTypography>
-          <BasicTextField size="small" />
+          <BasicTextField
+            size="small"
+            placeholder="Tìm theo tên tổ chức..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+          />
         </BasicStack>
         <TablePaginationCustom
           id="nation-wide_table-pagination"
@@ -49,8 +83,8 @@ const ExamScheduleNationWide = (_: ExamScheduleNationWideProps) => {
         />
       </BasicStack>
       <BasicTableContainer id="user-info_table" sx={{ minHeight: 430 }}>
-        <LoadingOverlay visible={examScheduleSample.length === 0} />
-        <NoDataOverlay visible={examScheduleSample.length === 0} />
+        <LoadingOverlay visible={isLoading} />
+        <NoDataOverlay visible={!isLoading && examSchedules.length === 0} />
         <TableCustom>
           <BasicTableHead>
             <BasicTableRow>
@@ -73,8 +107,8 @@ const ExamScheduleNationWide = (_: ExamScheduleNationWideProps) => {
             </BasicTableRow>
           </BasicTableHead>
           <BasicTableBody>
-            {examScheduleSample.map((item, index) => (
-              <BasicTableRow key={index}>
+            {examSchedules.map((item, index) => (
+              <BasicTableRow key={item.id}>
                 <TableCellCustom
                   align="center"
                   border={true}
@@ -82,7 +116,9 @@ const ExamScheduleNationWide = (_: ExamScheduleNationWideProps) => {
                   alignItems="center"
                   justifyContent="center"
                 >
-                  <BasicTypography variant="body2">{index + 1}</BasicTypography>
+                  <BasicTypography variant="body2">
+                    {(filter.pageNumber || 0) * (filter.pageSize || 10) + index + 1}
+                  </BasicTypography>
                 </TableCellCustom>
                 <TableCellCustom
                   align="center"
@@ -91,7 +127,7 @@ const ExamScheduleNationWide = (_: ExamScheduleNationWideProps) => {
                   alignItems="center"
                   justifyContent="center"
                 >
-                  <BasicTypography variant="body2">{item.date}</BasicTypography>
+                  <BasicTypography variant="body2">{item.examDates}</BasicTypography>
                 </TableCellCustom>
                 <TableCellCustom
                   align="center"
@@ -101,7 +137,7 @@ const ExamScheduleNationWide = (_: ExamScheduleNationWideProps) => {
                   justifyContent="center"
                 >
                   <BasicTypography variant="body2" component="span">
-                    {item.days}
+                    {item.weekdays}
                   </BasicTypography>
                 </TableCellCustom>
                 <TableCellCustom
@@ -123,7 +159,7 @@ const ExamScheduleNationWide = (_: ExamScheduleNationWideProps) => {
                   justifyContent="center"
                 >
                   <BasicTypography variant="body2" component="span">
-                    {item.deadline}
+                    {new Date(item.registrationDeadline).toLocaleDateString('vi-VN')}
                   </BasicTypography>
                 </TableCellCustom>
               </BasicTableRow>
