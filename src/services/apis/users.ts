@@ -56,15 +56,15 @@ export const useCreateUserMutation = () => {
 };
 
 // Update user profile
-export const useUpdateUserMutation = () => {
+export const useUpdateUserMutation = (id: number | undefined) => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (data: UpdateUserProfileDtoRequest) => {
-      const response = await HttpClient.patch<
+      const response = await HttpClient.put<
         any,
         CommonResponse<UserProfileDto>
-      >(API_PATH.ADMIN_UPDATE_USER, data);
+      >(`${API_PATH.ADMIN_UPDATE_USER}/${id}`, data);
       return response;
     },
     onSuccess: () => {

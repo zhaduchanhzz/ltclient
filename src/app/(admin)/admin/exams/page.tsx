@@ -1,8 +1,12 @@
 "use client";
 
+import ConfirmDialog from "@/components/common/Dialog/ConfirmDialog";
+import { useAppContextHandle } from "@/contexts/AppContext";
 import {
   useCreateExamMutation,
   useGetAllExamsQuery,
+  useUpdateExamMutation,
+  useDeleteExamMutation,
 } from "@/services/apis/exam";
 import { CreateExamRequest } from "@/services/types/exam";
 import {
@@ -10,6 +14,8 @@ import {
   ExpandMore as ExpandMoreIcon,
   Remove as RemoveIcon,
   Search as SearchIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
 } from "@mui/icons-material";
 import {
   Accordion,
@@ -60,13 +66,19 @@ interface ExamFormData {
 }
 
 const ExamsPage = () => {
-  const { data: examsResponse, isLoading, error } = useGetAllExamsQuery(true);
+  const { updateAppState } = useAppContextHandle();
+  const { data: examsResponse, isLoading, error, refetch } = useGetAllExamsQuery(true);
   const createExamMutation = useCreateExamMutation();
+  const updateExamMutation = useUpdateExamMutation();
+  const deleteExamMutation = useDeleteExamMutation();
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [searchQuery, setSearchQuery] = useState("");
   const [openDialog, setOpenDialog] = useState(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [selectedExam, setSelectedExam] = useState<any>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [formData, setFormData] = useState<ExamFormData>({
     title: "",
     examType: "LISTENING",
@@ -126,15 +138,28 @@ const ExamsPage = () => {
     exam.title.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const handleOpenDialog = () => {
-    const initialQuestion = getInitialQuestionForType("LISTENING");
-    setFormData({
-      title: "",
-      examType: "LISTENING",
-      description: "",
-      isNeedVip: false,
-      questions: [initialQuestion],
-    });
+  const handleOpenDialog = (exam?: any) => {
+    if (exam) {
+      setIsEditMode(true);
+      setFormData({
+        id: exam.id,
+        title: exam.title,
+        examType: exam.examType,
+        description: exam.description,
+        isNeedVip: exam.isNeedVip,
+        questions: exam.questions || [getInitialQuestionForType(exam.examType)],
+      });
+    } else {
+      setIsEditMode(false);
+      const initialQuestion = getInitialQuestionForType("LISTENING");
+      setFormData({
+        title: "",
+        examType: "LISTENING",
+        description: "",
+        isNeedVip: false,
+        questions: [initialQuestion],
+      });
+    }
     setOpenDialog(true);
   };
 
@@ -144,19 +169,82 @@ const ExamsPage = () => {
 
   const handleSubmit = async () => {
     try {
-      const submitData: CreateExamRequest = {
-        title: formData.title,
-        examType: formData.examType,
-        description: formData.description,
-        isNeedVip: formData.isNeedVip,
-        questions: formData.questions,
-      };
+      if (isEditMode) {
+        // TODO: The update API expects Exam type but we have SimulationExam data
+        // This might need backend API adjustment or different endpoint
+        updateAppState({
+          appAlertInfo: {
+            message: "Chức năng cập nhật đang được phát triển",
+            severity: "info",
+          },
+        });
+        handleCloseDialog();
+        return;
+      } else {
+        const submitData: CreateExamRequest = {
+          title: formData.title,
+          examType: formData.examType,
+          description: formData.description,
+          isNeedVip: formData.isNeedVip,
+          questions: formData.questions,
+        };
 
-      await createExamMutation.mutateAsync(submitData);
+        await createExamMutation.mutateAsync(submitData);
+        updateAppState({
+          appAlertInfo: {
+            message: "Tạo đề thi thành công",
+            severity: "success",
+          },
+        });
+      }
       handleCloseDialog();
-      // TODO: Refresh the exam list after successful creation
-    } catch (error) {
-      console.error("Error creating exam:", error);
+      refetch();
+    } catch (error: any) {
+      console.error("Error submitting exam:", error);
+      updateAppState({
+        appAlertInfo: {
+          message: error?.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại",
+          severity: "error",
+        },
+      });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedExam?.id) {
+      console.error("No exam selected or exam ID is missing");
+      updateAppState({
+        appAlertInfo: {
+          message: "Không thể xác định đề thi cần xóa",
+          severity: "error",
+        },
+      });
+      return;
+    }
+
+    try {
+      console.log("Deleting exam with ID:", selectedExam.id);
+      await deleteExamMutation.mutateAsync(selectedExam.id.toString());
+      
+      updateAppState({
+        appAlertInfo: {
+          message: "Xóa đề thi thành công",
+          severity: "success",
+        },
+      });
+      setOpenDeleteDialog(false);
+      setSelectedExam(null);
+      refetch();
+    } catch (error: any) {
+      console.error("Delete error:", error);
+      updateAppState({
+        appAlertInfo: {
+          message:
+            error?.response?.data?.message ||
+            "Có lỗi xảy ra khi xóa đề thi",
+          severity: "error",
+        },
+      });
     }
   };
 
@@ -370,7 +458,25 @@ const ExamsPage = () => {
                       />
                     </TableCell>
                     <TableCell align="right">
-                      <Chip label="View Only" size="small" variant="outlined" />
+                      <Stack direction="row" spacing={1} justifyContent="flex-end">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleOpenDialog(exam)}
+                          color="primary"
+                        >
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            setSelectedExam(exam);
+                            setOpenDeleteDialog(true);
+                          }}
+                          color="error"
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Stack>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -394,7 +500,7 @@ const ExamsPage = () => {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>Thêm đề thi mới</DialogTitle>
+        <DialogTitle>{isEditMode ? "Chỉnh sửa đề thi" : "Thêm đề thi mới"}</DialogTitle>
         <DialogContent>
           <Stack spacing={3} sx={{ mt: 1 }}>
             <TextField
@@ -614,10 +720,22 @@ const ExamsPage = () => {
         <DialogActions>
           <Button onClick={handleCloseDialog}>Hủy</Button>
           <Button variant="contained" onClick={handleSubmit}>
-            Tạo đề thi
+            {isEditMode ? "Cập nhật" : "Tạo đề thi"}
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={openDeleteDialog}
+        onClose={() => {
+          setOpenDeleteDialog(false);
+          setSelectedExam(null);
+        }}
+        onConfirm={handleDelete}
+        title="Xác nhận xóa"
+        description={`Bạn có chắc chắn muốn xóa đề thi "${selectedExam?.title}"? Hành động này không thể hoàn tác.`}
+      />
     </Box>
   );
 };

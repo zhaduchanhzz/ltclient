@@ -55,7 +55,6 @@ interface BlogPostFormData {
   pinned?: boolean;
 }
 
-
 const PostsPage = () => {
   const { updateAppState } = useAppContextHandle();
   const [page, setPage] = useState(0);
@@ -454,9 +453,7 @@ const PostsPage = () => {
           <Button
             onClick={handleSubmit}
             variant="contained"
-            disabled={
-              !formData.title || !formData.content
-            }
+            disabled={!formData.title || !formData.content}
           >
             {isEditMode ? "Cập nhật" : "Tạo mới"}
           </Button>

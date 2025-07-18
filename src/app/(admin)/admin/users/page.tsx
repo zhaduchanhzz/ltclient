@@ -79,7 +79,7 @@ const UsersPage = () => {
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [openDialog, setOpenDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<UserProfileDto | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserProfileDto>();
   const [isEditMode, setIsEditMode] = useState(false);
   const [vipDate, setVipDate] = useState<Dayjs | null>(null);
   const [formData, setFormData] = useState<UserFormData>({
@@ -109,7 +109,7 @@ const UsersPage = () => {
   });
 
   const { mutateAsync: createUser } = useCreateUserMutation();
-  const { mutateAsync: updateUser } = useUpdateUserMutation();
+  const { mutateAsync: updateUser } = useUpdateUserMutation(formData.id);
   const { mutateAsync: deleteUser } = useDeleteUserMutation();
 
   const users = usersResponse?.data?.content || [];
@@ -183,6 +183,7 @@ const UsersPage = () => {
     try {
       if (isEditMode) {
         const updateData: UpdateUserProfileDtoRequest = {
+          id: formData.id || 0,
           fullName: formData.fullName || undefined,
           email: formData.email || undefined,
           address: formData.address || undefined,
@@ -236,10 +237,22 @@ const UsersPage = () => {
   };
 
   const handleDelete = async () => {
-    if (!selectedUser?.id) return;
+    if (!selectedUser?.id) {
+      console.error("No user selected or user ID is missing");
+      updateAppState({
+        appAlertInfo: {
+          message: "Không thể xác định người dùng cần xóa",
+          severity: "error",
+        },
+      });
+      return;
+    }
 
     try {
-      await deleteUser(selectedUser.id);
+      console.log("Deleting user with ID:", selectedUser.id);
+      const result = await deleteUser(selectedUser.id);
+      console.log("Delete result:", result);
+
       updateAppState({
         appAlertInfo: {
           message: "Xóa người dùng thành công",
@@ -247,9 +260,10 @@ const UsersPage = () => {
         },
       });
       setOpenDeleteDialog(false);
-      setSelectedUser(null);
+      setSelectedUser(undefined);
       refetch();
     } catch (error: any) {
+      console.error("Delete error:", error);
       updateAppState({
         appAlertInfo: {
           message:
@@ -372,8 +386,8 @@ const UsersPage = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id} hover>
+                {users.map((user, index) => (
+                  <TableRow key={index} hover>
                     <TableCell>
                       <Typography variant="body2" fontWeight={500}>
                         {user.username}
@@ -633,7 +647,7 @@ const UsersPage = () => {
         open={openDeleteDialog}
         onClose={() => {
           setOpenDeleteDialog(false);
-          setSelectedUser(null);
+          setSelectedUser(undefined);
         }}
         onConfirm={handleDelete}
         title="Xác nhận xóa"
