@@ -5,7 +5,6 @@ import { useAppContextHandle } from "@/contexts/AppContext";
 import {
   useCreateExamMutation,
   useGetAllExamsQuery,
-  useUpdateExamMutation,
   useDeleteExamMutation,
 } from "@/services/apis/exam";
 import { CreateExamRequest } from "@/services/types/exam";
@@ -67,9 +66,13 @@ interface ExamFormData {
 
 const ExamsPage = () => {
   const { updateAppState } = useAppContextHandle();
-  const { data: examsResponse, isLoading, error, refetch } = useGetAllExamsQuery(true);
+  const {
+    data: examsResponse,
+    isLoading,
+    error,
+    refetch,
+  } = useGetAllExamsQuery(true);
   const createExamMutation = useCreateExamMutation();
-  const updateExamMutation = useUpdateExamMutation();
   const deleteExamMutation = useDeleteExamMutation();
 
   const [page, setPage] = useState(0);
@@ -160,6 +163,7 @@ const ExamsPage = () => {
         questions: [initialQuestion],
       });
     }
+
     setOpenDialog(true);
   };
 
@@ -197,13 +201,15 @@ const ExamsPage = () => {
           },
         });
       }
+
       handleCloseDialog();
       refetch();
     } catch (error: any) {
       console.error("Error submitting exam:", error);
       updateAppState({
         appAlertInfo: {
-          message: error?.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại",
+          message:
+            error?.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại",
           severity: "error",
         },
       });
@@ -225,7 +231,7 @@ const ExamsPage = () => {
     try {
       console.log("Deleting exam with ID:", selectedExam.id);
       await deleteExamMutation.mutateAsync(selectedExam.id.toString());
-      
+
       updateAppState({
         appAlertInfo: {
           message: "Xóa đề thi thành công",
@@ -240,8 +246,7 @@ const ExamsPage = () => {
       updateAppState({
         appAlertInfo: {
           message:
-            error?.response?.data?.message ||
-            "Có lỗi xảy ra khi xóa đề thi",
+            error?.response?.data?.message || "Có lỗi xảy ra khi xóa đề thi",
           severity: "error",
         },
       });
@@ -375,9 +380,7 @@ const ExamsPage = () => {
   if (error) {
     return (
       <Box sx={{ p: 3 }}>
-        <Typography color="error">
-          Lỗi tải đề thi. Vui lòng thử lại.
-        </Typography>
+        <Typography color="error">Lỗi tải đề thi. Vui lòng thử lại.</Typography>
       </Box>
     );
   }
@@ -458,7 +461,11 @@ const ExamsPage = () => {
                       />
                     </TableCell>
                     <TableCell align="right">
-                      <Stack direction="row" spacing={1} justifyContent="flex-end">
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        justifyContent="flex-end"
+                      >
                         <IconButton
                           size="small"
                           onClick={() => handleOpenDialog(exam)}
@@ -500,7 +507,9 @@ const ExamsPage = () => {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>{isEditMode ? "Chỉnh sửa đề thi" : "Thêm đề thi mới"}</DialogTitle>
+        <DialogTitle>
+          {isEditMode ? "Chỉnh sửa đề thi" : "Thêm đề thi mới"}
+        </DialogTitle>
         <DialogContent>
           <Stack spacing={3} sx={{ mt: 1 }}>
             <TextField

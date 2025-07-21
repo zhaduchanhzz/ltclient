@@ -36,7 +36,7 @@ const ExamScheduleNationWide = (_: ExamScheduleNationWideProps) => {
   }, [searchTerm]);
 
   // Fetch data using React Query
-  const { data, isLoading, error } = useFilterSchedulesQuery({
+  const { data, isLoading } = useFilterSchedulesQuery({
     organization: debouncedSearchTerm || undefined,
     page: filter.pageNumber,
     size: filter.pageSize,
@@ -117,7 +117,9 @@ const ExamScheduleNationWide = (_: ExamScheduleNationWideProps) => {
                   justifyContent="center"
                 >
                   <BasicTypography variant="body2">
-                    {(filter.pageNumber || 0) * (filter.pageSize || 10) + index + 1}
+                    {(filter.pageNumber || 0) * (filter.pageSize || 10) +
+                      index +
+                      1}
                   </BasicTypography>
                 </TableCellCustom>
                 <TableCellCustom
@@ -127,7 +129,9 @@ const ExamScheduleNationWide = (_: ExamScheduleNationWideProps) => {
                   alignItems="center"
                   justifyContent="center"
                 >
-                  <BasicTypography variant="body2">{item.examDates}</BasicTypography>
+                  <BasicTypography variant="body2">
+                    {item.examDates}
+                  </BasicTypography>
                 </TableCellCustom>
                 <TableCellCustom
                   align="center"
@@ -159,7 +163,9 @@ const ExamScheduleNationWide = (_: ExamScheduleNationWideProps) => {
                   justifyContent="center"
                 >
                   <BasicTypography variant="body2" component="span">
-                    {new Date(item.registrationDeadline).toLocaleDateString('vi-VN')}
+                    {new Date(item.registrationDeadline).toLocaleDateString(
+                      "vi-VN",
+                    )}
                   </BasicTypography>
                 </TableCellCustom>
               </BasicTableRow>

@@ -17,25 +17,33 @@ type ExamScheduleNextMonthProps = {};
 
 const ExamScheduleNextMonth = (_: ExamScheduleNextMonthProps) => {
   const columns = useMemo(() => getExamScheduleTableColumns(), []);
-  
+
   // Get next month and year
   const currentDate = new Date();
-  const nextMonthDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+  const nextMonthDate = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth() + 1,
+    1,
+  );
   const nextMonth = nextMonthDate.getMonth() + 1; // JavaScript months are 0-indexed
   const nextMonthYear = nextMonthDate.getFullYear();
-  
+
   // Fetch recent schedules
   const { data, isLoading } = useGetRecentSchedulesQuery({
     page: 0,
-    size: 20
+    size: 20,
   });
 
   // Filter schedules for next month
-  const nextMonthData = data?.data?.content?.find(item => item.month === nextMonth);
+  const nextMonthData = data?.data?.content?.find(
+    (item) => item.month === nextMonth,
+  );
   const nextMonthSchedules = nextMonthData?.schedules || [];
 
   // Format month display
-  const monthName = nextMonthDate.toLocaleDateString('vi-VN', { month: 'numeric' });
+  const monthName = nextMonthDate.toLocaleDateString("vi-VN", {
+    month: "numeric",
+  });
 
   return (
     <BasicStack spacing={3}>
@@ -44,7 +52,9 @@ const ExamScheduleNextMonth = (_: ExamScheduleNextMonthProps) => {
       </BasicTypography>
       <BasicTableContainer id="next-month_table" sx={{ minHeight: 430 }}>
         <LoadingOverlay visible={isLoading} />
-        <NoDataOverlay visible={!isLoading && nextMonthSchedules.length === 0} />
+        <NoDataOverlay
+          visible={!isLoading && nextMonthSchedules.length === 0}
+        />
         <TableCustom>
           <BasicTableHead>
             <BasicTableRow>
@@ -85,7 +95,9 @@ const ExamScheduleNextMonth = (_: ExamScheduleNextMonthProps) => {
                   alignItems="center"
                   justifyContent="center"
                 >
-                  <BasicTypography variant="body2">{item.examDates}</BasicTypography>
+                  <BasicTypography variant="body2">
+                    {item.examDates}
+                  </BasicTypography>
                 </TableCellCustom>
                 <TableCellCustom
                   align="center"
@@ -117,7 +129,9 @@ const ExamScheduleNextMonth = (_: ExamScheduleNextMonthProps) => {
                   justifyContent="center"
                 >
                   <BasicTypography variant="body2" component="span">
-                    {new Date(item.registrationDeadline).toLocaleDateString('vi-VN')}
+                    {new Date(item.registrationDeadline).toLocaleDateString(
+                      "vi-VN",
+                    )}
                   </BasicTypography>
                 </TableCellCustom>
               </BasicTableRow>

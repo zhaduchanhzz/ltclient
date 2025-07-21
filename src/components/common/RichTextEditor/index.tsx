@@ -88,7 +88,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       handler: handleAddLink,
     },
     {
-      icon: <Image />,
+      icon: <Image alt="image" component="img" />,
       command: "image",
       tooltip: "Chèn hình ảnh",
       handler: handleAddImage,
