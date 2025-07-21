@@ -76,7 +76,7 @@ export const useTogglePinBlogPostMutation = () => {
   return useMutation({
     mutationFn: (id: number) => {
       return HttpClient.patch<null, BlogPost>(
-        `${API_PATH.BLOG_POSTS}/${id}/pin`,
+        `${API_PATH.BLOG_POSTS}/pin/${id}`,
       );
     },
   });
