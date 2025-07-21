@@ -17,24 +17,28 @@ type ExamScheduleCurrentMonthProps = {};
 
 const ExamScheduleCurrentMonth = (_: ExamScheduleCurrentMonthProps) => {
   const columns = useMemo(() => getExamScheduleTableColumns(), []);
-  
+
   // Get current month and year
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth() + 1; // JavaScript months are 0-indexed
   const currentYear = currentDate.getFullYear();
-  
+
   // Fetch recent schedules
   const { data, isLoading } = useGetRecentSchedulesQuery({
     page: 0,
-    size: 20
+    size: 20,
   });
 
   // Filter schedules for current month
-  const currentMonthData = data?.data?.content?.find(item => item.month === currentMonth);
+  const currentMonthData = data?.data?.content?.find(
+    (item) => item.month === currentMonth,
+  );
   const currentMonthSchedules = currentMonthData?.schedules || [];
 
   // Format month display
-  const monthName = currentDate.toLocaleDateString('vi-VN', { month: 'numeric' });
+  const monthName = currentDate.toLocaleDateString("vi-VN", {
+    month: "numeric",
+  });
 
   return (
     <BasicStack spacing={3}>
@@ -43,7 +47,9 @@ const ExamScheduleCurrentMonth = (_: ExamScheduleCurrentMonthProps) => {
       </BasicTypography>
       <BasicTableContainer id="current-month_table" sx={{ minHeight: 430 }}>
         <LoadingOverlay visible={isLoading} />
-        <NoDataOverlay visible={!isLoading && currentMonthSchedules.length === 0} />
+        <NoDataOverlay
+          visible={!isLoading && currentMonthSchedules.length === 0}
+        />
         <TableCustom>
           <BasicTableHead>
             <BasicTableRow>
@@ -84,7 +90,9 @@ const ExamScheduleCurrentMonth = (_: ExamScheduleCurrentMonthProps) => {
                   alignItems="center"
                   justifyContent="center"
                 >
-                  <BasicTypography variant="body2">{item.examDates}</BasicTypography>
+                  <BasicTypography variant="body2">
+                    {item.examDates}
+                  </BasicTypography>
                 </TableCellCustom>
                 <TableCellCustom
                   align="center"
@@ -116,7 +124,9 @@ const ExamScheduleCurrentMonth = (_: ExamScheduleCurrentMonthProps) => {
                   justifyContent="center"
                 >
                   <BasicTypography variant="body2" component="span">
-                    {new Date(item.registrationDeadline).toLocaleDateString('vi-VN')}
+                    {new Date(item.registrationDeadline).toLocaleDateString(
+                      "vi-VN",
+                    )}
                   </BasicTypography>
                 </TableCellCustom>
               </BasicTableRow>

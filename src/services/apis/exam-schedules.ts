@@ -16,7 +16,7 @@ export const useGetExamSchedulesQuery = (enabled = true) => {
     queryKey: [API_PATH.EXAM_SCHEDULES],
     queryFn: async () => {
       const response = await HttpClient.get<ExamSchedule[]>(
-        API_PATH.EXAM_SCHEDULES
+        API_PATH.EXAM_SCHEDULES,
       );
       return response;
     },
@@ -30,7 +30,7 @@ export const useGetScheduleByIdQuery = (id: number, enabled = true) => {
     queryKey: [API_PATH.EXAM_SCHEDULES, id],
     queryFn: async () => {
       const response = await HttpClient.get<ExamSchedule>(
-        `${API_PATH.EXAM_SCHEDULES}/${id}`
+        `${API_PATH.EXAM_SCHEDULES}/${id}`,
       );
       return response;
     },
@@ -39,10 +39,14 @@ export const useGetScheduleByIdQuery = (id: number, enabled = true) => {
 };
 
 // Get recent exam schedules (last 2 months) with pagination
-export const useGetRecentSchedulesQuery = (params?: ExamScheduleRecentParams) => {
+export const useGetRecentSchedulesQuery = (
+  params?: ExamScheduleRecentParams,
+) => {
   const queryParams = new URLSearchParams();
-  if (params?.page !== undefined) queryParams.append("page", params.page.toString());
-  if (params?.size !== undefined) queryParams.append("size", params.size.toString());
+  if (params?.page !== undefined)
+    queryParams.append("page", params.page.toString());
+  if (params?.size !== undefined)
+    queryParams.append("size", params.size.toString());
 
   return useQuery({
     queryKey: [API_PATH.EXAM_SCHEDULES_RECENT, params],
@@ -59,10 +63,14 @@ export const useGetRecentSchedulesQuery = (params?: ExamScheduleRecentParams) =>
 // Filter exam schedules
 export const useFilterSchedulesQuery = (params?: ExamScheduleFilterParams) => {
   const queryParams = new URLSearchParams();
-  if (params?.organization) queryParams.append("organization", params.organization);
-  if (params?.registrationDeadline) queryParams.append("registrationDeadline", params.registrationDeadline);
-  if (params?.page !== undefined) queryParams.append("page", params.page.toString());
-  if (params?.size !== undefined) queryParams.append("size", params.size.toString());
+  if (params?.organization)
+    queryParams.append("organization", params.organization);
+  if (params?.registrationDeadline)
+    queryParams.append("registrationDeadline", params.registrationDeadline);
+  if (params?.page !== undefined)
+    queryParams.append("page", params.page.toString());
+  if (params?.size !== undefined)
+    queryParams.append("size", params.size.toString());
 
   return useQuery({
     queryKey: [API_PATH.EXAM_SCHEDULES_FILTER, params],
@@ -90,8 +98,12 @@ export const useCreateScheduleMutation = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [API_PATH.EXAM_SCHEDULES] });
-      queryClient.invalidateQueries({ queryKey: [API_PATH.EXAM_SCHEDULES_RECENT] });
-      queryClient.invalidateQueries({ queryKey: [API_PATH.EXAM_SCHEDULES_FILTER] });
+      queryClient.invalidateQueries({
+        queryKey: [API_PATH.EXAM_SCHEDULES_RECENT],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [API_PATH.EXAM_SCHEDULES_FILTER],
+      });
     },
   });
 };
@@ -110,9 +122,15 @@ export const useUpdateScheduleMutation = () => {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: [API_PATH.EXAM_SCHEDULES] });
-      queryClient.invalidateQueries({ queryKey: [API_PATH.EXAM_SCHEDULES, variables.id] });
-      queryClient.invalidateQueries({ queryKey: [API_PATH.EXAM_SCHEDULES_RECENT] });
-      queryClient.invalidateQueries({ queryKey: [API_PATH.EXAM_SCHEDULES_FILTER] });
+      queryClient.invalidateQueries({
+        queryKey: [API_PATH.EXAM_SCHEDULES, variables.id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [API_PATH.EXAM_SCHEDULES_RECENT],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [API_PATH.EXAM_SCHEDULES_FILTER],
+      });
     },
   });
 };
@@ -124,14 +142,18 @@ export const useDeleteScheduleMutation = () => {
   return useMutation({
     mutationFn: async (id: number) => {
       const response = await HttpClient.delete(
-        `${API_PATH.EXAM_SCHEDULES}/${id}`
+        `${API_PATH.EXAM_SCHEDULES}/${id}`,
       );
       return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [API_PATH.EXAM_SCHEDULES] });
-      queryClient.invalidateQueries({ queryKey: [API_PATH.EXAM_SCHEDULES_RECENT] });
-      queryClient.invalidateQueries({ queryKey: [API_PATH.EXAM_SCHEDULES_FILTER] });
+      queryClient.invalidateQueries({
+        queryKey: [API_PATH.EXAM_SCHEDULES_RECENT],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [API_PATH.EXAM_SCHEDULES_FILTER],
+      });
     },
   });
 };
