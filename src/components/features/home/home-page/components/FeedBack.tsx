@@ -4,8 +4,10 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
+import { useGetSettingsQuery } from "@/services/apis/settings";
+import { SettingsType } from "@/services/types/settings";
 
-const feedbackImages = [
+const defaultFeedbackImages = [
   "/images/feedback-1.png",
   "/images/feedback-2.png",
   "/images/feedback-3.png",
@@ -16,6 +18,13 @@ const feedbackImages = [
 ];
 
 const FeedBack = () => {
+  const { data: settings } = useGetSettingsQuery();
+  
+  // Get feedback images from settings or use default
+  const feedbackSettings = settings?.[SettingsType.FEEDBACK] || [];
+  const feedbackImages = feedbackSettings.length > 0 
+    ? feedbackSettings.map(f => f.content).filter(Boolean)
+    : defaultFeedbackImages;
   return (
     <Box sx={{ width: "100%", bgcolor: "#12263f", py: 8 }}>
       <Typography

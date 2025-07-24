@@ -1,17 +1,36 @@
 import { Box, Container, Grid2, Typography } from "@mui/material";
 import Link from "next/link";
+import { useGetSettingsQuery } from "@/services/apis/settings";
+import { SettingsType } from "@/services/types/settings";
+import Image from "next/image";
 
 type FooterProps = {};
 
 const Footer = (_: FooterProps) => {
+  const { data: settings } = useGetSettingsQuery();
   return (
     <Box sx={{ backgroundColor: "#000" }}>
       <Container maxWidth="xl" sx={{ py: 12 }}>
         <Grid2 container spacing={2}>
           <Grid2 size={{ xs: 3 }}>
-            <Typography variant="h5" sx={{ color: "#fff" }}>
-              MyWebsite
-            </Typography>
+            {settings?.[SettingsType.LOGO]?.[0]?.content ? (
+              <Box sx={{ mb: 2 }}>
+                <Image
+                  src={settings[SettingsType.LOGO][0].content}
+                  alt="Logo"
+                  style={{
+                    maxHeight: 60,
+                    maxWidth: 200,
+                    objectFit: "contain",
+                    filter: "brightness(0) invert(1)",
+                  }}
+                />
+              </Box>
+            ) : (
+              <Typography variant="h5" sx={{ color: "#fff" }}>
+                LUYỆN THI VSTEP
+              </Typography>
+            )}
           </Grid2>
           <Grid2 container size={{ xs: 3 }} alignItems="center">
             <Grid2 container spacing={1}>
@@ -85,12 +104,16 @@ const Footer = (_: FooterProps) => {
               </Grid2>
               <Grid2 size={{ xs: 12 }}>
                 <Typography variant="body2" sx={{ color: "#fff" }}>
-                  SĐT: 0967.697.014
+                  SĐT:{" "}
+                  {settings?.[SettingsType.PHONE_NUMBER]?.[0]?.content ||
+                    "0967.697.014"}
                 </Typography>
               </Grid2>
               <Grid2 size={{ xs: 12 }}>
                 <Typography variant="body2" sx={{ color: "#fff" }}>
-                  Email: chienzxzx33@gmail.com
+                  Email:{" "}
+                  {settings?.[SettingsType.EMAIL]?.[0]?.content ||
+                    "chienzxzx33@gmail.com"}
                 </Typography>
               </Grid2>
               <Grid2 container size={{ xs: 12 }}>
@@ -102,13 +125,55 @@ const Footer = (_: FooterProps) => {
                   Facebook:
                 </Typography>
                 <Link
-                  href="https://www.facebook.com/duongchien1704"
+                  href={
+                    settings?.[SettingsType.CONTACT_FACEBOOK]?.[0]?.link ||
+                    "https://www.facebook.com/duongchien1704"
+                  }
                   target="_blank"
                   style={{ color: "#fff", padding: 0, marginLeft: 0.5 }}
                 >
-                  duongchien1704
+                  {settings?.[SettingsType.CONTACT_FACEBOOK]?.[0]?.content ||
+                    "duongchien1704"}
                 </Link>
               </Grid2>
+              {settings?.[SettingsType.CONTACT_ZALO]?.[0] && (
+                <Grid2 container size={{ xs: 12 }}>
+                  <Typography
+                    variant="body2"
+                    component="span"
+                    sx={{ color: "#fff" }}
+                  >
+                    Zalo:
+                  </Typography>
+                  <Link
+                    href={settings[SettingsType.CONTACT_ZALO][0].link || "#"}
+                    target="_blank"
+                    style={{ color: "#fff", padding: 0, marginLeft: 0.5 }}
+                  >
+                    {settings[SettingsType.CONTACT_ZALO][0].content}
+                  </Link>
+                </Grid2>
+              )}
+              {settings?.[SettingsType.CONTACT_TELEGRAM]?.[0] && (
+                <Grid2 container size={{ xs: 12 }}>
+                  <Typography
+                    variant="body2"
+                    component="span"
+                    sx={{ color: "#fff" }}
+                  >
+                    Telegram:
+                  </Typography>
+                  <Link
+                    href={
+                      settings[SettingsType.CONTACT_TELEGRAM][0].link || "#"
+                    }
+                    target="_blank"
+                    style={{ color: "#fff", padding: 0, marginLeft: 0.5 }}
+                  >
+                    {settings[SettingsType.CONTACT_TELEGRAM][0].content}
+                  </Link>
+                </Grid2>
+              )}
             </Grid2>
           </Grid2>
         </Grid2>
