@@ -19,12 +19,13 @@ const defaultFeedbackImages = [
 
 const FeedBack = () => {
   const { data: settings } = useGetSettingsQuery();
-  
+
   // Get feedback images from settings or use default
   const feedbackSettings = settings?.[SettingsType.FEEDBACK] || [];
-  const feedbackImages = feedbackSettings.length > 0 
-    ? feedbackSettings.map(f => f.content).filter(Boolean)
-    : defaultFeedbackImages;
+  const feedbackImages =
+    feedbackSettings.length > 0
+      ? feedbackSettings.map((f) => f.content).filter(Boolean)
+      : defaultFeedbackImages;
   return (
     <Box sx={{ width: "100%", bgcolor: "#12263f", py: 8 }}>
       <Typography

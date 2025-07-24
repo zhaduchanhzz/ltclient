@@ -54,8 +54,8 @@ export const useUpdateSettingsConfigMutation = () => {
   return useMutation({
     mutationFn: async (data: UpdateSettingsRequest) => {
       const params = new URLSearchParams();
-      if (data.link !== undefined) params.append('link', data.link);
-      
+      if (data.link !== undefined) params.append("link", data.link);
+
       const response = await HttpClient.put<{}>(
         `${API_PATH.SETTINGS}/update/${data.id}?${params.toString()}`,
         {},
