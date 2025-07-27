@@ -1,8 +1,7 @@
-import { AccessTime, Menu } from "@mui/icons-material";
+import { AccessTime, CheckCircle } from "@mui/icons-material";
 import {
   AppBar,
   Chip,
-  IconButton,
   Stack,
   Toolbar,
   Typography,
@@ -25,9 +24,9 @@ const ExamTypeColors = {
 
 interface ExamHeaderProps {
   session: ExamTermSession;
-  sidebarOpen: boolean;
   currentSectionTimeRemaining: number;
-  onToggleSidebar: () => void;
+  answeredCount: number;
+  totalCount: number;
 }
 
 const formatTime = (seconds: number) => {
@@ -39,9 +38,9 @@ const formatTime = (seconds: number) => {
 
 export default function ExamHeader({
   session,
-  sidebarOpen,
   currentSectionTimeRemaining,
-  onToggleSidebar,
+  answeredCount,
+  totalCount,
 }: ExamHeaderProps) {
   return (
     <AppBar
@@ -53,12 +52,6 @@ export default function ExamHeader({
       }}
     >
       <Toolbar>
-        {!sidebarOpen && (
-          <IconButton color="inherit" onClick={onToggleSidebar} sx={{ mr: 2 }}>
-            <Menu />
-          </IconButton>
-        )}
-
         <Stack
           direction="row"
           alignItems="center"
@@ -68,9 +61,21 @@ export default function ExamHeader({
           <Typography variant="h6" fontWeight="bold">
             VSTEP Exam
           </Typography>
+          <Typography variant="body2" sx={{ opacity: 0.9 }}>
+            - {session.currentExamType}
+          </Typography>
         </Stack>
 
         <Stack direction="row" alignItems="center" spacing={2}>
+          <Chip
+            icon={<CheckCircle />}
+            label={`${answeredCount}/${totalCount} câu`}
+            sx={{
+              bgcolor: "rgba(76,175,80,0.2)",
+              color: "white",
+              fontWeight: "bold",
+            }}
+          />
           <Chip
             icon={<AccessTime />}
             label={formatTime(currentSectionTimeRemaining)}
@@ -86,19 +91,11 @@ export default function ExamHeader({
             }}
           />
           <Chip
-            label={`${session.currentExamType} - Part ${session.currentExamIndex + 1}`}
+            label={`Part ${session.currentExamIndex + 1}`}
             sx={{
               bgcolor: ExamTypeColors[session.currentExamType],
               color: "white",
               fontWeight: "bold",
-            }}
-          />
-          <Chip
-            label={`${EXAM_TIME_LIMITS[session.currentExamType as keyof typeof EXAM_TIME_LIMITS]} phút`}
-            size="small"
-            sx={{
-              bgcolor: "rgba(255,255,255,0.15)",
-              color: "white",
             }}
           />
         </Stack>

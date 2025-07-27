@@ -98,13 +98,13 @@ export type TakeExamRequest = {
     examType: "LISTENING" | "READING" | "WRITING" | "SPEAKING";
     title: string;
     description: string;
-    isNeedVip: number;
+    isNeedVip: boolean;
     questions: {
       id: string;
       questionText: string;
       answers: {
         id: string;
-        anwserText: string;
+        answerText: string;
         isCorrect: boolean;
       }[];
     }[];
