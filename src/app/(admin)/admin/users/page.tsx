@@ -109,7 +109,7 @@ const UsersPage = () => {
   });
 
   const { mutateAsync: createUser } = useCreateUserMutation();
-  const { mutateAsync: updateUser } = useUpdateUserMutation(formData.id);
+  const { mutateAsync: updateUser } = useUpdateUserMutation(formData.id || 0);
   const { mutateAsync: deleteUser } = useDeleteUserMutation();
 
   const users = usersResponse?.data?.content || [];

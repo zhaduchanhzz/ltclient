@@ -33,9 +33,9 @@ import {
   Zoom,
 } from "@mui/material";
 import ExamHeader from "./components/ExamHeader";
-import ExamSidebar from "./components/ExamSidebar";
 import NavigationControls from "./components/NavigationControls";
 import QuestionCard from "./components/QuestionCard";
+import BottomNavigation from "./components/BottomNavigation";
 import { useExamLogic } from "./hooks/useExamLogic";
 import { useGradingRequestMutation } from "@/services/apis/exam";
 import { useState } from "react";
@@ -70,9 +70,7 @@ export default function ExamPage() {
     examTypes,
     allExams,
     showSuccessDialog,
-    sidebarOpen,
     examExpired,
-    sectionStatus,
     currentSectionTimeRemaining,
     getCurrentExamAndQuestion,
     router,
@@ -80,14 +78,13 @@ export default function ExamPage() {
     handleAnswerChange,
     handleWritingAnswerChange,
     handleSpeakingAnswerChange,
-    navigateToExamTypePart,
     nextQuestion,
     previousQuestion,
     completeSection,
     submitWritingExam,
     submitFinalSpeaking,
-    setSidebarOpen,
     setShowSuccessDialog,
+    navigateToQuestion,
   } = useExamLogic();
 
   const gradingRequestMutation = useGradingRequestMutation();
@@ -261,17 +258,6 @@ export default function ExamPage() {
     );
   }
 
-  if (error) {
-    console.error("Error loading exams:", error);
-    return (
-      <Container sx={{ display: "flex", justifyContent: "center", p: 4 }}>
-        <Alert severity="error">
-          Failed to load exam data. Please try again.
-        </Alert>
-      </Container>
-    );
-  }
-
   if (examExpired) {
     return (
       <Container maxWidth="md" sx={{ py: 4 }}>
@@ -322,6 +308,17 @@ export default function ExamPage() {
             </Button>
           </Box>
         </Paper>
+      </Container>
+    );
+  }
+
+  if (error) {
+    console.error("Error loading exams:", error);
+    return (
+      <Container sx={{ display: "flex", justifyContent: "center", p: 4 }}>
+        <Alert severity="error">
+          Failed to load exam data. Please try again.
+        </Alert>
       </Container>
     );
   }
@@ -698,74 +695,99 @@ export default function ExamPage() {
   const { exam: currentExam, question: currentQuestion } =
     getCurrentExamAndQuestion();
 
+  console.log("Current exam type:", session.currentExamType);
+  console.log("Current exam:", currentExam);
+  console.log("Current question:", currentQuestion);
+  console.log("All exam types:", examTypes);
+  console.log("Exams by type:", examsByType);
+
   if (!currentExam || !currentQuestion) {
     return (
       <Container>
         <Alert severity="error">
-          Failed to load exam data. Please try again.
+          Failed to load exam data. Current exam type: {session.currentExamType}
+          , Exam index: {session.currentExamIndex}, Question index:{" "}
+          {session.currentQuestionIndex}
         </Alert>
       </Container>
     );
   }
 
   const currentTypeExams = examsByType[session.currentExamType] || [];
-  const progress =
-    (examTypes.indexOf(session.currentExamType) * 100 +
-      ((session.currentExamIndex + 1) / currentTypeExams.length) * 100) /
-    examTypes.length;
+
+  // Calculate answered questions count
+  const calculateAnsweredQuestions = () => {
+    let answered = 0;
+    let total = 0;
+
+    currentTypeExams.forEach((exam) => {
+      exam.questions.forEach((question) => {
+        total++;
+        const userAnswers = session.answers[question.id];
+
+        if (userAnswers && userAnswers.length > 0) {
+          answered++;
+        }
+      });
+    });
+
+    return { answered, total };
+  };
+
+  const { answered, total } = calculateAnsweredQuestions();
 
   return (
-    <Box sx={{ display: "flex", height: "100vh", overflow: "hidden" }}>
-      {/* Sidebar Navigation */}
-      <ExamSidebar
-        sidebarOpen={sidebarOpen}
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100vh",
+        overflow: "hidden",
+      }}
+    >
+      {/* Top Header */}
+      <ExamHeader
         session={session}
-        examsByType={examsByType}
-        examTypes={examTypes}
-        sectionStatus={sectionStatus}
         currentSectionTimeRemaining={currentSectionTimeRemaining}
-        onCloseSidebar={() => setSidebarOpen(false)}
-        onNavigateToExamTypePart={navigateToExamTypePart}
+        answeredCount={answered}
+        totalCount={total}
       />
 
-      {/* Main Content */}
-      <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
-        {/* Top Header */}
-        <ExamHeader
+      {/* Main Content Area */}
+      <Box
+        sx={{ flexGrow: 1, p: { xs: 2, md: 3 }, overflow: "scroll", pb: 15 }}
+      >
+        {/* Question Card */}
+        <QuestionCard
           session={session}
-          sidebarOpen={sidebarOpen}
-          currentSectionTimeRemaining={currentSectionTimeRemaining}
-          onToggleSidebar={() => setSidebarOpen(true)}
+          currentExam={currentExam}
+          currentQuestion={currentQuestion}
+          onAnswerChange={handleAnswerChange}
+          onWritingAnswerChange={handleWritingAnswerChange}
+          onSpeakingAnswerChange={handleSpeakingAnswerChange}
         />
 
-        {/* Content Area */}
-        <Box sx={{ flexGrow: 1, p: { xs: 2, md: 3 }, overflow: "auto" }}>
-          {/* Question Card with Progress */}
-          <QuestionCard
-            session={session}
-            currentExam={currentExam}
-            currentQuestion={currentQuestion}
-            progress={progress}
-            onAnswerChange={handleAnswerChange}
-            onWritingAnswerChange={handleWritingAnswerChange}
-            onSpeakingAnswerChange={handleSpeakingAnswerChange}
-          />
-
-          {/* Navigation Controls */}
-          <NavigationControls
-            session={session}
-            currentExam={currentExam}
-            examsByType={examsByType}
-            examTypes={examTypes}
-            onPreviousQuestion={previousQuestion}
-            onNextQuestion={nextQuestion}
-            onCompleteSection={completeSection}
-            onShowExamResults={() => setShowSuccessDialog(true)}
-            onSubmitWritingExam={submitWritingExam}
-            onSubmitFinalSpeaking={submitFinalSpeaking}
-          />
-        </Box>
+        {/* Navigation Controls */}
+        <NavigationControls
+          session={session}
+          currentExam={currentExam}
+          examsByType={examsByType}
+          examTypes={examTypes}
+          onPreviousQuestion={previousQuestion}
+          onNextQuestion={nextQuestion}
+          onCompleteSection={completeSection}
+          onShowExamResults={() => setShowSuccessDialog(true)}
+          onSubmitWritingExam={submitWritingExam}
+          onSubmitFinalSpeaking={submitFinalSpeaking}
+        />
       </Box>
+
+      {/* Bottom Navigation */}
+      <BottomNavigation
+        session={session}
+        examsByType={examsByType}
+        onNavigateToQuestion={navigateToQuestion}
+      />
     </Box>
   );
 }

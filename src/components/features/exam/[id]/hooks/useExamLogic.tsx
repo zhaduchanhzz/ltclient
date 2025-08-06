@@ -133,87 +133,107 @@ export function useExamLogic() {
   useEffect(() => {
     const loadExamData = () => {
       setIsLoading(true);
+      setError(null);
 
-      // First try to load from localStorage
-      const savedState = loadStateFromLocalStorage();
+      try {
+        // First try to load from localStorage
+        const savedState = loadStateFromLocalStorage();
 
-      if (savedState && savedState.examData) {
-        console.log("Found saved exam data");
-        setExamData(savedState.examData);
+        if (savedState && savedState.examData) {
+          console.log("Found saved exam data:", savedState.examData);
 
-        // If there's also a session and it's not completed, restore the session
-        if (savedState.session && !savedState.session.isCompleted) {
-          console.log("Loading ongoing exam from saved state");
-          setSession(savedState.session);
-          setSectionStatus(savedState.sectionStatus);
-          setSectionStartTimes(savedState.sectionStartTimes);
-
-          // Calculate remaining time for current section
-          const currentType = savedState.session.currentExamType;
-          const startTime = savedState.sectionStartTimes[currentType];
-
-          if (startTime) {
-            const timeLimit =
-              EXAM_TIME_LIMITS[currentType as keyof typeof EXAM_TIME_LIMITS] *
-              60;
-            const elapsed = Math.floor((Date.now() - startTime) / 1000);
-            const remaining = Math.max(0, timeLimit - elapsed);
-            setCurrentSectionTimeRemaining(remaining);
+          // Validate the exam data structure
+          if (
+            !savedState.examData.exams ||
+            !Array.isArray(savedState.examData.exams)
+          ) {
+            console.error(
+              "Invalid exam data structure - missing or invalid exams array",
+            );
+            setError("Invalid exam data format");
+            setIsLoading(false);
+            return;
           }
-        } else {
-          console.log(
-            "Exam data found but no active session - exam ready to start",
-          );
-        }
 
-        setIsLoading(false);
-        setExamExpired(false);
-      } else {
-        // If no saved state, this means the exam data is not available
-        console.log("No exam data found - exam not available");
-        setExamExpired(true);
+          setExamData(savedState.examData);
+
+          // If there's also a session and it's not completed, restore the session
+          if (savedState.session && !savedState.session.isCompleted) {
+            console.log("Loading ongoing exam from saved state");
+            setSession(savedState.session);
+            setSectionStatus(savedState.sectionStatus);
+            setSectionStartTimes(savedState.sectionStartTimes);
+
+            // Calculate remaining time for current section
+            const currentType = savedState.session.currentExamType;
+            const startTime = savedState.sectionStartTimes[currentType];
+
+            if (startTime) {
+              const timeLimit =
+                EXAM_TIME_LIMITS[currentType as keyof typeof EXAM_TIME_LIMITS] *
+                60;
+              const elapsed = Math.floor((Date.now() - startTime) / 1000);
+              const remaining = Math.max(0, timeLimit - elapsed);
+              setCurrentSectionTimeRemaining(remaining);
+            }
+          } else {
+            console.log(
+              "Exam data found but no active session - exam ready to start",
+            );
+          }
+
+          setIsLoading(false);
+          setExamExpired(false);
+        } else {
+          // If no saved state, this means the exam data is not available
+          console.log("No exam data found - exam not available");
+          console.log(
+            "Expected localStorage key:",
+            EXAM_STATE_KEY + "_" + examId,
+          );
+          setExamExpired(true);
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error("Error loading exam data:", error);
+        setError("Failed to load exam data");
         setIsLoading(false);
       }
     };
 
     loadExamData();
-  }, [loadStateFromLocalStorage]);
+  }, [loadStateFromLocalStorage, examId]);
 
   // Convert API exam data to SimulationExam format
   const convertToSimulationExams = (
     apiExams: TakeExamRequest["exams"],
   ): SimulationExam[] => {
-    return apiExams.map((exam) => ({
-      id: parseInt(exam.id),
-      examType: exam.examType,
-      title: exam.title,
-      description: exam.description,
-      isNeedVip: exam.isNeedVip === 1,
-      questions: exam.questions.map((question) => ({
-        id: parseInt(question.id),
-        questionText: question.questionText,
-        answers: question.answers.map((answer) => {
-          // Debug logging to see what's in the answer object
-          console.log("Raw answer data:", answer);
+    try {
+      return apiExams.map((exam) => {
+        console.log("Converting exam:", exam);
 
-          // Try different possible field names for answer text
-          const answerText =
-            answer.anwserText ||
-            (answer as any).answerText ||
-            (answer as any).text ||
-            (answer as any).content ||
-            `Answer ${answer.id}`;
-
-          console.log("Mapped answer text:", answerText);
-
-          return {
-            id: parseInt(answer.id),
-            answerText: answerText,
-            isCorrect: answer.isCorrect || false,
-          };
-        }),
-      })),
-    }));
+        return {
+          id: parseInt(exam.id),
+          examType: exam.examType,
+          title: exam.title,
+          description: exam.description,
+          isNeedVip: exam.isNeedVip, // Now correctly handles boolean
+          questions: exam.questions.map((question) => ({
+            id: parseInt(question.id),
+            questionText: question.questionText,
+            answers: question.answers.map((answer) => ({
+              id: parseInt(answer.id),
+              answerText: answer.answerText, // Now using correct field name
+              isCorrect: answer.isCorrect || false,
+            })),
+          })),
+        };
+      });
+    } catch (error) {
+      console.error("Error converting exam data:", error);
+      console.error("Raw exam data:", apiExams);
+      throw new Error("Failed to convert exam data");
+    }
   };
 
   // Organize exams by type
@@ -227,15 +247,27 @@ export function useExamLogic() {
 
     const organized = freeExams.reduce(
       (acc: Record<string, SimulationExam[]>, exam: SimulationExam) => {
-        if (!acc[exam.examType]) {
-          acc[exam.examType] = [];
-        }
+        // Only include exams that have questions
+        if (exam.questions && exam.questions.length > 0) {
+          if (!acc[exam.examType]) {
+            acc[exam.examType] = [];
+          }
 
-        acc[exam.examType].push(exam);
+          acc[exam.examType].push(exam);
+        } else {
+          console.log(
+            `Skipping exam ${exam.id} (${exam.examType}) - no questions`,
+          );
+        }
+        
         return acc;
       },
       {} as Record<string, SimulationExam[]>,
     );
+
+    console.log("Organized exams by type:", organized);
+    console.log("Exam types with questions:", Object.keys(organized));
+
     return organized;
   }, [examData, filterExamsByAccountType]);
 
@@ -275,61 +307,110 @@ export function useExamLogic() {
   const startExamWithData = (apiExamData: TakeExamRequest) => {
     console.log("Starting exam with data:", apiExamData);
 
-    setExamData(apiExamData);
+    try {
+      setExamData(apiExamData);
 
-    const simulationExams = convertToSimulationExams(apiExamData.exams);
-    const freeExams = filterExamsByAccountType(simulationExams);
+      const simulationExams = convertToSimulationExams(apiExamData.exams);
+      const freeExams = filterExamsByAccountType(simulationExams);
 
-    if (freeExams.length === 0) {
-      const hasVipExams = simulationExams.some((exam) => exam.isNeedVip);
-      const errorMessage =
-        hasVipExams && userInfo?.accountType === "FREE"
-          ? "Các đề thi này yêu cầu tài khoản VIP. Vui lòng nâng cấp tài khoản để truy cập."
-          : "No available exam parts found";
-      setError(errorMessage);
-      return;
+      if (freeExams.length === 0) {
+        const hasVipExams = simulationExams.some((exam) => exam.isNeedVip);
+        const errorMessage =
+          hasVipExams && userInfo?.accountType === "FREE"
+            ? "Các đề thi này yêu cầu tài khoản VIP. Vui lòng nâng cấp tài khoản để truy cập."
+            : "No available exam parts found";
+        setError(errorMessage);
+        return;
+      }
+
+      const examTypeOrder: Array<
+        "LISTENING" | "READING" | "WRITING" | "SPEAKING"
+      > = ["READING", "LISTENING", "WRITING", "SPEAKING"];
+
+      // Filter to only include exam types that have exams with questions
+      const availableTypes = examTypeOrder.filter((type) =>
+        freeExams.some(
+          (exam) =>
+            exam.examType === type &&
+            exam.questions &&
+            exam.questions.length > 0,
+        ),
+      );
+
+      // Log exam counts by type
+      const examCounts = examTypeOrder.reduce(
+        (acc, type) => {
+          const examsOfType = freeExams.filter(
+            (exam) => exam.examType === type,
+          );
+          const withQuestions = examsOfType.filter(
+            (exam) => exam.questions && exam.questions.length > 0,
+          );
+          acc[type] = {
+            total: examsOfType.length,
+            withQuestions: withQuestions.length,
+            questionCount: withQuestions.reduce(
+              (sum, exam) => sum + exam.questions.length,
+              0,
+            ),
+          };
+          return acc;
+        },
+        {} as Record<
+          string,
+          { total: number; withQuestions: number; questionCount: number }
+        >,
+      );
+
+      console.log("Exam counts by type:", examCounts);
+
+      if (availableTypes.length === 0) {
+        console.error("No exam types have questions!");
+        setError("No exam questions available");
+        return;
+      }
+
+      const termId = parseInt(apiExamData.termId);
+      const newSession: ExamTermSession = {
+        termId,
+        examId: parseInt(examId),
+        exams: freeExams,
+        currentExamType: availableTypes[0],
+        currentExamIndex: 0,
+        currentQuestionIndex: 0,
+        answers: {},
+        startTime: Date.now(),
+        timeLimit:
+          EXAM_TIME_LIMITS[availableTypes[0] as keyof typeof EXAM_TIME_LIMITS],
+        isCompleted: false,
+      };
+
+      console.log("Starting exam with type:", availableTypes[0]);
+
+      // Initialize section status - only first section is available
+      const initialStatus: Record<string, ExamSectionStatus> = {};
+      availableTypes.forEach((type, index) => {
+        initialStatus[type] = index === 0 ? "in_progress" : "locked";
+      });
+
+      // Initialize section start times
+      const initialStartTimes: Record<string, number> = {};
+      initialStartTimes[availableTypes[0]] = Date.now();
+
+      setSession(newSession);
+      setSectionStatus(initialStatus);
+      setSectionStartTimes(initialStartTimes);
+      setCurrentSectionTimeRemaining(
+        EXAM_TIME_LIMITS[availableTypes[0] as keyof typeof EXAM_TIME_LIMITS] *
+          60,
+      );
+      setExamExpired(false);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error starting exam:", error);
+      setError("Failed to start exam. Please check the exam data format.");
+      setIsLoading(false);
     }
-
-    const examTypeOrder: Array<
-      "LISTENING" | "READING" | "WRITING" | "SPEAKING"
-    > = ["LISTENING", "READING", "WRITING", "SPEAKING"];
-    const availableTypes = examTypeOrder.filter((type) =>
-      freeExams.some((exam) => exam.examType === type),
-    );
-
-    const termId = parseInt(apiExamData.termId);
-    const newSession: ExamTermSession = {
-      termId,
-      examId: parseInt(examId),
-      exams: freeExams,
-      currentExamType: availableTypes[0],
-      currentExamIndex: 0,
-      currentQuestionIndex: 0,
-      answers: {},
-      startTime: Date.now(),
-      timeLimit:
-        EXAM_TIME_LIMITS[availableTypes[0] as keyof typeof EXAM_TIME_LIMITS],
-      isCompleted: false,
-    };
-
-    // Initialize section status - only first section is available
-    const initialStatus: Record<string, ExamSectionStatus> = {};
-    availableTypes.forEach((type, index) => {
-      initialStatus[type] = index === 0 ? "in_progress" : "locked";
-    });
-
-    // Initialize section start times
-    const initialStartTimes: Record<string, number> = {};
-    initialStartTimes[availableTypes[0]] = Date.now();
-
-    setSession(newSession);
-    setSectionStatus(initialStatus);
-    setSectionStartTimes(initialStartTimes);
-    setCurrentSectionTimeRemaining(
-      EXAM_TIME_LIMITS[availableTypes[0] as keyof typeof EXAM_TIME_LIMITS] * 60,
-    );
-    setExamExpired(false);
-    setIsLoading(false);
   };
 
   // Start exam using available exam data
@@ -379,6 +460,18 @@ export function useExamLogic() {
     const currentExam = currentTypeExams[session.currentExamIndex];
     const currentQuestion =
       currentExam?.questions[session.currentQuestionIndex];
+
+    if (!currentExam) {
+      console.error(
+        `No exam found for type ${session.currentExamType} at index ${session.currentExamIndex}`,
+      );
+    }
+
+    if (!currentQuestion && currentExam) {
+      console.error(
+        `No question found at index ${session.currentQuestionIndex} in exam ${currentExam.id}`,
+      );
+    }
 
     return { exam: currentExam, question: currentQuestion };
   };
@@ -562,6 +655,8 @@ export function useExamLogic() {
   // Complete current section and move to next
   const completeSection = useCallback(
     (examType: string) => {
+      console.log(`Completing section: ${examType}`);
+
       setSectionStatus((prev) => ({
         ...prev,
         [examType]: "completed",
@@ -569,6 +664,11 @@ export function useExamLogic() {
 
       const currentIndex = examTypes.indexOf(examType as any);
       const nextIndex = currentIndex + 1;
+
+      console.log(
+        `Current exam type index: ${currentIndex}, Next index: ${nextIndex}`,
+      );
+      console.log(`Available exam types: ${examTypes.join(", ")}`);
 
       // Special handling for SPEAKING - automatically show results (for non-final questions)
       if (examType === "SPEAKING") {
@@ -579,6 +679,8 @@ export function useExamLogic() {
 
       if (nextIndex < examTypes.length) {
         const nextType = examTypes[nextIndex];
+        console.log(`Moving to next exam type: ${nextType}`);
+
         setSectionStatus((prev) => ({
           ...prev,
           [nextType]: "in_progress",
@@ -603,6 +705,7 @@ export function useExamLogic() {
           EXAM_TIME_LIMITS[nextType as keyof typeof EXAM_TIME_LIMITS] * 60,
         );
       } else {
+        console.log("All sections completed, submitting exam");
         submitExam();
       }
     },
@@ -935,6 +1038,49 @@ export function useExamLogic() {
     }
   }, [session, submitExamMutation, clearPersistedState, allExams]);
 
+  // Navigate to specific question index within the current exam type
+  const navigateToQuestion = useCallback(
+    async (globalQuestionIndex: number) => {
+      if (!session) return;
+
+      // Submit current speaking question before navigation
+      await submitCurrentSpeakingQuestion();
+
+      const currentTypeExams = examsByType[session.currentExamType] || [];
+      let questionCount = 0;
+      let targetExamIndex = 0;
+      let targetQuestionIndex = 0;
+
+      // Find which exam and question index corresponds to the global index
+      for (
+        let examIndex = 0;
+        examIndex < currentTypeExams.length;
+        examIndex++
+      ) {
+        const exam = currentTypeExams[examIndex];
+        const examQuestionCount = exam.questions.length;
+
+        if (questionCount + examQuestionCount > globalQuestionIndex) {
+          targetExamIndex = examIndex;
+          targetQuestionIndex = globalQuestionIndex - questionCount;
+          break;
+        }
+
+        questionCount += examQuestionCount;
+      }
+
+      setSession((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          currentExamIndex: targetExamIndex,
+          currentQuestionIndex: targetQuestionIndex,
+        };
+      });
+    },
+    [session, examsByType, submitCurrentSpeakingQuestion],
+  );
+
   // Reset exam
   const resetExam = () => {
     setSession(null);
@@ -980,6 +1126,7 @@ export function useExamLogic() {
     handleWritingAnswerChange,
     handleSpeakingAnswerChange,
     navigateToExamTypePart,
+    navigateToQuestion,
     nextQuestion,
     previousQuestion,
     completeSection,

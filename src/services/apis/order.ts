@@ -2,7 +2,12 @@ import { API_PATH } from "@/consts/api-path";
 import { CommonResponse } from "@/types/common";
 import HttpClient from "@/utils/axios-config";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Order, OrderCreateRequest, OrderFilterParams } from "../types/order";
+import {
+  Order,
+  OrderCreateRequest,
+  OrderFilterParams,
+  PaginationResponseOrderDto,
+} from "../types/order";
 
 // GET all orders
 export const useGetOrdersQuery = (enabled = true) => {
@@ -36,7 +41,7 @@ export const useGetFilteredOrdersQuery = (
   return useQuery({
     queryKey: [API_PATH.ORDERS, "filter", params],
     queryFn: () => {
-      return HttpClient.get<null, CommonResponse<Order[]>>(
+      return HttpClient.get<null, CommonResponse<PaginationResponseOrderDto>>(
         `${API_PATH.ORDERS}/filter`,
         { params },
       );

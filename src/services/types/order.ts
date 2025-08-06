@@ -19,7 +19,18 @@ export interface OrderCreateRequest {
 }
 
 export interface OrderFilterParams {
-  status?: "SUCCESS" | "FAILED";
+  status?: "PENDING" | "SUCCESS" | "FAILED";
   fromDate?: string;
   toDate?: string;
+  page?: number;
+  size?: number;
+  sortDirection?: string;
+}
+
+export interface PaginationResponseOrderDto {
+  content: Order[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
 }

@@ -17,12 +17,16 @@ import DrawerMobile from "./DrawerMobile";
 import UserMenuPopper from "./UserMenuPopper";
 import CookieStorage from "@/utils/cookie-storage";
 import { APP_LOCAL_STORAGE_KEY } from "@/consts";
+import { useGetSettingsQuery } from "@/services/apis/settings";
+import { SettingsType } from "@/services/types/settings";
+import Image from "next/image";
 
 const Header = () => {
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const theme = useTheme();
   const pathname = usePathname();
   const { push } = useRouter();
+  const { data: settings } = useGetSettingsQuery();
 
   const toggleDrawer = () => {
     setDrawerOpen(!drawerOpen);
@@ -52,13 +56,27 @@ const Header = () => {
               width: "100%",
             }}
           >
-            <BasicStack spacing={1} direction="row">
-              <HomeIcon style={{ color: theme.palette.text.primary }} />
+            <BasicStack
+              spacing={1}
+              direction="row"
+              onClick={() => push(APP_ROUTE.HOME)}
+              sx={{ cursor: "pointer", alignItems: "center" }}
+            >
+              {settings?.[SettingsType.LOGO]?.[0]?.content ? (
+                <Image
+                  src={settings[SettingsType.LOGO][0].content}
+                  alt="Logo"
+                  width={40}
+                  height={40}
+                  style={{ objectFit: "contain" }}
+                />
+              ) : (
+                <HomeIcon style={{ color: theme.palette.text.primary }} />
+              )}
               <BasicTypography
                 variant="h6"
                 component="span"
-                sx={{ color: theme.palette.text.primary, cursor: "pointer" }}
-                onClick={() => push(APP_ROUTE.HOME)}
+                sx={{ color: theme.palette.text.primary }}
               >
                 LUYỆN THI VSTEP
               </BasicTypography>
@@ -77,7 +95,10 @@ const Header = () => {
                       variant="body2"
                       component="span"
                       onClick={() => {
-                        if (nav.href === APP_ROUTE.EXAM_ROOM && !CookieStorage.get(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN)) {
+                        if (
+                          nav.href === APP_ROUTE.EXAM_ROOM &&
+                          !CookieStorage.get(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN)
+                        ) {
                           push(APP_ROUTE.LOGIN);
                         } else {
                           push(nav.href);

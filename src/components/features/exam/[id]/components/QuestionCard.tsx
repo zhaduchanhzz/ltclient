@@ -7,7 +7,6 @@ import {
   FormControl,
   FormControlLabel,
   FormGroup,
-  LinearProgress,
   Paper,
   Radio,
   RadioGroup,
@@ -24,7 +23,6 @@ interface QuestionCardProps {
   session: ExamTermSession;
   currentExam: any;
   currentQuestion: any;
-  progress: number;
   onAnswerChange: (
     questionId: number,
     answerId: number,
@@ -36,9 +34,7 @@ interface QuestionCardProps {
 
 export default function QuestionCard({
   session,
-  currentExam,
   currentQuestion,
-  progress,
   onAnswerChange,
   onWritingAnswerChange,
   onSpeakingAnswerChange,
@@ -460,7 +456,7 @@ export default function QuestionCard({
         }}
         elevation={2}
       >
-        <CardContent>
+        {/* <CardContent>
           <Stack
             direction={{ xs: "column", sm: "row" }}
             alignItems={{ xs: "flex-start", sm: "center" }}
@@ -473,20 +469,7 @@ export default function QuestionCard({
               {currentExam.questions.length}
             </Typography>
           </Stack>
-          <LinearProgress
-            variant="determinate"
-            value={progress}
-            sx={{
-              height: 12,
-              borderRadius: 6,
-              bgcolor: "rgba(255,255,255,0.2)",
-              "& .MuiLinearProgress-bar": {
-                bgcolor: "#4caf50",
-                borderRadius: 6,
-              },
-            }}
-          />
-        </CardContent>
+        </CardContent> */}
       </Card>
 
       {/* Question Card */}
