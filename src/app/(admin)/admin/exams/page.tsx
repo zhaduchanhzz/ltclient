@@ -629,20 +629,33 @@ const ExamsPage = () => {
                       />
 
                       {formData.examType === "LISTENING" && (
-                        <TextField
-                          fullWidth
-                          label="File âm thanh"
-                          value={question.audioFile}
-                          onChange={(e) =>
-                            handleAudioFileUpload(
-                              questionIndex,
-                              e as React.ChangeEvent<HTMLInputElement>,
-                            )
-                          }
-                          InputProps={{
-                            type: "file",
-                          }}
-                        />
+                        <Box>
+                          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                            File âm thanh
+                          </Typography>
+                          <Stack direction="row" spacing={2} alignItems="center">
+                            <Button
+                              variant="outlined"
+                              component="label"
+                              size="small"
+                            >
+                              Chọn file âm thanh
+                              <input
+                                type="file"
+                                hidden
+                                accept="audio/*"
+                                onChange={(e) =>
+                                  handleAudioFileUpload(questionIndex, e)
+                                }
+                              />
+                            </Button>
+                            {question.audioFile && (
+                              <Typography variant="body2" color="text.secondary">
+                                Đã tải lên file âm thanh
+                              </Typography>
+                            )}
+                          </Stack>
+                        </Box>
                       )}
 
                       {/* Show answers section only for LISTENING and READING */}
