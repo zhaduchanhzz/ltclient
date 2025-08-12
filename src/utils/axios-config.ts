@@ -19,7 +19,11 @@ class Axios {
   private interceptor: number | null = null;
 
   constructor() {
-    const instance = axios.create({ baseURL: ApiServerURL, headers });
+    const instance = axios.create({ 
+      baseURL: ApiServerURL, 
+      headers,
+      withCredentials: true, // Enable sending cookies with cross-origin requests
+    });
 
     // Config request interceptor
     instance.interceptors.request.use(

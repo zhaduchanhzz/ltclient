@@ -2,11 +2,20 @@ import Cookies from "js-cookie";
 
 class CookieStorage {
   set(key: string, value: string, options?: Cookies.CookieAttributes): void {
+    // Check if we're in a secure context (HTTPS)
+    const isSecureContext =
+      typeof window !== "undefined" && window.location?.protocol === "https:";
+
     const defaultOptions: Cookies.CookieAttributes = {
       expires: 7, // 7 days
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      // Only set secure flag if we're actually using HTTPS
+      secure: isSecureContext,
+      sameSite: isSecureContext ? "lax" : "lax",
       path: "/",
+      // Add domain configuration if needed for cross-origin
+      ...(process.env.NEXT_PUBLIC_COOKIE_DOMAIN && {
+        domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN,
+      }),
     };
 
     Cookies.set(key, value, { ...defaultOptions, ...options });
@@ -28,7 +37,11 @@ class CookieStorage {
   }
 
   // Specific method for storing boolean values
-  setBoolean(key: string, value: boolean, options?: Cookies.CookieAttributes): void {
+  setBoolean(
+    key: string,
+    value: boolean,
+    options?: Cookies.CookieAttributes,
+  ): void {
     this.set(key, value.toString(), options);
   }
 
