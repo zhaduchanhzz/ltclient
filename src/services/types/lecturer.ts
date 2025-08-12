@@ -1,4 +1,5 @@
 export interface UserResponse {
+  id: number;
   questionId: number;
   questionText: string;
   content: string;
@@ -32,9 +33,8 @@ export interface UserResponsesParams {
 }
 
 export interface GradeRequest {
-  responseId: number;
+  userResponseId: number;
   score: number;
-  feedback?: string;
 }
 
 export interface GradeResponse {

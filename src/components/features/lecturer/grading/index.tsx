@@ -23,11 +23,11 @@ import {
   FilterList as FilterListIcon,
 } from "@mui/icons-material";
 import { useState, useMemo } from "react";
-import {
-  useGetUserResponsesQuery,
-  useGradeResponseMutation,
-} from "@/services/apis/lecturer";
+import { useGetUserResponsesQuery } from "@/services/apis/lecturer";
 import { UserResponse } from "@/services/types/lecturer";
+import GradingDialog from "./GradingDialog";
+import ViewSpeakingWritingExamDialog from "@/components/common/Dialog/ViewSpeakingWritingExamDialog";
+import { EXAM_SECTION } from "@/consts";
 
 const LecturerGrading = () => {
   const [page, setPage] = useState(0);
@@ -38,14 +38,17 @@ const LecturerGrading = () => {
     termId: undefined as number | undefined,
   });
   const [showFilters, setShowFilters] = useState(false);
+  const [gradingDialogOpen, setGradingDialogOpen] = useState(false);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [selectedResponse, setSelectedResponse] = useState<UserResponse | null>(
+    null,
+  );
 
   const { data, isLoading } = useGetUserResponsesQuery({
     page,
     size: pageSize,
     ...filters,
   });
-
-  const { mutate: gradeResponse } = useGradeResponseMutation();
 
   const columns = useMemo(
     () => [
@@ -60,19 +63,20 @@ const LecturerGrading = () => {
   );
 
   const handleGrade = (response: UserResponse) => {
-    // This would open a dialog or navigate to grading form
-    console.log("Grade response:", response);
+    setSelectedResponse(response);
+    setGradingDialogOpen(true);
   };
 
   const handleView = (response: UserResponse) => {
-    // This would open a dialog to view the full response
-    console.log("View response:", response);
+    setSelectedResponse(response);
+    setViewDialogOpen(true);
   };
 
   const getStatusChip = (score: number | null) => {
     if (score === null) {
       return <BasicChip label="Ungraded" color="default" size="small" />;
     }
+    
     return <BasicChip label="Graded" color="success" size="small" />;
   };
 
@@ -259,6 +263,38 @@ const LecturerGrading = () => {
           />
         </BasicStack>
       </BasicPaper>
+
+      {/* Grading Dialog */}
+      <GradingDialog
+        open={gradingDialogOpen}
+        onClose={() => {
+          setGradingDialogOpen(false);
+          setSelectedResponse(null);
+        }}
+        response={selectedResponse}
+      />
+
+      {/* View Dialog */}
+      {selectedResponse && (
+        <ViewSpeakingWritingExamDialog
+          open={viewDialogOpen}
+          onClose={() => {
+            setViewDialogOpen(false);
+            setSelectedResponse(null);
+          }}
+          sectionType={
+            selectedResponse.examType === "WRITING"
+              ? EXAM_SECTION.WRITING
+              : EXAM_SECTION.SPEAKING
+          }
+          examData={[
+            {
+              questionText: selectedResponse.questionText,
+              content: selectedResponse.content,
+            },
+          ]}
+        />
+      )}
     </BasicStack>
   );
 };
