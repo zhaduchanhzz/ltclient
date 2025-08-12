@@ -13,36 +13,82 @@ import LoadingOverlay from "@/components/common/Overlay/LoadingOverlay";
 import NoDataOverlay from "@/components/common/Overlay/NoDataOverlay";
 import ContentPasteIcon from "@mui/icons-material/ContentPaste";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { getUserWritingTableColumns } from "../utils/columns";
-import { userWritingData } from "../utils/data";
 import useUserWritingFilter from "../hooks/useUserWritingFilter";
 import RegisterForPointingDialog from "@/components/common/Dialog/RegisterForPointingDialog";
 import ViewSpeakingWritingExamDialog from "@/components/common/Dialog/ViewSpeakingWritingExamDialog";
 import { EXAM_SECTION } from "@/consts";
+import { useGetUserHistoryQuery } from "@/services/apis/exam";
+import { UserHistory } from "@/services/types/exam";
 
 type UserWritingTableProps = {};
 
 const UserWritingTable = (_: UserWritingTableProps) => {
   const columns = useMemo(() => getUserWritingTableColumns(), []);
-  const [totalItems, __] = useState<number>(0);
+  const [totalItems, setTotalItems] = useState<number>(0);
   const [openRegisterForWritingPoint, setOpenRegisterForWritingPoint] =
     useState<boolean>(false);
   const [openViewWritingExamDialog, setOpenViewWritingExamDialog] =
     useState<boolean>(false);
+  const [selectedExamData, setSelectedExamData] = useState<any>(null);
+  const [selectedTermId, setSelectedTermId] = useState<number | null>(null);
+  const [selectedExamId, setSelectedExamId] = useState<number | null>(null);
+  const [writingExams, setWritingExams] = useState<any[]>([]);
 
   const { onPageChange, onPageSizeChange, filter } = useUserWritingFilter();
 
+  const { data: historyData, isLoading } = useGetUserHistoryQuery(true);
+
+  useEffect(() => {
+    if (historyData?.data && Array.isArray(historyData.data)) {
+      const writingData: any[] = [];
+      historyData.data.forEach((history: UserHistory) => {
+        const writingExam = history.exams.find(
+          (exam) => exam.examType === "WRITING",
+        );
+
+        if (writingExam) {
+          writingData.push({
+            termId: history.termId,
+            examCode: history.termId,
+            examId: writingExam.examId,
+            responses: writingExam.responses || [],
+            examScore: writingExam.examScore,
+            createdAt: history.createdAt,
+          });
+        }
+      });
+      setWritingExams(writingData);
+      setTotalItems(writingData.length);
+    } else {
+      // Handle case where data is not an array or doesn't exist
+      setWritingExams([]);
+      setTotalItems(0);
+    }
+  }, [historyData]);
+
   const onConfirmRegisterForWritingPoint = () => {
     setOpenRegisterForWritingPoint(false);
+  };
+
+  const handleRegisterClick = (termId: number, examId: number) => {
+    setSelectedTermId(termId);
+    setSelectedExamId(examId);
+    setOpenRegisterForWritingPoint(true);
+  };
+
+  const handleViewExamClick = (responses: any[]) => {
+    setSelectedExamData(responses);
+    setOpenViewWritingExamDialog(true);
   };
 
   return (
     <BasicPaper sx={{ p: 3 }}>
       <BasicStack spacing={2}>
         <BasicTableContainer id="user-history_table" sx={{ minHeight: 430 }}>
-          <LoadingOverlay visible={userWritingData.length === 0} />
-          <NoDataOverlay visible={userWritingData.length === 0} />
+          <LoadingOverlay visible={isLoading} />
+          <NoDataOverlay visible={!isLoading && writingExams.length === 0} />
           <TableCustom>
             <BasicTableHead>
               <BasicTableRow>
@@ -67,80 +113,87 @@ const UserWritingTable = (_: UserWritingTableProps) => {
               </BasicTableRow>
             </BasicTableHead>
             <BasicTableBody>
-              {userWritingData.map((item) => (
-                <BasicTableRow key={item.id}>
-                  <TableCellCustom
-                    align="center"
-                    border={true}
-                    minHeight={40}
-                    alignItems="center"
-                    justifyContent="center"
-                  >
-                    <BasicTypography variant="body2">
-                      {item.examCode}
-                    </BasicTypography>
-                  </TableCellCustom>
-                  <TableCellCustom
-                    align="center"
-                    border={true}
-                    minHeight={40}
-                    alignItems="center"
-                    justifyContent="center"
-                  >
-                    <BasicTypography variant="body2" component="span">
-                      {item.essay1}
-                    </BasicTypography>
-                  </TableCellCustom>
-                  <TableCellCustom
-                    align="center"
-                    border={true}
-                    minHeight={40}
-                    alignItems="center"
-                    justifyContent="center"
-                  >
-                    <BasicTypography variant="body2" component="span">
-                      {item.essay2}
-                    </BasicTypography>
-                  </TableCellCustom>
+              {writingExams.map((item, index) => {
+                const essay1 = item.responses[0];
+                const essay2 = item.responses[1];
 
-                  <TableCellCustom
-                    align="center"
-                    border={true}
-                    minHeight={40}
-                    alignItems="center"
-                    justifyContent="center"
-                  >
-                    <BasicStack spacing={1}>
-                      <BasicButton
-                        variant="outlined"
-                        color="info"
-                        size="small"
-                        startIcon={
-                          <ContentPasteIcon sx={{ width: 16, height: 16 }} />
-                        }
-                        onClick={() => setOpenRegisterForWritingPoint(true)}
-                      >
-                        <BasicTypography variant="body2">
-                          Đăng ký
-                        </BasicTypography>
-                      </BasicButton>
-                      <BasicButton
-                        variant="outlined"
-                        color="info"
-                        size="small"
-                        startIcon={
-                          <VisibilityIcon sx={{ width: 16, height: 16 }} />
-                        }
-                        onClick={() => setOpenRegisterForWritingPoint(true)}
-                      >
-                        <BasicTypography variant="body2">
-                          Xem bài
-                        </BasicTypography>
-                      </BasicButton>
-                    </BasicStack>
-                  </TableCellCustom>
-                </BasicTableRow>
-              ))}
+                return (
+                  <BasicTableRow key={index}>
+                    <TableCellCustom
+                      align="center"
+                      border={true}
+                      minHeight={40}
+                      alignItems="center"
+                      justifyContent="center"
+                    >
+                      <BasicTypography variant="body2">
+                        {item.examCode}
+                      </BasicTypography>
+                    </TableCellCustom>
+                    <TableCellCustom
+                      align="center"
+                      border={true}
+                      minHeight={40}
+                      alignItems="center"
+                      justifyContent="center"
+                    >
+                      <BasicTypography variant="body2" component="span">
+                        {essay1?.content ? "Đã làm" : "Chưa làm"}
+                      </BasicTypography>
+                    </TableCellCustom>
+                    <TableCellCustom
+                      align="center"
+                      border={true}
+                      minHeight={40}
+                      alignItems="center"
+                      justifyContent="center"
+                    >
+                      <BasicTypography variant="body2" component="span">
+                        {essay2?.content ? "Đã làm" : "Chưa làm"}
+                      </BasicTypography>
+                    </TableCellCustom>
+
+                    <TableCellCustom
+                      align="center"
+                      border={true}
+                      minHeight={40}
+                      alignItems="center"
+                      justifyContent="center"
+                    >
+                      <BasicStack spacing={1}>
+                        <BasicButton
+                          variant="outlined"
+                          color="info"
+                          size="small"
+                          startIcon={
+                            <ContentPasteIcon sx={{ width: 16, height: 16 }} />
+                          }
+                          onClick={() =>
+                            handleRegisterClick(item.termId, item.examId)
+                          }
+                        >
+                          <BasicTypography variant="body2">
+                            Đăng ký
+                          </BasicTypography>
+                        </BasicButton>
+                        <BasicButton
+                          variant="outlined"
+                          color="info"
+                          size="small"
+                          startIcon={
+                            <VisibilityIcon sx={{ width: 16, height: 16 }} />
+                          }
+                          onClick={() => handleViewExamClick(item.responses)}
+                        >
+                          <BasicTypography variant="body2">
+                            Xem bài
+                          </BasicTypography>
+                        </BasicButton>
+                      </BasicStack>
+                    </TableCellCustom>
+                  </BasicTableRow>
+                );
+              })}
             </BasicTableBody>
           </TableCustom>
         </BasicTableContainer>
@@ -158,11 +211,14 @@ const UserWritingTable = (_: UserWritingTableProps) => {
         open={openRegisterForWritingPoint}
         onClose={() => setOpenRegisterForWritingPoint(false)}
         onConfirm={onConfirmRegisterForWritingPoint}
+        termId={selectedTermId}
+        examId={selectedExamId}
       />
       <ViewSpeakingWritingExamDialog
         open={openViewWritingExamDialog}
-        sectionType={EXAM_SECTION.SPEAKING}
+        sectionType={EXAM_SECTION.WRITING}
         onClose={() => setOpenViewWritingExamDialog(false)}
+        examData={selectedExamData}
       />
     </BasicPaper>
   );

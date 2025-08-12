@@ -7,10 +7,11 @@ type ViewWritingExamDialogProps = {
   open: boolean;
   onClose: () => void;
   sectionType: keyof typeof EXAM_SECTION;
+  examData?: any;
 };
 
 const ViewSpeakingWritingExamDialog = (props: ViewWritingExamDialogProps) => {
-  const { open, onClose, sectionType } = props;
+  const { open, onClose, sectionType, examData } = props;
 
   return (
     <ViewDialog
@@ -29,8 +30,15 @@ const ViewSpeakingWritingExamDialog = (props: ViewWritingExamDialogProps) => {
                 >
                   Task 1
                 </BasicTypography>
-                {false ? (
-                  <BasicTypography variant="h6">Load bài thi</BasicTypography>
+                {examData && examData[0] ? (
+                  <BasicStack spacing={1}>
+                    <BasicTypography variant="body2" sx={{ fontWeight: "bold" }}>
+                      Câu hỏi: {examData[0].questionText}
+                    </BasicTypography>
+                    <BasicTypography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
+                      {examData[0].content || "Thí sinh không làm bài"}
+                    </BasicTypography>
+                  </BasicStack>
                 ) : (
                   <BasicTypography variant="body2" sx={{ fontStyle: "italic" }}>
                     Thí sinh không làm bài
@@ -44,8 +52,15 @@ const ViewSpeakingWritingExamDialog = (props: ViewWritingExamDialogProps) => {
                 >
                   Task 2
                 </BasicTypography>
-                {false ? (
-                  <BasicTypography variant="h6">Load bài thi</BasicTypography>
+                {examData && examData[1] ? (
+                  <BasicStack spacing={1}>
+                    <BasicTypography variant="body2" sx={{ fontWeight: "bold" }}>
+                      Câu hỏi: {examData[1].questionText}
+                    </BasicTypography>
+                    <BasicTypography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
+                      {examData[1].content || "Thí sinh không làm bài"}
+                    </BasicTypography>
+                  </BasicStack>
                 ) : (
                   <BasicTypography variant="body2" sx={{ fontStyle: "italic" }}>
                     Thí sinh không làm bài
@@ -55,51 +70,35 @@ const ViewSpeakingWritingExamDialog = (props: ViewWritingExamDialogProps) => {
             </BasicStack>
           ) : (
             <BasicStack spacing={2}>
-              <BasicStack spacing={1}>
-                <BasicTypography
-                  variant="h6"
-                  sx={{ textDecoration: "underline" }}
-                >
-                  Bài thu âm số 1
-                </BasicTypography>
-                {false ? (
-                  <BasicTypography variant="h6">Load bài thi</BasicTypography>
-                ) : (
-                  <BasicTypography variant="body2" sx={{ fontStyle: "italic" }}>
-                    Thí sinh không làm bài
+              {examData && examData.map((item: any, index: number) => (
+                <BasicStack spacing={1} key={index}>
+                  <BasicTypography
+                    variant="h6"
+                    sx={{ textDecoration: "underline" }}
+                  >
+                    Bài thu âm số {index + 1}
                   </BasicTypography>
-                )}
-              </BasicStack>
-              <BasicStack spacing={1}>
-                <BasicTypography
-                  variant="h6"
-                  sx={{ textDecoration: "underline" }}
-                >
-                  Bài thu âm số 2
+                  {item ? (
+                    <BasicStack spacing={1}>
+                      <BasicTypography variant="body2" sx={{ fontWeight: "bold" }}>
+                        Câu hỏi: {item.questionText}
+                      </BasicTypography>
+                      <BasicTypography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
+                        {item.content ? "Đã thu âm" : "Thí sinh không làm bài"}
+                      </BasicTypography>
+                    </BasicStack>
+                  ) : (
+                    <BasicTypography variant="body2" sx={{ fontStyle: "italic" }}>
+                      Thí sinh không làm bài
+                    </BasicTypography>
+                  )}
+                </BasicStack>
+              ))}
+              {(!examData || examData.length === 0) && (
+                <BasicTypography variant="body2" sx={{ fontStyle: "italic" }}>
+                  Không có dữ liệu bài thi
                 </BasicTypography>
-                {false ? (
-                  <BasicTypography variant="h6">Load bài thi</BasicTypography>
-                ) : (
-                  <BasicTypography variant="body2" sx={{ fontStyle: "italic" }}>
-                    Thí sinh không làm bài
-                  </BasicTypography>
-                )}
-              </BasicStack>
-              <BasicStack spacing={1}>
-                <BasicTypography
-                  variant="h6"
-                  sx={{ textDecoration: "underline" }}
-                >
-                  Bài thu âm số 2
-                </BasicTypography>
-                {false ? (
-                  <BasicTypography variant="h6">Load bài thi</BasicTypography>
-                ) : (
-                  <BasicTypography variant="body2" sx={{ fontStyle: "italic" }}>
-                    Thí sinh không làm bài
-                  </BasicTypography>
-                )}
-              </BasicStack>
+              )}
             </BasicStack>
           )}
         </>

@@ -12,32 +12,68 @@ import TablePaginationCustom from "@/components/base/MaterialUI-Table/TablePagin
 import LoadingOverlay from "@/components/common/Overlay/LoadingOverlay";
 import NoDataOverlay from "@/components/common/Overlay/NoDataOverlay";
 import ContentPasteIcon from "@mui/icons-material/ContentPaste";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import useUserSpeakingFilter from "../hooks/useUserSpeakingFilter";
 import { getUserSpeakingTableColumns } from "../utils/columns";
-import { userSpeakingData } from "../utils/data";
 import RegisterForPointingDialog from "@/components/common/Dialog/RegisterForPointingDialog";
+import { useGetUserHistoryQuery } from "@/services/apis/exam";
+import { UserHistory } from "@/services/types/exam";
 
 type UserSpeakingTableProps = {};
 
 const UserSpeakingTable = (_: UserSpeakingTableProps) => {
   const columns = useMemo(() => getUserSpeakingTableColumns(), []);
-  const [totalItems, __] = useState<number>(0);
+  const [totalItems, setTotalItems] = useState<number>(0);
   const [openRegisterForSpeakingPoint, setOpenRegisterForSpeakingPoint] =
     useState<boolean>(false);
+  const [selectedTermId, setSelectedTermId] = useState<number | null>(null);
+  const [selectedExamId, setSelectedExamId] = useState<number | null>(null);
+  const [speakingExams, setSpeakingExams] = useState<any[]>([]);
 
   const { onPageChange, onPageSizeChange, filter } = useUserSpeakingFilter();
 
+  const { data: historyData, isLoading } = useGetUserHistoryQuery(true);
+
+  useEffect(() => {
+    if (historyData?.data) {
+      const speakingData: any[] = [];
+      historyData.data.forEach((history: UserHistory) => {
+        const speakingExam = history.exams.find(
+          (exam) => exam.examType === "SPEAKING",
+        );
+
+        if (speakingExam) {
+          speakingData.push({
+            termId: history.termId,
+            examCode: history.termId,
+            examId: speakingExam.examId,
+            responses: speakingExam.responses || [],
+            examScore: speakingExam.examScore,
+            createdAt: history.createdAt,
+          });
+        }
+      });
+      setSpeakingExams(speakingData);
+      setTotalItems(speakingData.length);
+    }
+  }, [historyData]);
+
   const onConfirmRegisterForSpeakingPoint = () => {
     setOpenRegisterForSpeakingPoint(false);
+  };
+
+  const handleRegisterClick = (termId: number, examId: number) => {
+    setSelectedTermId(termId);
+    setSelectedExamId(examId);
+    setOpenRegisterForSpeakingPoint(true);
   };
 
   return (
     <BasicPaper sx={{ p: 3 }}>
       <BasicStack spacing={2}>
         <BasicTableContainer id="user-history_table" sx={{ minHeight: 430 }}>
-          <LoadingOverlay visible={userSpeakingData.length === 0} />
-          <NoDataOverlay visible={userSpeakingData.length === 0} />
+          <LoadingOverlay visible={isLoading} />
+          <NoDataOverlay visible={!isLoading && speakingExams.length === 0} />
           <TableCustom>
             <BasicTableHead>
               <BasicTableRow>
@@ -62,67 +98,75 @@ const UserSpeakingTable = (_: UserSpeakingTableProps) => {
               </BasicTableRow>
             </BasicTableHead>
             <BasicTableBody>
-              {userSpeakingData.map((item) => (
-                <BasicTableRow key={item.id}>
-                  <TableCellCustom
-                    align="center"
-                    border={true}
-                    minHeight={40}
-                    alignItems="center"
-                    justifyContent="center"
-                  >
-                    <BasicTypography variant="body2">
-                      {item.examCode}
-                    </BasicTypography>
-                  </TableCellCustom>
-                  <TableCellCustom
-                    align="center"
-                    border={true}
-                    minHeight={40}
-                    alignItems="center"
-                    justifyContent="center"
-                  >
-                    <BasicTypography variant="body2" component="span">
-                      {item.essay1}
-                    </BasicTypography>
-                  </TableCellCustom>
-                  <TableCellCustom
-                    align="center"
-                    border={true}
-                    minHeight={40}
-                    alignItems="center"
-                    justifyContent="center"
-                  >
-                    <BasicTypography variant="body2" component="span">
-                      {item.essay2}
-                    </BasicTypography>
-                  </TableCellCustom>
+              {speakingExams.map((item, index) => {
+                const audio1 = item.responses[0];
+                const audio2 = item.responses[1];
+                const _audio3 = item.responses[2];
 
-                  <TableCellCustom
-                    align="center"
-                    border={true}
-                    minHeight={40}
-                    alignItems="center"
-                    justifyContent="center"
-                  >
-                    <BasicStack spacing={1}>
-                      <BasicButton
-                        variant="outlined"
-                        color="info"
-                        size="small"
-                        startIcon={
-                          <ContentPasteIcon sx={{ width: 16, height: 16 }} />
-                        }
-                        onClick={() => setOpenRegisterForSpeakingPoint(true)}
-                      >
-                        <BasicTypography variant="body2">
-                          Đăng ký
-                        </BasicTypography>
-                      </BasicButton>
-                    </BasicStack>
-                  </TableCellCustom>
-                </BasicTableRow>
-              ))}
+                return (
+                  <BasicTableRow key={index}>
+                    <TableCellCustom
+                      align="center"
+                      border={true}
+                      minHeight={40}
+                      alignItems="center"
+                      justifyContent="center"
+                    >
+                      <BasicTypography variant="body2">
+                        {item.examCode}
+                      </BasicTypography>
+                    </TableCellCustom>
+                    <TableCellCustom
+                      align="center"
+                      border={true}
+                      minHeight={40}
+                      alignItems="center"
+                      justifyContent="center"
+                    >
+                      <BasicTypography variant="body2" component="span">
+                        {audio1?.content ? "Đã thu âm" : "Chưa thu âm"}
+                      </BasicTypography>
+                    </TableCellCustom>
+                    <TableCellCustom
+                      align="center"
+                      border={true}
+                      minHeight={40}
+                      alignItems="center"
+                      justifyContent="center"
+                    >
+                      <BasicTypography variant="body2" component="span">
+                        {audio2?.content ? "Đã thu âm" : "Chưa thu âm"}
+                      </BasicTypography>
+                    </TableCellCustom>
+
+                    <TableCellCustom
+                      align="center"
+                      border={true}
+                      minHeight={40}
+                      alignItems="center"
+                      justifyContent="center"
+                    >
+                      <BasicStack spacing={1}>
+                        <BasicButton
+                          variant="outlined"
+                          color="info"
+                          size="small"
+                          startIcon={
+                            <ContentPasteIcon sx={{ width: 16, height: 16 }} />
+                          }
+                          onClick={() =>
+                            handleRegisterClick(item.termId, item.examId)
+                          }
+                        >
+                          <BasicTypography variant="body2">
+                            Đăng ký
+                          </BasicTypography>
+                        </BasicButton>
+                      </BasicStack>
+                    </TableCellCustom>
+                  </BasicTableRow>
+                );
+              })}
             </BasicTableBody>
           </TableCustom>
         </BasicTableContainer>
@@ -140,6 +184,8 @@ const UserSpeakingTable = (_: UserSpeakingTableProps) => {
         open={openRegisterForSpeakingPoint}
         onClose={() => setOpenRegisterForSpeakingPoint(false)}
         onConfirm={onConfirmRegisterForSpeakingPoint}
+        termId={selectedTermId}
+        examId={selectedExamId}
       />
     </BasicPaper>
   );

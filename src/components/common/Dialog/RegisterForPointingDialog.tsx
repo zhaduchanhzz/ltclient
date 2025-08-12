@@ -1,15 +1,46 @@
 import BasicStack from "@/components/base/MaterialUI-Basic/Stack";
 import BasicTypography from "@/components/base/MaterialUI-Basic/Typography";
 import InfoDialog from "@/components/common/Dialog/InfoDialog";
+import { useGradingRequestMutation } from "@/services/apis/exam";
+import useNotification from "@/contexts/NotificationContext";
 
 type RegisterForPointingDialogProps = {
   open: boolean;
   onConfirm: () => void;
   onClose: () => void;
+  termId?: number | null;
+  examId?: number | null;
 };
 
 const RegisterForPointingDialog = (props: RegisterForPointingDialogProps) => {
-  const { open, onConfirm, onClose } = props;
+  const { open, onConfirm, onClose, termId, examId } = props;
+  const setNotification = useNotification();
+  const gradingRequestMutation = useGradingRequestMutation();
+
+  const handleConfirm = async () => {
+    // If termId and examId are not provided, just call the original onConfirm
+    if (!termId || !examId) {
+      onConfirm();
+      return;
+    }
+
+    try {
+      await gradingRequestMutation.mutateAsync({
+        termId,
+        examId,
+      });
+      setNotification({
+        message: "Đăng ký chấm thi thành công",
+        severity: "success",
+      });
+      onConfirm();
+    } catch {
+      setNotification({
+        message: "Đăng ký chấm thi thất bại",
+        severity: "error",
+      });
+    }
+  };
 
   return (
     <InfoDialog
@@ -45,7 +76,7 @@ const RegisterForPointingDialog = (props: RegisterForPointingDialogProps) => {
           </BasicStack>
         </BasicStack>
       }
-      onConfirm={onConfirm}
+      onConfirm={handleConfirm}
       confirmText="Đăng ký"
     />
   );
