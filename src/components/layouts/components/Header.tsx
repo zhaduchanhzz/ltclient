@@ -17,16 +17,14 @@ import DrawerMobile from "./DrawerMobile";
 import UserMenuPopper from "./UserMenuPopper";
 import CookieStorage from "@/utils/cookie-storage";
 import { APP_LOCAL_STORAGE_KEY } from "@/consts";
-import { useGetSettingsQuery } from "@/services/apis/settings";
-import { SettingsType } from "@/services/types/settings";
 import Image from "next/image";
+import { AppConfig } from "@/config/app-config";
 
 const Header = () => {
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
   const theme = useTheme();
   const pathname = usePathname();
   const { push } = useRouter();
-  const { data: settings } = useGetSettingsQuery();
 
   const toggleDrawer = () => {
     setDrawerOpen(!drawerOpen);
@@ -62,9 +60,9 @@ const Header = () => {
               onClick={() => push(APP_ROUTE.HOME)}
               sx={{ cursor: "pointer", alignItems: "center" }}
             >
-              {settings?.[SettingsType.LOGO]?.[0]?.content ? (
+              {AppConfig.logoUrl ? (
                 <Image
-                  src={settings[SettingsType.LOGO][0].content}
+                  src={AppConfig.logoUrl}
                   alt="Logo"
                   width={40}
                   height={40}

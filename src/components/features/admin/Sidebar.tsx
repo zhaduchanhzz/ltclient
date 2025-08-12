@@ -10,7 +10,6 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import PeopleIcon from "@mui/icons-material/People";
 import SchoolIcon from "@mui/icons-material/School";
 import ArticleIcon from "@mui/icons-material/Article";
-import SettingsIcon from "@mui/icons-material/Settings";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { useRouter, usePathname } from "next/navigation";
 
@@ -25,7 +24,6 @@ const menuItems = [
   { text: "Orders", icon: <ShoppingCartIcon />, path: "/admin/orders" },
   { text: "Exams", icon: <SchoolIcon />, path: "/admin/exams" },
   { text: "Blog Posts", icon: <ArticleIcon />, path: "/admin/posts" },
-  { text: "Settings", icon: <SettingsIcon />, path: "/admin/settings" },
 ];
 
 export default function AdminSidebar({ open, drawerWidth }: AdminSidebarProps) {

@@ -1,23 +1,23 @@
 import { Box, Container, Grid2, Typography } from "@mui/material";
 import Link from "next/link";
-import { useGetSettingsQuery } from "@/services/apis/settings";
-import { SettingsType } from "@/services/types/settings";
 import Image from "next/image";
+import { AppConfig } from "@/config/app-config";
 
 type FooterProps = {};
 
 const Footer = (_: FooterProps) => {
-  const { data: settings } = useGetSettingsQuery();
   return (
     <Box sx={{ backgroundColor: "#000" }}>
       <Container maxWidth="xl" sx={{ py: 12 }}>
         <Grid2 container spacing={2}>
           <Grid2 size={{ xs: 3 }}>
-            {settings?.[SettingsType.LOGO]?.[0]?.content ? (
+            {AppConfig.logoUrl ? (
               <Box sx={{ mb: 2 }}>
                 <Image
-                  src={settings[SettingsType.LOGO][0].content}
+                  src={AppConfig.logoUrl}
                   alt="Logo"
+                  width={200}
+                  height={60}
                   style={{
                     maxHeight: 60,
                     maxWidth: 200,
@@ -99,21 +99,17 @@ const Footer = (_: FooterProps) => {
               </Grid2>
               <Grid2 size={{ xs: 12 }}>
                 <Typography variant="body2" sx={{ color: "#fff" }}>
-                  Địa chỉ: Việt Trì, Phú Thọ
+                  Địa chỉ: {AppConfig.address}
                 </Typography>
               </Grid2>
               <Grid2 size={{ xs: 12 }}>
                 <Typography variant="body2" sx={{ color: "#fff" }}>
-                  SĐT:{" "}
-                  {settings?.[SettingsType.PHONE_NUMBER]?.[0]?.content ||
-                    "0967.697.014"}
+                  SĐT: {AppConfig.phone}
                 </Typography>
               </Grid2>
               <Grid2 size={{ xs: 12 }}>
                 <Typography variant="body2" sx={{ color: "#fff" }}>
-                  Email:{" "}
-                  {settings?.[SettingsType.EMAIL]?.[0]?.content ||
-                    "chienzxzx33@gmail.com"}
+                  Email: {AppConfig.email}
                 </Typography>
               </Grid2>
               <Grid2 container size={{ xs: 12 }}>
@@ -125,18 +121,14 @@ const Footer = (_: FooterProps) => {
                   Facebook:
                 </Typography>
                 <Link
-                  href={
-                    settings?.[SettingsType.CONTACT_FACEBOOK]?.[0]?.link ||
-                    "https://www.facebook.com/duongchien1704"
-                  }
+                  href={AppConfig.facebook.url}
                   target="_blank"
                   style={{ color: "#fff", padding: 0, marginLeft: 0.5 }}
                 >
-                  {settings?.[SettingsType.CONTACT_FACEBOOK]?.[0]?.content ||
-                    "duongchien1704"}
+                  {AppConfig.facebook.name}
                 </Link>
               </Grid2>
-              {settings?.[SettingsType.CONTACT_ZALO]?.[0] && (
+              {AppConfig.zalo && (
                 <Grid2 container size={{ xs: 12 }}>
                   <Typography
                     variant="body2"
@@ -146,15 +138,15 @@ const Footer = (_: FooterProps) => {
                     Zalo:
                   </Typography>
                   <Link
-                    href={settings[SettingsType.CONTACT_ZALO][0].link || "#"}
+                    href={AppConfig.zalo.url}
                     target="_blank"
                     style={{ color: "#fff", padding: 0, marginLeft: 0.5 }}
                   >
-                    {settings[SettingsType.CONTACT_ZALO][0].content}
+                    {AppConfig.zalo.name}
                   </Link>
                 </Grid2>
               )}
-              {settings?.[SettingsType.CONTACT_TELEGRAM]?.[0] && (
+              {AppConfig.telegram && (
                 <Grid2 container size={{ xs: 12 }}>
                   <Typography
                     variant="body2"
@@ -164,13 +156,11 @@ const Footer = (_: FooterProps) => {
                     Telegram:
                   </Typography>
                   <Link
-                    href={
-                      settings[SettingsType.CONTACT_TELEGRAM][0].link || "#"
-                    }
+                    href={AppConfig.telegram.url}
                     target="_blank"
                     style={{ color: "#fff", padding: 0, marginLeft: 0.5 }}
                   >
-                    {settings[SettingsType.CONTACT_TELEGRAM][0].content}
+                    {AppConfig.telegram.name}
                   </Link>
                 </Grid2>
               )}
