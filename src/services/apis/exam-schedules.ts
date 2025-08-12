@@ -12,13 +12,20 @@ import {
 
 // Get all exam schedules
 export const useGetExamSchedulesQuery = (enabled = true) => {
-  return useQuery({
+  return useQuery<ExamSchedule[]>({
     queryKey: [API_PATH.EXAM_SCHEDULES],
     queryFn: async () => {
-      const response = await HttpClient.get<ExamSchedule[]>(
-        API_PATH.EXAM_SCHEDULES,
-      );
-      return response;
+      const response = await HttpClient.get<
+        ExamSchedule[],
+        CommonResponse<ExamSchedule[]>
+      >(API_PATH.EXAM_SCHEDULES);
+      // Handle both direct array response and wrapped response
+
+      if (Array.isArray(response)) {
+        return response;
+      }
+
+      return response?.data || [];
     },
     enabled,
   });
@@ -48,14 +55,51 @@ export const useGetRecentSchedulesQuery = (
   if (params?.size !== undefined)
     queryParams.append("size", params.size.toString());
 
-  return useQuery({
+  return useQuery<PageExamScheduleRecentDto>({
     queryKey: [API_PATH.EXAM_SCHEDULES_RECENT, params],
     queryFn: async () => {
       const response = await HttpClient.get<
         PageExamScheduleRecentDto,
         CommonResponse<PageExamScheduleRecentDto>
       >(`${API_PATH.EXAM_SCHEDULES_RECENT}?${queryParams.toString()}`);
-      return response;
+      // Handle undefined or missing data
+
+      if (!response) {
+        return {
+          content: [],
+          totalElements: 0,
+          totalPages: 0,
+          size: params?.size || 20,
+          number: params?.page || 0,
+          first: true,
+          last: true,
+          numberOfElements: 0,
+          empty: true,
+        };
+      }
+
+      // Handle wrapped response
+      if ("data" in response && response.data) {
+        return response.data;
+      }
+
+      // Handle direct response
+      if ("content" in response) {
+        return response as unknown as PageExamScheduleRecentDto;
+      }
+
+      // Default empty response
+      return {
+        content: [],
+        totalElements: 0,
+        totalPages: 0,
+        size: params?.size || 20,
+        number: params?.page || 0,
+        first: true,
+        last: true,
+        numberOfElements: 0,
+        empty: true,
+      };
     },
   });
 };
@@ -72,14 +116,14 @@ export const useFilterSchedulesQuery = (params?: ExamScheduleFilterParams) => {
   if (params?.size !== undefined)
     queryParams.append("size", params.size.toString());
 
-  return useQuery({
+  return useQuery<PageExamSchedule>({
     queryKey: [API_PATH.EXAM_SCHEDULES_FILTER, params],
     queryFn: async () => {
       const response = await HttpClient.get<
         PageExamSchedule,
         CommonResponse<PageExamSchedule>
       >(`${API_PATH.EXAM_SCHEDULES_FILTER}?${queryParams.toString()}`);
-      return response;
+      return response.data;
     },
   });
 };

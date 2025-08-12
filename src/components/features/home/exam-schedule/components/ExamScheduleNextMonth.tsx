@@ -12,21 +12,22 @@ import NoDataOverlay from "@/components/common/Overlay/NoDataOverlay";
 import { useMemo } from "react";
 import { getExamScheduleTableColumns } from "../utils/columns";
 import { useGetRecentSchedulesQuery } from "@/services/apis/exam-schedules";
+import { ExamSchedule, ExamScheduleRecentDto } from "@/services/types/exam-schedule";
 
 type ExamScheduleNextMonthProps = {};
 
-const ExamScheduleNextMonth = (_: ExamScheduleNextMonthProps) => {
+const ExamSchedulePreviousMonth = (_: ExamScheduleNextMonthProps) => {
   const columns = useMemo(() => getExamScheduleTableColumns(), []);
 
   // Get next month and year
   const currentDate = new Date();
-  const nextMonthDate = new Date(
+  const previousMonthDate = new Date(
     currentDate.getFullYear(),
-    currentDate.getMonth() + 1,
+    currentDate.getMonth() - 1,
     1,
   );
-  const nextMonth = nextMonthDate.getMonth() + 1; // JavaScript months are 0-indexed
-  const nextMonthYear = nextMonthDate.getFullYear();
+  const previousMonth = previousMonthDate.getMonth() + 1; // JavaScript months are 0-indexed
+  const previousMonthYear = previousMonthDate.getFullYear();
 
   // Fetch recent schedules
   const { data, isLoading } = useGetRecentSchedulesQuery({
@@ -35,25 +36,25 @@ const ExamScheduleNextMonth = (_: ExamScheduleNextMonthProps) => {
   });
 
   // Filter schedules for next month
-  const nextMonthData = data?.data?.content?.find(
-    (item) => item.month === nextMonth,
+  const previousMonthData = data?.content?.find(
+    (item: ExamScheduleRecentDto) => item.month === previousMonth,
   );
-  const nextMonthSchedules = nextMonthData?.schedules || [];
+  const previousMonthSchedules: ExamSchedule[] = previousMonthData?.schedules || [];
 
   // Format month display
-  const monthName = nextMonthDate.toLocaleDateString("vi-VN", {
+  const monthName = previousMonthDate.toLocaleDateString("vi-VN", {
     month: "numeric",
   });
 
   return (
     <BasicStack spacing={3}>
       <BasicTypography variant="h6">
-        Lịch thi VSTEP tháng {monthName} năm {nextMonthYear}
+        Lịch thi VSTEP tháng {monthName} năm {previousMonthYear}
       </BasicTypography>
       <BasicTableContainer id="next-month_table" sx={{ minHeight: 430 }}>
         <LoadingOverlay visible={isLoading} />
         <NoDataOverlay
-          visible={!isLoading && nextMonthSchedules.length === 0}
+          visible={!isLoading && previousMonthSchedules.length === 0}
         />
         <TableCustom>
           <BasicTableHead>
@@ -77,7 +78,7 @@ const ExamScheduleNextMonth = (_: ExamScheduleNextMonthProps) => {
             </BasicTableRow>
           </BasicTableHead>
           <BasicTableBody>
-            {nextMonthSchedules.map((item, index) => (
+            {previousMonthSchedules.map((item: ExamSchedule, index: number) => (
               <BasicTableRow key={item.id}>
                 <TableCellCustom
                   align="center"
@@ -143,4 +144,4 @@ const ExamScheduleNextMonth = (_: ExamScheduleNextMonthProps) => {
   );
 };
 
-export default ExamScheduleNextMonth;
+export default ExamSchedulePreviousMonth;

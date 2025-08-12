@@ -14,8 +14,6 @@ type Feature = {
 const PriceList = ({ id }: { id: string }) => {
   const { VIP_SUBSCRIPTIONS, MARK_SUBSCRIPTIONS, COMBO_SUBSCRIPTIONS } =
     useSubscriptions();
-  console.log("🚀 ~ PriceList ~ VIP_SUBSCRIPTIONS:", VIP_SUBSCRIPTIONS);
-
   return (
     <Box sx={{ py: 6, px: 2 }} id={id}>
       <Typography
@@ -47,13 +45,9 @@ const PriceList = ({ id }: { id: string }) => {
 
       <VipSubscription VIP_SUBSCRIPTIONS={VIP_SUBSCRIPTIONS} />
 
-      <MarkSubscription
-        MARK_SUBSCRIPTIONS={MARK_SUBSCRIPTIONS}
-      />
+      <MarkSubscription MARK_SUBSCRIPTIONS={MARK_SUBSCRIPTIONS} />
 
-      <ComboSubscription
-        COMBO_SUBSCRIPTIONS={COMBO_SUBSCRIPTIONS}
-      />
+      <ComboSubscription COMBO_SUBSCRIPTIONS={COMBO_SUBSCRIPTIONS} />
     </Box>
   );
 };

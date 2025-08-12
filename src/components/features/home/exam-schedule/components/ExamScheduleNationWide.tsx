@@ -14,9 +14,10 @@ import { useMemo, useState, useEffect } from "react";
 import useExamScheduleFilter from "../hooks/useExamScheduleFilter";
 import { getExamScheduleTableColumns } from "../utils/columns";
 import BasicTextField from "@/components/base/MaterialUI-Basic/TextField";
-import { useFilterSchedulesQuery } from "@/services/apis/exam-schedules";
+import { useGetExamSchedulesQuery } from "@/services/apis/exam-schedules";
 import { InputAdornment } from "@mui/material";
 import { Search as SearchIcon } from "@mui/icons-material";
+import { ExamSchedule } from "@/services/types/exam-schedule";
 
 type ExamScheduleNationWideProps = {};
 
@@ -35,15 +36,35 @@ const ExamScheduleNationWide = (_: ExamScheduleNationWideProps) => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Fetch data using React Query
-  const { data, isLoading } = useFilterSchedulesQuery({
-    organization: debouncedSearchTerm || undefined,
-    page: filter.pageNumber,
-    size: filter.pageSize,
-  });
+  // Fetch all exam schedules
+  const { data, isLoading } = useGetExamSchedulesQuery(true);
 
-  const examSchedules = data?.data?.content || [];
-  const totalItems = data?.data?.totalElements || 0;
+  // Client-side filtering
+  const filteredSchedules = useMemo(() => {
+    if (!data) return [];
+
+    let schedules = Array.isArray(data) ? data : [];
+
+    // Apply search filter
+    if (debouncedSearchTerm) {
+      schedules = schedules.filter((schedule: ExamSchedule) =>
+        schedule.organizer
+          ?.toLowerCase()
+          .includes(debouncedSearchTerm.toLowerCase()),
+      );
+    }
+
+    return schedules;
+  }, [data, debouncedSearchTerm]);
+
+  // Client-side pagination
+  const paginatedSchedules = useMemo(() => {
+    const startIndex = (filter.pageNumber || 0) * (filter.pageSize || 10);
+    const endIndex = startIndex + (filter.pageSize || 10);
+    return filteredSchedules.slice(startIndex, endIndex);
+  }, [filteredSchedules, filter.pageNumber, filter.pageSize]);
+
+  const totalItems = filteredSchedules.length;
 
   return (
     <BasicStack spacing={2}>
@@ -84,7 +105,9 @@ const ExamScheduleNationWide = (_: ExamScheduleNationWideProps) => {
       </BasicStack>
       <BasicTableContainer id="user-info_table" sx={{ minHeight: 430 }}>
         <LoadingOverlay visible={isLoading} />
-        <NoDataOverlay visible={!isLoading && examSchedules.length === 0} />
+        <NoDataOverlay
+          visible={!isLoading && paginatedSchedules.length === 0}
+        />
         <TableCustom>
           <BasicTableHead>
             <BasicTableRow>
@@ -107,7 +130,7 @@ const ExamScheduleNationWide = (_: ExamScheduleNationWideProps) => {
             </BasicTableRow>
           </BasicTableHead>
           <BasicTableBody>
-            {examSchedules.map((item, index) => (
+            {paginatedSchedules.map((item: ExamSchedule, index: number) => (
               <BasicTableRow key={item.id}>
                 <TableCellCustom
                   align="center"

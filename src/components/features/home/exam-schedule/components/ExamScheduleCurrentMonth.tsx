@@ -12,6 +12,7 @@ import NoDataOverlay from "@/components/common/Overlay/NoDataOverlay";
 import { useMemo } from "react";
 import { getExamScheduleTableColumns } from "../utils/columns";
 import { useGetRecentSchedulesQuery } from "@/services/apis/exam-schedules";
+import { ExamSchedule, ExamScheduleRecentDto } from "@/services/types/exam-schedule";
 
 type ExamScheduleCurrentMonthProps = {};
 
@@ -30,10 +31,10 @@ const ExamScheduleCurrentMonth = (_: ExamScheduleCurrentMonthProps) => {
   });
 
   // Filter schedules for current month
-  const currentMonthData = data?.data?.content?.find(
-    (item) => item.month === currentMonth,
+  const currentMonthData = data?.content?.find(
+    (item: ExamScheduleRecentDto) => item.month === currentMonth,
   );
-  const currentMonthSchedules = currentMonthData?.schedules || [];
+  const currentMonthSchedules: ExamSchedule[] = currentMonthData?.schedules || [];
 
   // Format month display
   const monthName = currentDate.toLocaleDateString("vi-VN", {
@@ -72,7 +73,7 @@ const ExamScheduleCurrentMonth = (_: ExamScheduleCurrentMonthProps) => {
             </BasicTableRow>
           </BasicTableHead>
           <BasicTableBody>
-            {currentMonthSchedules.map((item, index) => (
+            {currentMonthSchedules.map((item: ExamSchedule, index: number) => (
               <BasicTableRow key={item.id}>
                 <TableCellCustom
                   align="center"
