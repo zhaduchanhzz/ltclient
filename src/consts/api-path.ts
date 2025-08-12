@@ -18,4 +18,6 @@ export const API_PATH = {
   ADMIN_CREATE_USER: "/admin/create/user",
   ADMIN_UPDATE_USER: "/admin/update/user",
   ADMIN_DELETE_USER: "/admin/delete/user",
+  LECTURER_USER_RESPONSES: "/lecturer/user-responses",
+  LECTURER_GRADE: "/lecturer/grade",
 };
