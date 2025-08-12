@@ -2,15 +2,15 @@ type Response = {
   questionId: number;
   questionText: string;
   content: string;
-  score: number;
+  score: number | null;
 };
 
 type ExamList = {
-  examId: string;
-  examType: string;
+  examId: number;
+  examType: "LISTENING" | "READING" | "WRITING" | "SPEAKING";
   title: string;
   responses: Response[];
-  examScore: number;
+  examScore: number | null;
 };
 
 export type ExamDetailRequest = {
@@ -81,12 +81,14 @@ export type UserWriting = {
 };
 
 export type UserHistory = {
-  termId: string;
+  termId: number;
   createdAt: string;
   exams: ExamList[];
-  examType: string;
-  title: string;
-  description: string;
+  totalScore: number | null;
+};
+
+export type UserHistoryResponse = {
+  terms: UserHistory[];
 };
 
 export type TakeExamRequest = {

@@ -9,18 +9,17 @@ import BasicTypography from "@/components/base/MaterialUI-Basic/Typography";
 import TableCustom from "@/components/base/MaterialUI-Table/Table";
 import TableCellCustom from "@/components/base/MaterialUI-Table/TableCell";
 import TablePaginationCustom from "@/components/base/MaterialUI-Table/TablePagination";
-import LoadingOverlay from "@/components/common/Overlay/LoadingOverlay";
-import NoDataOverlay from "@/components/common/Overlay/NoDataOverlay";
-import ContentPasteIcon from "@mui/icons-material/ContentPaste";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import { useMemo, useState, useEffect } from "react";
-import { getUserWritingTableColumns } from "../utils/columns";
-import useUserWritingFilter from "../hooks/useUserWritingFilter";
 import RegisterForPointingDialog from "@/components/common/Dialog/RegisterForPointingDialog";
 import ViewSpeakingWritingExamDialog from "@/components/common/Dialog/ViewSpeakingWritingExamDialog";
+import LoadingOverlay from "@/components/common/Overlay/LoadingOverlay";
+import NoDataOverlay from "@/components/common/Overlay/NoDataOverlay";
 import { EXAM_SECTION } from "@/consts";
 import { useGetUserHistoryQuery } from "@/services/apis/exam";
-import { UserHistory } from "@/services/types/exam";
+import ContentPasteIcon from "@mui/icons-material/ContentPaste";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import { useEffect, useMemo, useState } from "react";
+import useUserWritingFilter from "../hooks/useUserWritingFilter";
+import { getUserWritingTableColumns } from "../utils/columns";
 
 type UserWritingTableProps = {};
 
@@ -41,28 +40,43 @@ const UserWritingTable = (_: UserWritingTableProps) => {
   const { data: historyData, isLoading } = useGetUserHistoryQuery(true);
 
   useEffect(() => {
-    if (historyData?.data && Array.isArray(historyData.data)) {
-      const writingData: any[] = [];
-      historyData.data.forEach((history: UserHistory) => {
-        const writingExam = history.exams.find(
-          (exam) => exam.examType === "WRITING",
-        );
+    if (historyData?.data?.terms) {
+      // Use a Map to track unique exams by examId
+      const examMap = new Map<number, any>();
 
-        if (writingExam) {
-          writingData.push({
-            termId: history.termId,
-            examCode: history.termId,
-            examId: writingExam.examId,
-            responses: writingExam.responses || [],
-            examScore: writingExam.examScore,
-            createdAt: history.createdAt,
-          });
-        }
+      historyData.data.terms.forEach((term: any) => {
+        term.exams.forEach((exam: any) => {
+          if (exam.examType === "WRITING") {
+            const existingExam = examMap.get(exam.examId);
+            const newExamData = {
+              termId: term.termId,
+              examCode: term.termId,
+              examId: exam.examId,
+              title: exam.title,
+              responses: exam.responses || [],
+              examScore: exam.examScore,
+              createdAt: term.createdAt,
+            };
+
+            // If exam doesn't exist or the new one has more responses, use it
+            if (
+              !existingExam ||
+              newExamData.responses.length > existingExam.responses.length ||
+              (newExamData.responses.length === existingExam.responses.length &&
+                newExamData.termId > existingExam.termId)
+            ) {
+              examMap.set(exam.examId, newExamData);
+            }
+          }
+        });
       });
+
+      // Convert Map to array
+      const writingData = Array.from(examMap.values());
       setWritingExams(writingData);
       setTotalItems(writingData.length);
     } else {
-      // Handle case where data is not an array or doesn't exist
+      // Handle case where data doesn't exist
       setWritingExams([]);
       setTotalItems(0);
     }
@@ -138,7 +152,7 @@ const UserWritingTable = (_: UserWritingTableProps) => {
                       justifyContent="center"
                     >
                       <BasicTypography variant="body2" component="span">
-                        {essay1?.content ? "Đã làm" : "Chưa làm"}
+                        {essay1?.content}
                       </BasicTypography>
                     </TableCellCustom>
                     <TableCellCustom
@@ -149,7 +163,7 @@ const UserWritingTable = (_: UserWritingTableProps) => {
                       justifyContent="center"
                     >
                       <BasicTypography variant="body2" component="span">
-                        {essay2?.content ? "Đã làm" : "Chưa làm"}
+                        {essay2?.content}
                       </BasicTypography>
                     </TableCellCustom>
 

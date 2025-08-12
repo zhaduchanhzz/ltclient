@@ -9,15 +9,14 @@ import BasicTypography from "@/components/base/MaterialUI-Basic/Typography";
 import TableCustom from "@/components/base/MaterialUI-Table/Table";
 import TableCellCustom from "@/components/base/MaterialUI-Table/TableCell";
 import TablePaginationCustom from "@/components/base/MaterialUI-Table/TablePagination";
+import RegisterForPointingDialog from "@/components/common/Dialog/RegisterForPointingDialog";
 import LoadingOverlay from "@/components/common/Overlay/LoadingOverlay";
 import NoDataOverlay from "@/components/common/Overlay/NoDataOverlay";
+import { useGetUserHistoryQuery } from "@/services/apis/exam";
 import ContentPasteIcon from "@mui/icons-material/ContentPaste";
-import { useMemo, useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import useUserSpeakingFilter from "../hooks/useUserSpeakingFilter";
 import { getUserSpeakingTableColumns } from "../utils/columns";
-import RegisterForPointingDialog from "@/components/common/Dialog/RegisterForPointingDialog";
-import { useGetUserHistoryQuery } from "@/services/apis/exam";
-import { UserHistory } from "@/services/types/exam";
 
 type UserSpeakingTableProps = {};
 
@@ -35,24 +34,39 @@ const UserSpeakingTable = (_: UserSpeakingTableProps) => {
   const { data: historyData, isLoading } = useGetUserHistoryQuery(true);
 
   useEffect(() => {
-    if (historyData?.data) {
-      const speakingData: any[] = [];
-      historyData.data.forEach((history: UserHistory) => {
-        const speakingExam = history.exams.find(
-          (exam) => exam.examType === "SPEAKING",
-        );
+    if (historyData?.data?.terms) {
+      // Use a Map to track unique exams by examId
+      const examMap = new Map<number, any>();
 
-        if (speakingExam) {
-          speakingData.push({
-            termId: history.termId,
-            examCode: history.termId,
-            examId: speakingExam.examId,
-            responses: speakingExam.responses || [],
-            examScore: speakingExam.examScore,
-            createdAt: history.createdAt,
-          });
-        }
+      historyData.data.terms.forEach((term: any) => {
+        term.exams.forEach((exam: any) => {
+          if (exam.examType === "SPEAKING") {
+            const existingExam = examMap.get(exam.examId);
+            const newExamData = {
+              termId: term.termId,
+              examCode: term.termId,
+              examId: exam.examId,
+              title: exam.title,
+              responses: exam.responses || [],
+              examScore: exam.examScore,
+              createdAt: term.createdAt,
+            };
+
+            // If exam doesn't exist or the new one has more responses, use it
+            if (
+              !existingExam ||
+              newExamData.responses.length > existingExam.responses.length ||
+              (newExamData.responses.length === existingExam.responses.length &&
+                newExamData.termId > existingExam.termId)
+            ) {
+              examMap.set(exam.examId, newExamData);
+            }
+          }
+        });
       });
+
+      // Convert Map to array
+      const speakingData = Array.from(examMap.values());
       setSpeakingExams(speakingData);
       setTotalItems(speakingData.length);
     }
@@ -99,10 +113,6 @@ const UserSpeakingTable = (_: UserSpeakingTableProps) => {
             </BasicTableHead>
             <BasicTableBody>
               {speakingExams.map((item, index) => {
-                const audio1 = item.responses[0];
-                const audio2 = item.responses[1];
-                const _audio3 = item.responses[2];
-
                 return (
                   <BasicTableRow key={index}>
                     <TableCellCustom
@@ -124,18 +134,7 @@ const UserSpeakingTable = (_: UserSpeakingTableProps) => {
                       justifyContent="center"
                     >
                       <BasicTypography variant="body2" component="span">
-                        {audio1?.content ? "Đã thu âm" : "Chưa thu âm"}
-                      </BasicTypography>
-                    </TableCellCustom>
-                    <TableCellCustom
-                      align="center"
-                      border={true}
-                      minHeight={40}
-                      alignItems="center"
-                      justifyContent="center"
-                    >
-                      <BasicTypography variant="body2" component="span">
-                        {audio2?.content ? "Đã thu âm" : "Chưa thu âm"}
+                        {item.title}
                       </BasicTypography>
                     </TableCellCustom>
 

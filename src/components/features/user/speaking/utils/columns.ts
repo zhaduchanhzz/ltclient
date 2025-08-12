@@ -13,16 +13,8 @@ export const getUserSpeakingTableColumns = () => {
       sticky: true,
     },
     {
-      id: "Bài viết số 1",
-      label: "Bài viết số 1",
-      minWidth: 100,
-      minHeight: 40,
-      align: "center",
-      sticky: true,
-    },
-    {
-      id: "Bài viết số 2",
-      label: "Bài viết số 2",
+      id: "Bài nói số 1",
+      label: "Bài nói số 1",
       minWidth: 100,
       minHeight: 40,
       align: "center",

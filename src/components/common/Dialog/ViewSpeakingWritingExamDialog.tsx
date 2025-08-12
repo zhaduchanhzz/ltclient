@@ -28,7 +28,7 @@ const ViewSpeakingWritingExamDialog = (props: ViewWritingExamDialogProps) => {
                   variant="h6"
                   sx={{ textDecoration: "underline" }}
                 >
-                  Task 1
+                  Bài viết 1
                 </BasicTypography>
                 {examData && examData[0] ? (
                   <BasicStack spacing={1}>
@@ -36,7 +36,7 @@ const ViewSpeakingWritingExamDialog = (props: ViewWritingExamDialogProps) => {
                       Câu hỏi: {examData[0].questionText}
                     </BasicTypography>
                     <BasicTypography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
-                      {examData[0].content || "Thí sinh không làm bài"}
+                      {examData[0].content}
                     </BasicTypography>
                   </BasicStack>
                 ) : (
@@ -50,7 +50,7 @@ const ViewSpeakingWritingExamDialog = (props: ViewWritingExamDialogProps) => {
                   variant="h6"
                   sx={{ textDecoration: "underline" }}
                 >
-                  Task 2
+                  Bài viết 2
                 </BasicTypography>
                 {examData && examData[1] ? (
                   <BasicStack spacing={1}>
@@ -58,7 +58,7 @@ const ViewSpeakingWritingExamDialog = (props: ViewWritingExamDialogProps) => {
                       Câu hỏi: {examData[1].questionText}
                     </BasicTypography>
                     <BasicTypography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
-                      {examData[1].content || "Thí sinh không làm bài"}
+                      {examData[1].content}
                     </BasicTypography>
                   </BasicStack>
                 ) : (

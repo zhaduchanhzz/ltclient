@@ -14,6 +14,7 @@ import {
   SimulationExam,
   TakeExamResponse,
   UserHistory,
+  UserHistoryResponse,
   UserWriting,
 } from "../types/exam";
 
@@ -100,7 +101,7 @@ export const useGetUserHistoryQuery = (enabled = false) => {
   return useQuery({
     queryKey: [API_PATH.EXAMS, "history"],
     queryFn: () => {
-      return HttpClient.get<null, CommonResponse<UserHistory[]>>(
+      return HttpClient.get<null, CommonResponse<UserHistoryResponse>>(
         API_PATH.EXAMS + "/history",
       );
     },
