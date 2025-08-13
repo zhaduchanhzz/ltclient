@@ -13,7 +13,6 @@ import {
   GradingResponseDto,
   SimulationExam,
   TakeExamResponse,
-  UserHistory,
   UserHistoryResponse,
   UserWriting,
 } from "../types/exam";
