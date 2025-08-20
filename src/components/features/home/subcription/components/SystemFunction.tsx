@@ -1,16 +1,14 @@
 import BasicBox from "@/components/base/MaterialUI-Basic/Box";
 import BasicStack from "@/components/base/MaterialUI-Basic/Stack";
-import { features } from "../utils/func";
 import BasicTypography from "@/components/base/MaterialUI-Basic/Typography";
-import { Button, Grid, useTheme } from "@mui/material";
+import { Button, Grid } from "@mui/material";
+import { features } from "../utils/func";
 
 type SystemFunctionProps = {
   id: string;
 };
 
 const SystemFunction = ({ id }: SystemFunctionProps) => {
-  const theme = useTheme();
-  
   return (
     <BasicBox
       id={id}

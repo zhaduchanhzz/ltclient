@@ -1,4 +1,4 @@
-import { Box, Typography, Card, CardContent, useTheme } from "@mui/material";
+import { Box, Typography, Card, CardContent } from "@mui/material";
 import LoginIcon from "@mui/icons-material/Login";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import PaymentIcon from "@mui/icons-material/Payment";
@@ -53,8 +53,6 @@ const steps = [
 ];
 
 const PurchaseGuide = ({ id }: { id: string }) => {
-  const theme = useTheme();
-  
   return (
     <Box sx={{ py: 8, px: 2 }} id={id}>
       <Typography

@@ -1,10 +1,9 @@
 import BasicBox from "@/components/base/MaterialUI-Basic/Box";
 import BasicStack from "@/components/base/MaterialUI-Basic/Stack";
-import { useTheme } from "@mui/material";
-import { grey } from "@mui/material/colors";
+import { useThemeContext, useThemeContextHandle } from "@/contexts/ThemeContext";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import NightlightIcon from "@mui/icons-material/Nightlight";
-import { useThemeContext, useThemeContextHandle } from "@/contexts/ThemeContext";
+import { useTheme } from "@mui/material";
 
 type DarkNightChangeProps = {};
 

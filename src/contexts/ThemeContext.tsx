@@ -38,12 +38,16 @@ const getInitialTheme = (): Mode => {
 
   // Try to get from localStorage first
   const stored = LocalStorage.get(THEME_STORAGE_KEY);
+
   if (stored === "dark" || stored === "light") {
     return stored as Mode;
   }
 
   // Fall back to system preference
-  if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+  if (
+    window.matchMedia &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches
+  ) {
     return "dark";
   }
 
@@ -92,6 +96,7 @@ export const ThemeContextProvider = ({
     setMounted(true);
     // Get the actual theme from localStorage after mounting
     const storedTheme = getInitialTheme();
+    
     if (storedTheme !== themeState.mode) {
       dispatchThemeState({ type: "update", payload: { mode: storedTheme } });
     }
