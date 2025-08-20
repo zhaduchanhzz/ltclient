@@ -1,4 +1,4 @@
-import { Box, Typography, Grid } from "@mui/material";
+import { Box, Typography, Grid, useTheme } from "@mui/material";
 import { benefits } from "../utils/benefits";
 
 type VstepBenefitsProps = {
@@ -6,12 +6,13 @@ type VstepBenefitsProps = {
 };
 
 const VstepBenefits = ({ id }: VstepBenefitsProps) => {
+  const theme = useTheme();
   return (
     <Box id={id} sx={{ py: 6, px: 2 }}>
       <Typography
         variant="h5"
         align="center"
-        sx={{ color: "black", fontWeight: 700, mb: 1 }}
+        sx={{ color: theme.palette.text.primary, fontWeight: 700, mb: 1 }}
       >
         <span role="img" aria-label="rocket">
           🚀
@@ -23,7 +24,7 @@ const VstepBenefits = ({ id }: VstepBenefitsProps) => {
       </Typography>
       <Typography
         align="center"
-        sx={{ color: "#fff", mb: 5, maxWidth: 900, mx: "auto", fontSize: 18 }}
+        sx={{ color: theme.palette.text.primary, mb: 5, maxWidth: 900, mx: "auto", fontSize: 18 }}
       >
         Để chinh phục chứng chỉ <b>B1 - B2 - C1</b>, việc{" "}
         <b>làm quen và luyện đề thi trên phần mềm thi</b> là mấu chốt quan
@@ -43,13 +44,13 @@ const VstepBenefits = ({ id }: VstepBenefitsProps) => {
               <Box>
                 <Typography
                   variant="subtitle1"
-                  sx={{ color: "black", fontWeight: 700 }}
+                  sx={{ color: theme.palette.text.primary, fontWeight: 700 }}
                 >
                   {benefit.title}
                 </Typography>
                 <Typography
                   sx={{
-                    color: "#b0bed9",
+                    color: theme.palette.text.secondary,
                     mt: 0.5,
                     fontSize: 16,
                     width: { xs: "90%", lg: "100%" },

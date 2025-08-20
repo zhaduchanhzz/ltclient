@@ -1,6 +1,7 @@
 import BasicBox from "@/components/base/MaterialUI-Basic/Box";
 import BasicStack from "@/components/base/MaterialUI-Basic/Stack";
 import BasicTypography from "@/components/base/MaterialUI-Basic/Typography";
+import { useTheme } from "@mui/material";
 import Image from "next/image";
 
 type IntroducePackProps = {
@@ -8,6 +9,7 @@ type IntroducePackProps = {
 };
 
 const IntroducePack = ({ id }: IntroducePackProps) => {
+  const theme = useTheme();
   return (
     <BasicBox
       id={id}
@@ -36,7 +38,7 @@ const IntroducePack = ({ id }: IntroducePackProps) => {
           <BasicTypography
             variant="h4"
             sx={{
-              color: "black",
+              color: theme.palette.text.primary,
               fontWeight: 700,
               mb: 1,
               textAlign: "left",
@@ -58,7 +60,7 @@ const IntroducePack = ({ id }: IntroducePackProps) => {
           <BasicTypography
             variant="body1"
             sx={{
-              color: "black",
+              color: theme.palette.text.primary,
               fontSize: 18,
               textAlign: "left",
             }}

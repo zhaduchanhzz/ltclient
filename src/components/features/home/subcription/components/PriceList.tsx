@@ -2,7 +2,7 @@
 
 import { usePayment } from "@/hooks/usePayment";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { Box, Button, Card, Typography } from "@mui/material";
+import { Box, Button, Card, Typography, useTheme } from "@mui/material";
 import { Subscription, useSubscriptions } from "../utils/subs";
 
 type Feature = {
@@ -12,6 +12,7 @@ type Feature = {
 };
 
 const PriceList = ({ id }: { id: string }) => {
+  const theme = useTheme();
   const { VIP_SUBSCRIPTIONS, MARK_SUBSCRIPTIONS, COMBO_SUBSCRIPTIONS } =
     useSubscriptions();
   return (
@@ -33,7 +34,7 @@ const PriceList = ({ id }: { id: string }) => {
       </Typography>
       <Typography
         sx={{
-          color: "black",
+          color: theme.palette.text.primary,
           mb: 5,
           fontSize: 18,
           textAlign: "center",
@@ -58,6 +59,7 @@ const VipSubscription = ({
   VIP_SUBSCRIPTIONS: Subscription[];
 }) => {
   const { handlePurchase } = usePayment();
+  const theme = useTheme();
 
   return (
     <>
@@ -67,7 +69,7 @@ const VipSubscription = ({
       >
         GÓI ĐỀ THI VIP
       </Typography>
-      <Typography sx={{ color: "black", mb: 4 }}>
+      <Typography sx={{ color: theme.palette.text.primary, mb: 4 }}>
         Thí sinh được truy cập <b>toàn bộ kho đề thi</b> cập nhật mới nhất,
         chính xác nhất.
       </Typography>
@@ -201,6 +203,7 @@ const MarkSubscription = ({
   MARK_SUBSCRIPTIONS: Subscription[];
 }) => {
   const { handlePurchase } = usePayment();
+  const theme = useTheme();
   return (
     <Box sx={{ mt: 6 }}>
       <Typography
@@ -209,7 +212,7 @@ const MarkSubscription = ({
       >
         GÓI CHẤM THI TỰ LUẬN
       </Typography>
-      <Typography sx={{ color: "black", mb: 2 }}>
+      <Typography sx={{ color: theme.palette.text.primary, mb: 2 }}>
         Thí sinh được <b>tự chọn bài thi</b> mà mình muốn chấm. Giám khảo chấm
         bài theo <b>đúng tiêu chí chấm VSTEP</b> của Bộ Giáo dục và Đào tạo.
       </Typography>
@@ -286,7 +289,9 @@ const MarkSubscription = ({
                         justifyContent: "space-between",
                       }}
                     >
-                      <Typography sx={{ color: "black", fontSize: 16 }}>
+                      <Typography
+                        sx={{ color: theme.palette.text.primary, fontSize: 16 }}
+                      >
                         {feature.label}
                       </Typography>
                       {feature.checked && (
@@ -343,6 +348,7 @@ const ComboSubscription = ({
   COMBO_SUBSCRIPTIONS: Subscription[];
 }) => {
   const { handlePurchase } = usePayment();
+  const theme = useTheme();
   return (
     <Box sx={{ mt: 8 }}>
       <Typography
@@ -352,7 +358,12 @@ const ComboSubscription = ({
         GÓI COMBO ƯU ĐÃI
       </Typography>
       <Typography
-        sx={{ color: "black", mb: 4, textAlign: "center", fontSize: 16 }}
+        sx={{
+          color: theme.palette.text.primary,
+          mb: 4,
+          textAlign: "center",
+          fontSize: 16,
+        }}
       >
         Bao gồm <b>toàn bộ quyền lợi</b> từ gói đề thi VIP và gói chấm thi tự
         luận, kèm theo nhiều <b>ưu đãi</b>, tiết kiệm hơn.
@@ -372,7 +383,7 @@ const ComboSubscription = ({
           <Card
             key={pkg.id}
             sx={{
-              color: "black",
+              color: theme.palette.text.primary,
               borderRadius: 4,
               border: "1px solid #2c7be5",
               boxShadow: 3,
@@ -435,7 +446,9 @@ const ComboSubscription = ({
                         minHeight: 32,
                       }}
                     >
-                      <Typography sx={{ color: "black", fontSize: 16 }}>
+                      <Typography
+                        sx={{ color: theme.palette.text.primary, fontSize: 16 }}
+                      >
                         {feature.label}
                       </Typography>
                       {feature.checked && (

@@ -12,6 +12,7 @@ import {
   ListItemIcon,
   ListItemText,
   Typography,
+  useTheme,
 } from "@mui/material";
 import { subscriptionPackages } from "../utils/serv";
 
@@ -20,6 +21,8 @@ type ServcesPackageProps = {
 };
 
 const ServcesPackage = ({ id }: ServcesPackageProps) => {
+  const theme = useTheme();
+  
   const handleScrollToPriceList = () => {
     const el = document.getElementById("gia-goi-dich-vu-vstep");
 
@@ -33,7 +36,7 @@ const ServcesPackage = ({ id }: ServcesPackageProps) => {
       <Typography
         variant="h5"
         align="center"
-        sx={{ color: "black", fontWeight: 700, mb: 2 }}
+        sx={{ color: theme.palette.text.primary, fontWeight: 700, mb: 2 }}
       >
         <span role="img" aria-label="star">
           🌟
@@ -43,7 +46,7 @@ const ServcesPackage = ({ id }: ServcesPackageProps) => {
       </Typography>
       <Typography
         align="center"
-        sx={{ color: "black", mb: 4, maxWidth: 700, mx: "auto" }}
+        sx={{ color: theme.palette.text.primary, mb: 4, maxWidth: 700, mx: "auto" }}
       >
         Chọn gói phù hợp để tối ưu điểm số và đạt <b>B1-B2-C1</b> dễ dàng. Đề
         thi chuẩn định dạng VSTEP, chấm điểm chi tiết, phản hồi từ giám khảo có
@@ -63,8 +66,8 @@ const ServcesPackage = ({ id }: ServcesPackageProps) => {
           <Card
             key={pkg.title}
             sx={{
-              background: "transparent",
-              color: "black",
+              background: theme.palette.background.paper,
+              color: theme.palette.text.primary,
               border: "2px solid #2c7be5",
               flex: "1 1",
               p: 2,
@@ -85,7 +88,7 @@ const ServcesPackage = ({ id }: ServcesPackageProps) => {
               </Typography>
               <List dense>
                 {pkg.features.map((feature, i) => (
-                  <ListItem key={i} sx={{ color: "black" }}>
+                  <ListItem key={i} sx={{ color: theme.palette.text.primary }}>
                     <ListItemIcon sx={{ minWidth: 32 }}>
                       <CheckCircleIcon sx={{ color: "#2c7be5" }} />
                     </ListItemIcon>
@@ -99,7 +102,7 @@ const ServcesPackage = ({ id }: ServcesPackageProps) => {
                 </Typography>
                 <List dense>
                   {pkg.target.map((t, i) => (
-                    <ListItem key={i} sx={{ color: "black" }}>
+                    <ListItem key={i} sx={{ color: theme.palette.text.primary }}>
                       <ListItemIcon sx={{ minWidth: 32 }}>
                         <FiberManualRecordIcon
                           sx={{ color: "#2c7be5", fontSize: 12 }}
@@ -159,7 +162,7 @@ const ServcesPackage = ({ id }: ServcesPackageProps) => {
         <Typography sx={{ fontWeight: 700, mb: 1 }}>
           Thí sinh cần hỏi thêm về các gói cước?
         </Typography>
-        <Typography sx={{ color: "#b0bed9", mb: 2 }}>
+        <Typography sx={{ color: theme.palette.text.secondary, mb: 2 }}>
           Thí sinh cần thêm thông tin hoặc chưa rõ về mục nào, hãy nhắn tin trực
           tiếp cho Luyện thi VSTEP để được giải đáp mọi thắc mắc liên quan.
         </Typography>

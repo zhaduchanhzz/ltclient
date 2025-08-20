@@ -72,8 +72,8 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="vi">
-      <body style={{ backgroundColor: "#ffffff" }}>
+    <html lang="vi" suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <ClientLayout>{children}</ClientLayout>
       </body>
     </html>

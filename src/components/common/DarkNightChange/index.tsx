@@ -4,11 +4,26 @@ import { useTheme } from "@mui/material";
 import { grey } from "@mui/material/colors";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import NightlightIcon from "@mui/icons-material/Nightlight";
+import { useThemeContext, useThemeContextHandle } from "@/contexts/ThemeContext";
 
 type DarkNightChangeProps = {};
 
 const DarkNightChange = (_: DarkNightChangeProps) => {
   const theme = useTheme();
+  const { mode } = useThemeContext();
+  const { toggleTheme } = useThemeContextHandle();
+
+  const handleLightMode = () => {
+    if (mode !== "light") {
+      toggleTheme();
+    }
+  };
+
+  const handleDarkMode = () => {
+    if (mode !== "dark") {
+      toggleTheme();
+    }
+  };
 
   return (
     <BasicStack
@@ -17,21 +32,41 @@ const DarkNightChange = (_: DarkNightChangeProps) => {
         justifyContent: "center",
         alignItems: "center",
       }}
-      spacing={0.3}
+      spacing={0}
     >
       <BasicBox>
         <BasicBox
+          onClick={handleLightMode}
           sx={{
-            backgroundColor: grey[100],
+            backgroundColor: mode === "light" 
+              ? theme.palette.primary.main 
+              : theme.palette.mode === "dark" 
+                ? theme.palette.grey[800] 
+                : theme.palette.grey[200],
             lineHeight: 1,
             ":hover": {
               cursor: "pointer",
-              backgroundColor: grey[300],
+              backgroundColor: mode === "light" 
+                ? theme.palette.primary.dark 
+                : theme.palette.mode === "dark"
+                  ? theme.palette.grey[700]
+                  : theme.palette.grey[300],
             },
-            color: theme.palette.primary.main,
-            border: "1px solid #ccc",
+            color: mode === "light" 
+              ? "#fff" 
+              : theme.palette.mode === "dark"
+                ? theme.palette.grey[400]
+                : theme.palette.text.secondary,
+            border: `1px solid ${
+              mode === "light" 
+                ? theme.palette.primary.main 
+                : theme.palette.mode === "dark"
+                  ? theme.palette.grey[700]
+                  : theme.palette.grey[400]
+            }`,
             p: 0.8,
             borderRadius: "6px 0 0 6px",
+            transition: "all 0.3s ease",
           }}
         >
           <LightModeIcon
@@ -44,17 +79,38 @@ const DarkNightChange = (_: DarkNightChangeProps) => {
       </BasicBox>
       <BasicBox>
         <BasicBox
+          onClick={handleDarkMode}
           sx={{
-            backgroundColor: grey[100],
+            backgroundColor: mode === "dark" 
+              ? theme.palette.primary.main 
+              : theme.palette.mode === "dark"
+                ? theme.palette.grey[800]
+                : theme.palette.grey[200],
             lineHeight: 1,
             ":hover": {
               cursor: "pointer",
-              color: theme.palette.primary.main,
-              backgroundColor: grey[300],
+              backgroundColor: mode === "dark" 
+                ? theme.palette.primary.dark 
+                : theme.palette.mode === "dark"
+                  ? theme.palette.grey[700]
+                  : theme.palette.grey[300],
             },
-            border: "1px solid #ccc",
+            color: mode === "dark" 
+              ? "#fff" 
+              : theme.palette.mode === "dark"
+                ? theme.palette.grey[400]
+                : theme.palette.text.secondary,
+            border: `1px solid ${
+              mode === "dark" 
+                ? theme.palette.primary.main 
+                : theme.palette.mode === "dark"
+                  ? theme.palette.grey[700]
+                  : theme.palette.grey[400]
+            }`,
+            borderLeft: "none",
             p: 0.8,
             borderRadius: "0 6px 6px 0",
+            transition: "all 0.3s ease",
           }}
         >
           <NightlightIcon

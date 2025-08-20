@@ -1,12 +1,15 @@
 "use client";
 import { createAppTheme } from "@/components/base/theme";
+import LocalStorage from "@/utils/local-storage";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useReducer,
+  useState,
 } from "react";
 
 /**
@@ -24,8 +27,31 @@ type ThemeContextType = {
   mode: Mode;
 };
 
+const THEME_STORAGE_KEY = "theme-mode";
+
+// Get initial theme from localStorage or system preference
+const getInitialTheme = (): Mode => {
+  // Check if we're on the client side
+  if (typeof window === "undefined") {
+    return "light";
+  }
+
+  // Try to get from localStorage first
+  const stored = LocalStorage.get(THEME_STORAGE_KEY);
+  if (stored === "dark" || stored === "light") {
+    return stored as Mode;
+  }
+
+  // Fall back to system preference
+  if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+    return "dark";
+  }
+
+  return "light";
+};
+
 const initThemeContextState = {
-  mode: "light" as Mode,
+  mode: getInitialTheme(),
 };
 
 const ThemeContext = createContext<ThemeContextType>(initThemeContextState);
@@ -41,6 +67,11 @@ const ThemeContextHandler = createContext({
      * ignore
      */
   },
+  toggleTheme: () => {
+    /**
+     * ignore
+     */
+  },
 });
 
 ThemeContextHandler.displayName = "ThemeContextHandler";
@@ -50,10 +81,28 @@ export const ThemeContextProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
+  const [mounted, setMounted] = useState(false);
   const [themeState, dispatchThemeState] = useReducer(
     _updateThemeStateReducer,
     initThemeContextState,
   );
+
+  // Handle mounting to prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+    // Get the actual theme from localStorage after mounting
+    const storedTheme = getInitialTheme();
+    if (storedTheme !== themeState.mode) {
+      dispatchThemeState({ type: "update", payload: { mode: storedTheme } });
+    }
+  }, []);
+
+  // Persist theme changes to localStorage
+  useEffect(() => {
+    if (mounted) {
+      LocalStorage.set(THEME_STORAGE_KEY, themeState.mode);
+    }
+  }, [themeState.mode, mounted]);
 
   const updateThemeState = useCallback(
     (payload: Partial<ThemeContextType>, type?: "update" | "reset") => {
@@ -62,16 +111,24 @@ export const ThemeContextProvider = ({
     [],
   );
 
+  const toggleTheme = useCallback(() => {
+    const newMode = themeState.mode === "light" ? "dark" : "light";
+    dispatchThemeState({ type: "update", payload: { mode: newMode } });
+  }, [themeState.mode]);
+
   const ThemeContextHandleValue = useMemo(() => {
-    return { updateThemeState };
-  }, [updateThemeState]);
+    return { updateThemeState, toggleTheme };
+  }, [updateThemeState, toggleTheme]);
+
+  // Use the mounted state's theme to prevent hydration issues
+  const activeTheme = mounted ? themeState.mode : "light";
 
   return (
     <ThemeContext.Provider value={themeState}>
       <ThemeContextHandler.Provider value={ThemeContextHandleValue}>
-        <ThemeProvider theme={createAppTheme(themeState.mode)}>
+        <ThemeProvider theme={createAppTheme(activeTheme)}>
           {children}
-          <CssBaseline />
+          <CssBaseline enableColorScheme />
         </ThemeProvider>
       </ThemeContextHandler.Provider>
     </ThemeContext.Provider>

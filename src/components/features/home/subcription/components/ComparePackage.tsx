@@ -8,6 +8,7 @@ import {
   TableHead,
   TableRow,
   Paper,
+  useTheme,
 } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
@@ -52,48 +53,51 @@ type ComparePackageProps = {
   id: string;
 };
 
-const ComparePackage = ({ id }: ComparePackageProps) => (
-  <Box id={id} sx={{ py: 5, px: 2 }}>
-    <Typography
-      variant="h5"
-      align="center"
-      sx={{ color: "#3ea6ff", fontWeight: 700, mb: 1 }}
-    >
-      <span role="img" aria-label="balance">
-        ⚖️
-      </span>{" "}
-      So sánh gói tài khoản miễn phí & tài khoản VIP
-    </Typography>
-    <Typography
-      align="center"
-      sx={{ color: "black", mb: 4, maxWidth: 800, mx: "auto", fontSize: 18 }}
-    >
-      Bạn đang phân vân giữa <b>tài khoản miễn phí</b> và <b>tài khoản VIP</b>?
-      Hãy xem bảng so sánh dưới đây để chọn gói phù hợp nhất!
-    </Typography>
+const ComparePackage = ({ id }: ComparePackageProps) => {
+  const theme = useTheme();
+  
+  return (
+    <Box id={id} sx={{ py: 5, px: 2 }}>
+      <Typography
+        variant="h5"
+        align="center"
+        sx={{ color: "#3ea6ff", fontWeight: 700, mb: 1 }}
+      >
+        <span role="img" aria-label="balance">
+          ⚖️
+        </span>{" "}
+        So sánh gói tài khoản miễn phí & tài khoản VIP
+      </Typography>
+      <Typography
+        align="center"
+        sx={{ color: theme.palette.text.primary, mb: 4, maxWidth: 800, mx: "auto", fontSize: 18 }}
+      >
+        Bạn đang phân vân giữa <b>tài khoản miễn phí</b> và <b>tài khoản VIP</b>?
+        Hãy xem bảng so sánh dưới đây để chọn gói phù hợp nhất!
+      </Typography>
     <TableContainer
       component={Paper}
-      sx={{ background: "transparent", maxWidth: 900, mx: "auto" }}
+      sx={{ background: theme.palette.background.paper, maxWidth: 900, mx: "auto" }}
     >
       <Table>
         <TableHead>
           <TableRow>
             <TableCell
               sx={{
-                color: "black",
+                color: theme.palette.text.primary,
                 fontWeight: 700,
                 fontSize: 16,
-                borderBottom: "2px solid black",
+                borderBottom: `2px solid ${theme.palette.divider}`,
               }}
             >
               TÍNH NĂNG
             </TableCell>
             <TableCell
               sx={{
-                color: "black",
+                color: theme.palette.text.primary,
                 fontWeight: 700,
                 fontSize: 16,
-                borderBottom: "2px solid black",
+                borderBottom: `2px solid ${theme.palette.divider}`,
               }}
               align="center"
             >
@@ -101,10 +105,10 @@ const ComparePackage = ({ id }: ComparePackageProps) => (
             </TableCell>
             <TableCell
               sx={{
-                color: "black",
+                color: theme.palette.text.primary,
                 fontWeight: 700,
                 fontSize: 16,
-                borderBottom: "2px solid black",
+                borderBottom: `2px solid ${theme.palette.divider}`,
               }}
               align="center"
             >
@@ -117,21 +121,21 @@ const ComparePackage = ({ id }: ComparePackageProps) => (
             <TableRow key={idx} sx={{ "&:last-child td": { borderBottom: 0 } }}>
               <TableCell
                 sx={{
-                  color: "black",
+                  color: theme.palette.text.primary,
                   fontWeight: 500,
                   fontSize: 17,
 
-                  borderBottom: "1px solid #2e3b55",
+                  borderBottom: `1px solid ${theme.palette.divider}`,
                 }}
               >
                 {row.feature}
               </TableCell>
               <TableCell
                 sx={{
-                  color: "black",
+                  color: theme.palette.text.primary,
                   fontSize: 16,
 
-                  borderBottom: "1px solid #2e3b55",
+                  borderBottom: `1px solid ${theme.palette.divider}`,
                 }}
                 align="center"
               >
@@ -140,10 +144,10 @@ const ComparePackage = ({ id }: ComparePackageProps) => (
               </TableCell>
               <TableCell
                 sx={{
-                  color: "black",
+                  color: theme.palette.text.primary,
                   fontSize: 16,
 
-                  borderBottom: "1px solid #2e3b55",
+                  borderBottom: `1px solid ${theme.palette.divider}`,
                 }}
                 align="center"
               >
@@ -155,7 +159,8 @@ const ComparePackage = ({ id }: ComparePackageProps) => (
         </TableBody>
       </Table>
     </TableContainer>
-  </Box>
-);
+    </Box>
+  );
+};
 
 export default ComparePackage;

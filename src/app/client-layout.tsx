@@ -1,5 +1,6 @@
 "use client";
 import SnackBarAlert from "@/components/common/SnackBarAlert";
+import InitColorSchemeScript from "@/components/common/InitColorSchemeScript";
 import { AppContextProvider } from "@/contexts/AppContext";
 import { ThemeContextProvider } from "@/contexts/ThemeContext";
 import "@/styles/globals.scss";
@@ -22,17 +23,20 @@ export default function ClientLayout({
   children: ReactNode;
 }>) {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AppRouterCacheProvider>
-        <AppContextProvider>
-          <AuthContextProvider>
-            <ProgressBar />
-            <ThemeContextProvider>{children}</ThemeContextProvider>
-            <SnackBarAlert />
-            <ReactQueryDevtools initialIsOpen={false} />
-          </AuthContextProvider>
-        </AppContextProvider>
-      </AppRouterCacheProvider>
-    </QueryClientProvider>
+    <>
+      <InitColorSchemeScript />
+      <QueryClientProvider client={queryClient}>
+        <AppRouterCacheProvider>
+          <AppContextProvider>
+            <AuthContextProvider>
+              <ProgressBar />
+              <ThemeContextProvider>{children}</ThemeContextProvider>
+              <SnackBarAlert />
+              <ReactQueryDevtools initialIsOpen={false} />
+            </AuthContextProvider>
+          </AppContextProvider>
+        </AppRouterCacheProvider>
+      </QueryClientProvider>
+    </>
   );
 }

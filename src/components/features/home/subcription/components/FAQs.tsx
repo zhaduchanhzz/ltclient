@@ -7,6 +7,7 @@ import {
   Box,
   Link,
   Typography,
+  useTheme,
 } from "@mui/material";
 
 const faqs = [
@@ -49,6 +50,7 @@ const faqs = [
 ];
 
 const FAQs = ({ id }: { id: string }) => {
+  const theme = useTheme();
   return (
     <Box id={id} sx={{ py: 8, px: 2 }}>
       <Typography
@@ -68,7 +70,7 @@ const FAQs = ({ id }: { id: string }) => {
         Câu hỏi thường gặp
       </Typography>
       <Typography
-        sx={{ color: "black", mb: 4, textAlign: "center", fontSize: 16 }}
+        sx={{ color: theme.palette.text.primary, mb: 4, textAlign: "center", fontSize: 16 }}
       >
         Những thắc mắc phổ biến về <b>gói ôn luyện & chấm thi VSTEP</b> được
         giải đáp dưới đây. Nếu bạn cần thêm thông tin, hãy{" "}
@@ -98,7 +100,7 @@ const FAQs = ({ id }: { id: string }) => {
           <Accordion
             key={idx}
             sx={{
-              color: "black",
+              color: theme.palette.text.primary,
               boxShadow: "none",
               borderBottom:
                 idx !== faqs.length - 1 ? "1px solid #2c7be5" : "none",
@@ -112,7 +114,7 @@ const FAQs = ({ id }: { id: string }) => {
               {faq.question}
             </AccordionSummary>
             <AccordionDetails
-              sx={{ color: "black", fontSize: 15, px: 3, pb: 2 }}
+              sx={{ color: theme.palette.text.primary, fontSize: 15, px: 3, pb: 2 }}
             >
               {faq.answer}
             </AccordionDetails>

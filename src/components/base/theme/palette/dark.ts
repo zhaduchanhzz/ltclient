@@ -6,56 +6,60 @@ export const darkPalette: PaletteOptions = {
   mode: "dark", // This enables dark mode
   primary: {
     main: "#cda274",
-    contrastText: "#fff", // Text color for primary buttons
+    light: "#d4b185",
+    dark: "#a0764e",
+    contrastText: "#fff",
   },
   secondary: {
-    main: "#292f36", // Main color for primary
-    contrastText: "#fff", // Text color for primary buttons
+    main: "#4a5568",
+    light: "#718096",
+    dark: "#2d3748",
+    contrastText: "#fff",
   },
   background: {
-    default: "#f9fbfd",
-    paper: "#ffffff",
+    default: "#121212", // Dark background
+    paper: "#1e1e1e", // Slightly lighter for cards/papers
   },
   error: {
-    main: "#f44336", // Main color for error
-    light: "#e57373", // Light shade for error
-    dark: "#d32f2f", // Dark shade for error
-    contrastText: "#fff", // Text color for error
+    main: "#ef5350",
+    light: "#e57373",
+    dark: "#c62828",
+    contrastText: "#fff",
   },
   warning: {
-    main: "#ff9800", // Main color for warning
-    light: "#ffb74d", // Light shade for warning
-    dark: "#f57c00", // Dark shade for warning
-    contrastText: "#fff", // Text color for warning
+    main: "#ff9800",
+    light: "#ffb74d",
+    dark: "#f57c00",
+    contrastText: "#fff",
   },
   info: {
-    main: "#2196f3", // Main color for info
-    light: "#64b5f6", // Light shade for info
-    dark: "#1976d2", // Dark shade for info
-    contrastText: "#fff", // Text color for info
+    main: "#29b6f6",
+    light: "#4fc3f7",
+    dark: "#0288d1",
+    contrastText: "#fff",
   },
   success: {
-    main: "#4caf50", // Main color for success
-    light: "#81c784", // Light shade for success
-    dark: "#388e3c", // Dark shade for success
-    contrastText: "#fff", // Text color for success
+    main: "#66bb6a",
+    light: "#81c784",
+    dark: "#388e3c",
+    contrastText: "#fff",
   },
   text: {
-    primary: "#292f36", // Primary text color
-    secondary: "#757575", // Secondary text color
-    disabled: "#bdbdbd", // Disabled text color
+    primary: "#ffffff", // White text for dark mode
+    secondary: "rgba(255, 255, 255, 0.7)", // Slightly transparent white
+    disabled: "rgba(255, 255, 255, 0.5)", // More transparent for disabled
   },
   action: {
-    active: "#000", // Active action color
-    hover: "#f1f1f1", // Hover action color
-    selected: "#e0e0e0", // Selected action color
-    disabled: "#bdbdbd", // Disabled action color
-    disabledBackground: "#f5f5f5", // Disabled background color for actions
+    active: "#fff",
+    hover: "rgba(255, 255, 255, 0.08)",
+    selected: "rgba(255, 255, 255, 0.16)",
+    disabled: "rgba(255, 255, 255, 0.3)",
+    disabledBackground: "rgba(255, 255, 255, 0.12)",
   },
-  divider: "#e0e0e0", // Divider color
+  divider: "rgba(255, 255, 255, 0.12)", // Subtle divider for dark mode
   common: {
-    black: "#292f36", // Black color
-    white: "#ffffff", // White color
+    black: "#000000",
+    white: "#ffffff",
   },
   grey: {
     50: "#fafafa",
@@ -69,5 +73,4 @@ export const darkPalette: PaletteOptions = {
     800: "#424242",
     900: "#212121",
   },
-  // Other color customizations...
 };
