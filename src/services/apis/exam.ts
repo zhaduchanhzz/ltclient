@@ -11,6 +11,7 @@ import {
   ExamSubmitResponse,
   GradingRequestDto,
   GradingResponseDto,
+  ListExamByTypeResponse,
   SimulationExam,
   TakeExamResponse,
   UserHistoryResponse,
@@ -31,7 +32,7 @@ export const useExamDetailQuery = (examId: string, enabled = false) => {
   return useQuery({
     queryKey: [API_PATH.EXAMS, examId],
     queryFn: () => {
-      return HttpClient.get<string, CommonResponse<null>>(
+      return HttpClient.get<string, CommonResponse<ExamsDetail>>(
         API_PATH.EXAMS + "/" + examId,
       );
     },
@@ -160,5 +161,17 @@ export const useGradingRequestMutation = () => {
         CommonResponse<GradingResponseDto>
       >(API_PATH.GRADING_REQUEST, data);
     },
+  });
+};
+
+export const useListExamsByTypeQuery = (enabled = false) => {
+  return useQuery({
+    queryKey: [API_PATH.EXAMS_LIST_BY_TYPE],
+    queryFn: () => {
+      return HttpClient.get<null, CommonResponse<ListExamByTypeResponse>>(
+        API_PATH.EXAMS_LIST_BY_TYPE
+      );
+    },
+    enabled,
   });
 };

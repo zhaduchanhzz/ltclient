@@ -233,3 +233,19 @@ export type GradingResponseDto = {
   status: string;
   requestedAt: string;
 };
+
+export type PracticeExam = {
+  id: number;
+  examType: "LISTENING" | "READING" | "WRITING" | "SPEAKING";
+  title: string;
+  description: string;
+  isNeedVip: boolean | null;
+  questions: null;
+};
+
+export type ExamByType = {
+  examType: "LISTENING" | "READING" | "WRITING" | "SPEAKING";
+  exams: PracticeExam[];
+};
+
+export type ListExamByTypeResponse = ExamByType[];
