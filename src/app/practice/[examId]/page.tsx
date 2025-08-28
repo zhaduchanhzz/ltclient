@@ -7,13 +7,14 @@ export const metadata: Metadata = {
 };
 
 type PracticeExamPageProps = {
-  params: {
+  params: Promise<{
     examId: string;
-  };
+  }>;
 };
 
-const PracticeExamPage = ({ params }: PracticeExamPageProps) => {
-  return <PracticeExam examId={params.examId} />;
+const PracticeExamPage = async ({ params }: PracticeExamPageProps) => {
+  const { examId } = await params;
+  return <PracticeExam examId={examId} />;
 };
 
 export default PracticeExamPage;

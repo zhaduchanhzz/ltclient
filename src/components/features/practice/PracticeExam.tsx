@@ -81,13 +81,14 @@ const PracticeExam = ({ examId }: PracticeExamProps) => {
   };
   
   const handleSubmit = () => {
-    // TODO: Submit answers to API
+    // Store answers in localStorage for review
+    localStorage.setItem(`practice_exam_${examId}_answers`, JSON.stringify(answers));
+    
     console.log("Submitting answers:", answers);
     console.log("Exam Type:", examData?.examType);
     
-    if (examData?.examType) {
-      router.push(getReviewRoute(examData.examType));
-    }
+    // Navigate to unified review page
+    router.push(`/practice/review/${examId}`);
   };
   
   if (isLoading) {
