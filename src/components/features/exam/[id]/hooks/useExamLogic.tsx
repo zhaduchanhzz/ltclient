@@ -140,8 +140,6 @@ export function useExamLogic() {
         const savedState = loadStateFromLocalStorage();
 
         if (savedState && savedState.examData) {
-          console.log("Found saved exam data:", savedState.examData);
-
           // Validate the exam data structure
           if (
             !savedState.examData.exams ||
@@ -176,10 +174,6 @@ export function useExamLogic() {
               const remaining = Math.max(0, timeLimit - elapsed);
               setCurrentSectionTimeRemaining(remaining);
             }
-          } else {
-            console.log(
-              "Exam data found but no active session - exam ready to start",
-            );
           }
 
           setIsLoading(false);
@@ -210,8 +204,6 @@ export function useExamLogic() {
   ): SimulationExam[] => {
     try {
       return apiExams.map((exam) => {
-        console.log("Converting exam:", exam);
-
         return {
           id: parseInt(exam.id),
           examType: exam.examType,
@@ -996,6 +988,210 @@ export function useExamLogic() {
     }
   }, [session, submitExamMutation, clearPersistedState, allExams]);
 
+  // Submit all exams at once (for final submission with all exam types)
+  const submitAllExams = useCallback(async () => {
+    if (!session) return { success: false, error: "No session available" };
+
+    try {
+      const submissionPromises: Promise<any>[] = [];
+      const submissionResults: {
+        examType: string;
+        success: boolean;
+        error?: string;
+      }[] = [];
+
+      // Group exams by type for organized submission
+      const examGroups: Record<string, any[]> = {};
+      allExams.forEach((exam) => {
+        if (!examGroups[exam.examType]) {
+          examGroups[exam.examType] = [];
+        }
+        
+        examGroups[exam.examType].push(exam);
+      });
+
+      // Submit LISTENING and READING exams
+      ["LISTENING", "READING"].forEach((examType) => {
+        const typeExams = examGroups[examType] || [];
+
+        typeExams.forEach((exam) => {
+          const responses: Record<string, string> = {};
+
+          exam.questions.forEach((question: any) => {
+            const answers = session.answers[question.id];
+
+            if (answers && answers.length > 0) {
+              // For multiple choice, join answer IDs with comma
+              responses[question.id] = answers.join(",");
+            }
+          });
+
+          if (Object.keys(responses).length > 0) {
+            const submitRequest: ExamSubmitRequest = {
+              examId: exam.id,
+              responses,
+              termId: session.termId,
+            };
+
+            const promise = submitExamMutation
+              .mutateAsync(submitRequest)
+              .then(() => {
+                submissionResults.push({ examType, success: true });
+                console.log(
+                  `Successfully submitted ${examType} exam ${exam.id}`,
+                );
+              })
+              .catch((error) => {
+                submissionResults.push({
+                  examType,
+                  success: false,
+                  error: error.message,
+                });
+                console.error(
+                  `Failed to submit ${examType} exam ${exam.id}:`,
+                  error,
+                );
+              });
+
+            submissionPromises.push(promise);
+          }
+        });
+      });
+
+      // Submit WRITING exams
+      const writingExams = examGroups["WRITING"] || [];
+      writingExams.forEach((exam) => {
+        const responses: Record<string, string> = {};
+
+        exam.questions.forEach((question: any) => {
+          const answers = session.answers[question.id];
+
+          if (answers && answers.length > 0) {
+            // For writing, the answer is the text content
+            responses[question.id] = answers[0] || "";
+          }
+        });
+
+        if (Object.keys(responses).length > 0) {
+          const submitRequest: ExamSubmitRequest = {
+            examId: exam.id,
+            responses,
+            termId: session.termId,
+          };
+
+          const promise = submitExamMutation
+            .mutateAsync(submitRequest)
+            .then(() => {
+              submissionResults.push({ examType: "WRITING", success: true });
+              console.log(`Successfully submitted WRITING exam ${exam.id}`);
+            })
+            .catch((error) => {
+              submissionResults.push({
+                examType: "WRITING",
+                success: false,
+                error: error.message,
+              });
+              console.error(`Failed to submit WRITING exam ${exam.id}:`, error);
+            });
+
+          submissionPromises.push(promise);
+        }
+      });
+
+      // Submit SPEAKING exams
+      const speakingExams = examGroups["SPEAKING"] || [];
+      speakingExams.forEach((exam) => {
+        exam.questions.forEach((question: any) => {
+          const answers = session.answers[question.id];
+
+          if (answers && answers.length > 0) {
+            const speakingFile = answers[0]; // Base64 audio data
+            const responses: Record<string, string> = {
+              [question.id]: "speaking_response",
+            };
+
+            const submitRequest: ExamSubmitRequest = {
+              examId: exam.id,
+              responses,
+              termId: session.termId,
+              speakingFile,
+            };
+
+            const promise = submitExamMutation
+              .mutateAsync(submitRequest)
+              .then(() => {
+                submissionResults.push({ examType: "SPEAKING", success: true });
+                console.log(
+                  `Successfully submitted SPEAKING question ${question.id} for exam ${exam.id}`,
+                );
+              })
+              .catch((error) => {
+                submissionResults.push({
+                  examType: "SPEAKING",
+                  success: false,
+                  error: error.message,
+                });
+                console.error(
+                  `Failed to submit SPEAKING question ${question.id}:`,
+                  error,
+                );
+              });
+
+            submissionPromises.push(promise);
+          }
+        });
+      });
+
+      // Wait for all submissions to complete
+      await Promise.allSettled(submissionPromises);
+
+      // Check results
+      const successCount = submissionResults.filter((r) => r.success).length;
+      const failCount = submissionResults.filter((r) => !r.success).length;
+
+      // Get unique failed exam types
+      const failedTypes = submissionResults
+        .filter((r) => !r.success)
+        .map((r) => r.examType)
+        .filter((v, i, a) => a.indexOf(v) === i); // unique
+
+      if (failCount === 0) {
+        // All submissions successful
+        setSession((prev) => (prev ? { ...prev, isCompleted: true } : null));
+        clearPersistedState();
+        return {
+          success: true,
+          message: "Exam submitted successfully!",
+          failedTypes: [],
+        };
+      } else if (successCount > 0) {
+        // Partial success
+        return {
+          success: false,
+          error: `Partially submitted. Failed: ${failedTypes.join(", ")}`,
+          failedTypes,
+          partial: true,
+        };
+      } else {
+        // Complete failure
+        return {
+          success: false,
+          error: "Failed to submit exam. Please try again.",
+          failedTypes,
+          partial: false,
+        };
+      }
+    } catch (error) {
+      console.error("Failed to submit all exams:", error);
+      return {
+        success: false,
+        error: "An unexpected error occurred during submission.",
+        failedTypes: ["WRITING", "SPEAKING"], // Show both links on unexpected error
+        partial: false,
+      };
+    }
+  }, [session, submitExamMutation, clearPersistedState, allExams]);
+
   // Navigate to specific question index within the current exam type
   const navigateToQuestion = useCallback(
     async (globalQuestionIndex: number) => {
@@ -1089,6 +1285,7 @@ export function useExamLogic() {
     previousQuestion,
     completeSection,
     submitExam,
+    submitAllExams,
     submitWritingExam,
     submitSpeakingQuestion,
     submitFinalSpeaking,

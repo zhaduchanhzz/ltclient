@@ -76,7 +76,7 @@ export default function ExamPage() {
     handleAnswerChange,
     handleWritingAnswerChange,
     handleSpeakingAnswerChange,
-    setShowSuccessDialog,
+    submitAllExams,
   } = useExamLogic();
 
   const gradingRequestMutation = useGradingRequestMutation();
@@ -86,6 +86,16 @@ export default function ExamPage() {
     total: number;
     currentExamType?: string;
   }>({ isGrading: false, current: 0, total: 0 });
+
+  // State for submission
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionDialog, setSubmissionDialog] = useState<{
+    open: boolean;
+    success: boolean;
+    message: string;
+    failedTypes?: string[];
+    partial?: boolean;
+  }>({ open: false, success: false, message: "" });
 
   // Get all exams in a flat array
   const allExamsFlat = useMemo(() => {
@@ -718,12 +728,6 @@ export default function ExamPage() {
   const { exam: currentExam, question: currentQuestion } =
     getCurrentExamAndQuestion();
 
-  console.log("Current exam type:", session.currentExamType);
-  console.log("Current exam:", currentExam);
-  console.log("Current question:", currentQuestion);
-  console.log("All exam types:", examTypes);
-  console.log("Exams by type:", examsByType);
-
   if (!currentExam || !currentQuestion) {
     return (
       <Container>
@@ -796,6 +800,44 @@ export default function ExamPage() {
 
   const navigateToPart = (index: number) => {
     setCurrentExamPartIndex(index);
+  };
+
+  // Handle exam submission
+  const handleSubmitAllAnswers = async () => {
+    setIsSubmitting(true);
+
+    try {
+      const result = await submitAllExams();
+
+      if (result.success) {
+        // Success - show success dialog
+        setSubmissionDialog({
+          open: true,
+          success: true,
+          message: result.message || "Exam submitted successfully!",
+          failedTypes: [],
+        });
+      } else {
+        // Error - show error dialog with links
+        setSubmissionDialog({
+          open: true,
+          success: false,
+          message: result.error || "Failed to submit exam",
+          failedTypes: result.failedTypes || [],
+          partial: result.partial,
+        });
+      }
+    } catch (error) {
+      console.error("Submission error:", error);
+      setSubmissionDialog({
+        open: true,
+        success: false,
+        message: "An unexpected error occurred during submission",
+        failedTypes: ["WRITING", "SPEAKING"], // Show both links on unexpected error
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!currentExamPart) {
@@ -985,6 +1027,7 @@ export default function ExamPage() {
                     currentExam={currentExamPart}
                     currentQuestion={question}
                     questionNumber={globalQuestionNumber}
+                    examType={currentExamPart.examType}
                     onAnswerChange={handleAnswerChange}
                     onWritingAnswerChange={handleWritingAnswerChange}
                     onSpeakingAnswerChange={handleSpeakingAnswerChange}
@@ -1027,13 +1070,11 @@ export default function ExamPage() {
               variant="contained"
               size="large"
               color="success"
-              onClick={() => {
-                // Mark the exam as completed and show success dialog
-                setShowSuccessDialog(true);
-              }}
+              onClick={handleSubmitAllAnswers}
+              disabled={isSubmitting}
               sx={{ px: 4 }}
             >
-              Submit All Answers
+              {isSubmitting ? "Submitting..." : "Submit All Answers"}
             </Button>
           ) : (
             <Button variant="contained" onClick={navigateToNextPart}>
@@ -1103,6 +1144,94 @@ export default function ExamPage() {
           );
         })}
       </Paper>
+
+      {/* Submission Result Dialog */}
+      <Dialog 
+        open={submissionDialog.open} 
+        onClose={() => setSubmissionDialog({ ...submissionDialog, open: false })}
+        maxWidth="sm" 
+        fullWidth
+      >
+        <DialogTitle>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {submissionDialog.success ? (
+              <CheckCircle color="success" />
+            ) : (
+              <AccessTime color="error" />
+            )}
+            {submissionDialog.success ? "Submission Successful" : "Submission Failed"}
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            {submissionDialog.message}
+          </Typography>
+
+          {/* Show links for failed exam types */}
+          {!submissionDialog.success && submissionDialog.failedTypes && submissionDialog.failedTypes.length > 0 && (
+            <Box sx={{ mt: 3, p: 2, bgcolor: "grey.100", borderRadius: 1 }}>
+              <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: "bold" }}>
+                Please visit the following pages to resubmit:
+              </Typography>
+              <Stack spacing={1}>
+                {submissionDialog.failedTypes.includes("WRITING") && (
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Create fontSize="small" color="primary" />
+                    <Typography variant="body2">
+                      Writing submissions:{" "}
+                      <Button
+                        size="small"
+                        onClick={() => router.push("/user/writing")}
+                        sx={{ textTransform: "none" }}
+                      >
+                        Go to Writing Page
+                      </Button>
+                    </Typography>
+                  </Box>
+                )}
+                {submissionDialog.failedTypes.includes("SPEAKING") && (
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Mic fontSize="small" color="primary" />
+                    <Typography variant="body2">
+                      Speaking submissions:{" "}
+                      <Button
+                        size="small"
+                        onClick={() => router.push("/user/speaking")}
+                        sx={{ textTransform: "none" }}
+                      >
+                        Go to Speaking Page
+                      </Button>
+                    </Typography>
+                  </Box>
+                )}
+                {(submissionDialog.failedTypes.includes("LISTENING") || 
+                  submissionDialog.failedTypes.includes("READING")) && (
+                  <Box sx={{ mt: 1 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Note: Listening and Reading exams have been automatically graded.
+                    </Typography>
+                  </Box>
+                )}
+              </Stack>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button 
+            onClick={() => {
+              setSubmissionDialog({ ...submissionDialog, open: false });
+              
+              if (submissionDialog.success) {
+                // Navigate to home or exam room after successful submission
+                router.push("/");
+              }
+            }}
+            variant="contained"
+          >
+            {submissionDialog.success ? "OK" : "Close"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

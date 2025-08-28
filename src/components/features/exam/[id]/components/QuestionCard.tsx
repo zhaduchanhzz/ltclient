@@ -24,6 +24,7 @@ interface QuestionCardProps {
   currentExam: any;
   currentQuestion: any;
   questionNumber?: number; // Optional global question number
+  examType?: "LISTENING" | "READING" | "WRITING" | "SPEAKING"; // Add examType prop
   onAnswerChange: (
     questionId: number,
     answerId: number,
@@ -36,6 +37,7 @@ interface QuestionCardProps {
 export default function QuestionCard({
   session,
   currentQuestion,
+  examType,
   onAnswerChange,
   onWritingAnswerChange,
   onSpeakingAnswerChange,
@@ -52,20 +54,20 @@ export default function QuestionCard({
   // Writing text state
   const [writingText, setWritingText] = useState<string>("");
 
+  // Use the passed examType prop, fallback to session.currentExamType if not provided
+  const currentExamType = examType || session.currentExamType;
+
   // Initialize states from existing answers
   useEffect(() => {
-    if (session.currentExamType === "WRITING") {
+    if (currentExamType === "WRITING") {
       const existingAnswer = session.answers[currentQuestion.id]?.[0] || "";
       setWritingText(existingAnswer);
     }
-  }, [currentQuestion.id, session.currentExamType, session.answers]);
+  }, [currentQuestion.id, currentExamType, session.answers]);
 
   useEffect(() => {
     // Convert base64 audio to playable URL for LISTENING
-    if (
-      session.currentExamType === "LISTENING" &&
-      currentQuestion.questionText
-    ) {
+    if (currentExamType === "LISTENING" && currentQuestion.questionText) {
       try {
         // Assuming questionText contains base64 audio data
         const audioData = currentQuestion.questionText;
@@ -80,11 +82,11 @@ export default function QuestionCard({
         console.error("Error processing audio data:", error);
       }
     }
-  }, [currentQuestion, session.currentExamType]);
+  }, [currentQuestion, currentExamType]);
 
   // Reset audio recording state when question changes for SPEAKING
   useEffect(() => {
-    if (session.currentExamType === "SPEAKING") {
+    if (currentExamType === "SPEAKING") {
       // Stop any ongoing recording
       if (
         mediaRecorder.current &&
@@ -135,7 +137,7 @@ export default function QuestionCard({
       setIsRecording(false);
       audioChunks.current = [];
     }
-  }, [currentQuestion.id, session.currentExamType, session.answers]);
+  }, [currentQuestion.id, currentExamType, session.answers]);
 
   const startRecording = async () => {
     try {
@@ -187,7 +189,7 @@ export default function QuestionCard({
   };
 
   const renderQuestionContent = () => {
-    switch (session.currentExamType) {
+    switch (currentExamType) {
       case "LISTENING":
         return (
           <Box sx={{ mb: 3 }}>
@@ -242,10 +244,7 @@ export default function QuestionCard({
             <Typography variant="h6" sx={{ mb: 2, fontSize: "1rem" }}>
               {currentQuestion.questionText}
             </Typography>
-            <Paper
-              elevation={2}
-              sx={{ p: 3, textAlign: "center", bgcolor: "grey.50" }}
-            >
+            <Paper elevation={2} sx={{ p: 3, textAlign: "center" }}>
               <Typography variant="body1" sx={{ mb: 3 }}>
                 Record your spoken response to the question above
               </Typography>
@@ -305,17 +304,13 @@ export default function QuestionCard({
 
   const renderAnswerOptions = () => {
     // For WRITING and SPEAKING, we don't show multiple choice options
-    if (
-      session.currentExamType === "WRITING" ||
-      session.currentExamType === "SPEAKING"
-    ) {
+    if (currentExamType === "WRITING" || currentExamType === "SPEAKING") {
       return null;
     }
 
     return (
       <FormControl component="fieldset" sx={{ width: "100%" }}>
-        {session.currentExamType === "READING" ||
-        session.currentExamType === "LISTENING" ? (
+        {currentExamType === "READING" || currentExamType === "LISTENING" ? (
           // Radio buttons for single answer questions
           <RadioGroup
             value={session.answers[currentQuestion.id]?.[0] || ""}
