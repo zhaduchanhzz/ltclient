@@ -259,14 +259,11 @@ export function useExamLogic() {
             `Skipping exam ${exam.id} (${exam.examType}) - no questions`,
           );
         }
-        
+
         return acc;
       },
       {} as Record<string, SimulationExam[]>,
     );
-
-    console.log("Organized exams by type:", organized);
-    console.log("Exam types with questions:", Object.keys(organized));
 
     return organized;
   }, [examData, filterExamsByAccountType]);
@@ -305,8 +302,6 @@ export function useExamLogic() {
 
   // Initialize exam session with provided exam data
   const startExamWithData = (apiExamData: TakeExamRequest) => {
-    console.log("Starting exam with data:", apiExamData);
-
     try {
       setExamData(apiExamData);
 
@@ -337,35 +332,7 @@ export function useExamLogic() {
         ),
       );
 
-      // Log exam counts by type
-      const examCounts = examTypeOrder.reduce(
-        (acc, type) => {
-          const examsOfType = freeExams.filter(
-            (exam) => exam.examType === type,
-          );
-          const withQuestions = examsOfType.filter(
-            (exam) => exam.questions && exam.questions.length > 0,
-          );
-          acc[type] = {
-            total: examsOfType.length,
-            withQuestions: withQuestions.length,
-            questionCount: withQuestions.reduce(
-              (sum, exam) => sum + exam.questions.length,
-              0,
-            ),
-          };
-          return acc;
-        },
-        {} as Record<
-          string,
-          { total: number; withQuestions: number; questionCount: number }
-        >,
-      );
-
-      console.log("Exam counts by type:", examCounts);
-
       if (availableTypes.length === 0) {
-        console.error("No exam types have questions!");
         setError("No exam questions available");
         return;
       }
@@ -384,8 +351,6 @@ export function useExamLogic() {
           EXAM_TIME_LIMITS[availableTypes[0] as keyof typeof EXAM_TIME_LIMITS],
         isCompleted: false,
       };
-
-      console.log("Starting exam with type:", availableTypes[0]);
 
       // Initialize section status - only first section is available
       const initialStatus: Record<string, ExamSectionStatus> = {};
@@ -420,7 +385,6 @@ export function useExamLogic() {
       return;
     }
 
-    console.log("Starting exam with available data");
     startExamWithData(examData);
   };
 
@@ -460,12 +424,6 @@ export function useExamLogic() {
     const currentExam = currentTypeExams[session.currentExamIndex];
     const currentQuestion =
       currentExam?.questions[session.currentQuestionIndex];
-
-    if (!currentExam) {
-      console.error(
-        `No exam found for type ${session.currentExamType} at index ${session.currentExamIndex}`,
-      );
-    }
 
     if (!currentQuestion && currentExam) {
       console.error(

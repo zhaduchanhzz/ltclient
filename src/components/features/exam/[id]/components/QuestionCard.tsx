@@ -1,5 +1,8 @@
 import { ExamTermSession } from "@/services/types/exam";
+import { Mic, PlayArrow, Stop, VolumeUp } from "@mui/icons-material";
 import {
+  Box,
+  Button,
   Card,
   CardContent,
   Checkbox,
@@ -13,16 +16,14 @@ import {
   Stack,
   TextField,
   Typography,
-  Button,
-  Box,
 } from "@mui/material";
-import { Mic, Stop, PlayArrow, VolumeUp } from "@mui/icons-material";
-import { useRef, useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface QuestionCardProps {
   session: ExamTermSession;
   currentExam: any;
   currentQuestion: any;
+  questionNumber?: number; // Optional global question number
   onAnswerChange: (
     questionId: number,
     answerId: number,
@@ -190,27 +191,24 @@ export default function QuestionCard({
       case "LISTENING":
         return (
           <Box sx={{ mb: 3 }}>
-            <Typography
-              variant="h6"
-              sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}
-            >
-              <VolumeUp /> Nghe đoạn âm thanh và trả lời câu hỏi
+            <Typography variant="h6" sx={{ mb: 2, fontSize: "1rem" }}>
+              {currentQuestion.questionText}
             </Typography>
-            {audioSrc && (
+            {/* {audioSrc && (
               <Box sx={{ mb: 2 }}>
                 <audio controls style={{ width: "100%" }}>
                   <source src={audioSrc} type="audio/mp3" />
                   Trình duyệt của bạn không hỗ trợ phát âm thanh.
                 </audio>
               </Box>
-            )}
+            )} */}
           </Box>
         );
 
       case "WRITING":
         return (
           <Box sx={{ mb: 3 }}>
-            <Typography variant="h6" sx={{ mb: 2 }}>
+            <Typography variant="h6" sx={{ mb: 2, fontSize: "1rem" }}>
               {currentQuestion.questionText}
             </Typography>
             <TextField
@@ -241,7 +239,7 @@ export default function QuestionCard({
       case "SPEAKING":
         return (
           <Box sx={{ mb: 3 }}>
-            <Typography variant="h6" sx={{ mb: 2 }}>
+            <Typography variant="h6" sx={{ mb: 2, fontSize: "1rem" }}>
               {currentQuestion.questionText}
             </Typography>
             <Paper
@@ -298,7 +296,7 @@ export default function QuestionCard({
 
       default:
         return (
-          <Typography variant="h5" fontWeight="medium" sx={{ mb: 3 }}>
+          <Typography variant="h5" sx={{ mb: 3, fontSize: "1rem" }}>
             {currentQuestion.questionText}
           </Typography>
         );
@@ -316,10 +314,6 @@ export default function QuestionCard({
 
     return (
       <FormControl component="fieldset" sx={{ width: "100%" }}>
-        <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-          Câu hỏi {session.currentQuestionIndex + 1}:{" "}
-          {currentQuestion.questionText}
-        </Typography>
         {session.currentExamType === "READING" ||
         session.currentExamType === "LISTENING" ? (
           // Radio buttons for single answer questions
@@ -340,7 +334,7 @@ export default function QuestionCard({
                     : 0
                 }
                 sx={{
-                  p: 2,
+                  p: 1,
                   mb: 2,
                   border: "2px solid",
                   borderColor: session.answers[currentQuestion.id]?.includes(
@@ -386,7 +380,7 @@ export default function QuestionCard({
                     : 0
                 }
                 sx={{
-                  p: 2,
+                  p: 1,
                   mb: 2,
                   border: "2px solid",
                   borderColor: session.answers[currentQuestion.id]?.includes(
@@ -465,8 +459,12 @@ export default function QuestionCard({
             sx={{ mb: 2 }}
           >
             <Typography variant="h6" fontWeight="bold">
-              Câu hỏi {session.currentQuestionIndex + 1} trên{" "}
-              {currentExam.questions.length}
+              {questionNumber ? (
+                <>Câu hỏi {questionNumber}</>
+              ) : (
+                <>Câu hỏi {session.currentQuestionIndex + 1} trên{" "}
+                {currentExam.questions.length}</>
+              )}
             </Typography>
           </Stack>
         </CardContent> */}

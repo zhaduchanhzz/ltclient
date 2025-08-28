@@ -1,5 +1,6 @@
 "use client";
 
+import { useGradingRequestMutation } from "@/services/apis/exam";
 import {
   AccessTime,
   Assignment,
@@ -32,13 +33,10 @@ import {
   Typography,
   Zoom,
 } from "@mui/material";
+import { useMemo, useState } from "react";
 import ExamHeader from "./components/ExamHeader";
-import NavigationControls from "./components/NavigationControls";
 import QuestionCard from "./components/QuestionCard";
-import BottomNavigation from "./components/BottomNavigation";
 import { useExamLogic } from "./hooks/useExamLogic";
-import { useGradingRequestMutation } from "@/services/apis/exam";
-import { useState } from "react";
 
 const EXAM_TIME_LIMITS = {
   LISTENING: 47,
@@ -78,13 +76,7 @@ export default function ExamPage() {
     handleAnswerChange,
     handleWritingAnswerChange,
     handleSpeakingAnswerChange,
-    nextQuestion,
-    previousQuestion,
-    completeSection,
-    submitWritingExam,
-    submitFinalSpeaking,
     setShowSuccessDialog,
-    navigateToQuestion,
   } = useExamLogic();
 
   const gradingRequestMutation = useGradingRequestMutation();
@@ -94,6 +86,37 @@ export default function ExamPage() {
     total: number;
     currentExamType?: string;
   }>({ isGrading: false, current: 0, total: 0 });
+
+  // Get all exams in a flat array
+  const allExamsFlat = useMemo(() => {
+    const result: any[] = [];
+    examTypes.forEach((examType) => {
+      const typeExams = examsByType[examType] || [];
+      typeExams.forEach((exam) => {
+        result.push(exam);
+      });
+    });
+    return result;
+  }, [examTypes, examsByType]);
+
+  // Track current exam part index (instead of individual questions)
+  const [currentExamPartIndex, setCurrentExamPartIndex] = useState(0);
+
+  // Get current exam part
+  const currentExamPart = allExamsFlat[currentExamPartIndex];
+
+  // Calculate global question offset for continuous numbering
+  const getGlobalQuestionOffset = useMemo(() => {
+    let offset = 0;
+
+    for (let i = 0; i < currentExamPartIndex; i++) {
+      if (allExamsFlat[i]) {
+        offset += allExamsFlat[i].questions.length;
+      }
+    }
+
+    return offset;
+  }, [currentExamPartIndex, allExamsFlat]);
 
   const calculateExamResultsByType = () => {
     if (!session || !allExams) return {};
@@ -713,15 +736,36 @@ export default function ExamPage() {
     );
   }
 
-  const currentTypeExams = examsByType[session.currentExamType] || [];
+  // Calculate answered questions for current exam part
+  const calculateCurrentPartAnswered = () => {
+    if (!session || !currentExamPart) return { answered: 0, total: 0 };
 
-  // Calculate answered questions count
-  const calculateAnsweredQuestions = () => {
+    let answered = 0;
+    const total = currentExamPart.questions.length;
+
+    currentExamPart.questions.forEach((question: any) => {
+      const userAnswers = session.answers[question.id];
+
+      if (userAnswers && userAnswers.length > 0) {
+        answered++;
+      }
+    });
+
+    return { answered, total };
+  };
+
+  const { answered: partAnswered, total: partTotal } =
+    calculateCurrentPartAnswered();
+
+  // Calculate total answered across all parts
+  const calculateAllAnswered = () => {
+    if (!session) return { answered: 0, total: 0 };
+
     let answered = 0;
     let total = 0;
 
-    currentTypeExams.forEach((exam) => {
-      exam.questions.forEach((question) => {
+    allExamsFlat.forEach((exam) => {
+      exam.questions.forEach((question: any) => {
         total++;
         const userAnswers = session.answers[question.id];
 
@@ -734,7 +778,33 @@ export default function ExamPage() {
     return { answered, total };
   };
 
-  const { answered, total } = calculateAnsweredQuestions();
+  const { answered: totalAnswered, total: totalQuestions } =
+    calculateAllAnswered();
+
+  // Navigation functions
+  const navigateToPreviousPart = () => {
+    if (currentExamPartIndex > 0) {
+      setCurrentExamPartIndex(currentExamPartIndex - 1);
+    }
+  };
+
+  const navigateToNextPart = () => {
+    if (currentExamPartIndex < allExamsFlat.length - 1) {
+      setCurrentExamPartIndex(currentExamPartIndex + 1);
+    }
+  };
+
+  const navigateToPart = (index: number) => {
+    setCurrentExamPartIndex(index);
+  };
+
+  if (!currentExamPart) {
+    return (
+      <Container>
+        <Alert severity="error">No exam part available.</Alert>
+      </Container>
+    );
+  }
 
   return (
     <Box
@@ -749,45 +819,290 @@ export default function ExamPage() {
       <ExamHeader
         session={session}
         currentSectionTimeRemaining={currentSectionTimeRemaining}
-        answeredCount={answered}
-        totalCount={total}
+        answeredCount={totalAnswered}
+        totalCount={totalQuestions}
       />
 
-      {/* Main Content Area */}
-      <Box
-        sx={{ flexGrow: 1, p: { xs: 2, md: 3 }, overflow: "scroll", pb: 15 }}
+      {/* Part Navigation Bar */}
+      <Paper
+        elevation={2}
+        sx={{
+          px: 3,
+          py: 1.5,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          bgcolor: "background.paper",
+          borderBottom: "1px solid",
+          borderColor: "divider",
+        }}
       >
-        {/* Question Card */}
-        <QuestionCard
-          session={session}
-          currentExam={currentExam}
-          currentQuestion={currentQuestion}
-          onAnswerChange={handleAnswerChange}
-          onWritingAnswerChange={handleWritingAnswerChange}
-          onSpeakingAnswerChange={handleSpeakingAnswerChange}
-        />
+        <Typography variant="h6" fontWeight="bold">
+          Part {currentExamPartIndex + 1} of {allExamsFlat.length}
+        </Typography>
 
-        {/* Navigation Controls */}
-        <NavigationControls
-          session={session}
-          currentExam={currentExam}
-          examsByType={examsByType}
-          examTypes={examTypes}
-          onPreviousQuestion={previousQuestion}
-          onNextQuestion={nextQuestion}
-          onCompleteSection={completeSection}
-          onShowExamResults={() => setShowSuccessDialog(true)}
-          onSubmitWritingExam={submitWritingExam}
-          onSubmitFinalSpeaking={submitFinalSpeaking}
-        />
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={navigateToPreviousPart}
+            disabled={currentExamPartIndex === 0}
+          >
+            Previous Part
+          </Button>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={navigateToNextPart}
+            disabled={currentExamPartIndex === allExamsFlat.length - 1}
+          >
+            Next Part
+          </Button>
+        </Box>
+      </Paper>
+
+      {/* Two-Panel Layout */}
+      <Box
+        sx={{
+          flexGrow: 1,
+          display: "flex",
+          flexDirection: { xs: "column", md: "row" },
+          overflow: "hidden",
+          height: "calc(100vh - 120px)", // Adjust based on header height
+        }}
+      >
+        {/* Left Panel - Title & Content */}
+        <Box
+          sx={{
+            width: { xs: "100%", md: "50%" },
+            height: { xs: "40%", md: "100%" },
+            overflow: "auto",
+            borderRight: { md: "1px solid" },
+            borderBottom: { xs: "1px solid", md: "none" },
+            borderColor: "divider",
+            bgcolor: "background.paper",
+            p: 3,
+          }}
+        >
+          {/* Part Header - Sticky */}
+          <Paper
+            elevation={2}
+            sx={{
+              p: 3,
+              mb: 3,
+              bgcolor:
+                ExamTypeColors[
+                  currentExamPart.examType as keyof typeof ExamTypeColors
+                ] || "#grey",
+              color: "white",
+              position: "sticky",
+              top: 0,
+              zIndex: 10,
+              borderRadius: 2,
+            }}
+          >
+            <Typography sx={{ fontSize: "1rem" }}>
+              {currentExamPart.title ||
+                `${currentExamPart.examType} - Part ${currentExamPartIndex + 1}`}
+            </Typography>
+            <Typography variant="body2" sx={{ mt: 1, opacity: 0.9 }}>
+              Questions {getGlobalQuestionOffset + 1} -{" "}
+              {getGlobalQuestionOffset + currentExamPart.questions.length} •
+              {partAnswered} of {partTotal} answered
+            </Typography>
+          </Paper>
+
+          {/* Part Description / Content */}
+          {currentExamPart.description && (
+            <Paper elevation={1} sx={{ p: 3 }}>
+              <Typography sx={{ mb: 2, fontSize: "1rem" }}>
+                Instructions / Reading Passage
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{
+                  whiteSpace: "pre-wrap",
+                  lineHeight: 1.8,
+                }}
+              >
+                {currentExamPart.description}
+              </Typography>
+            </Paper>
+          )}
+
+          {/* Additional content area for reading passages if needed */}
+          {currentExamPart.examType === "READING" &&
+            !currentExamPart.description && (
+              <Paper elevation={1} sx={{ p: 3 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  textAlign="center"
+                >
+                  Reading passage will appear here when available
+                </Typography>
+              </Paper>
+            )}
+        </Box>
+
+        {/* Right Panel - Questions */}
+        <Box
+          sx={{
+            width: { xs: "100%", md: "50%" },
+            height: { xs: "60%", md: "100%" },
+            overflow: "auto",
+            bgcolor: "background.default",
+            p: 0,
+          }}
+        >
+          <Box sx={{ p: 3 }}>
+            {/* Questions for current exam part */}
+            {currentExamPart.questions.map((question: any, index: number) => {
+              const globalQuestionNumber = getGlobalQuestionOffset + index + 1;
+
+              return (
+                <Paper
+                  key={`question-${question.id}`}
+                  id={`question-${index}`}
+                  elevation={1}
+                  sx={{
+                    p: 3,
+                    mb: 3,
+                    bgcolor: "background.paper",
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      mb: 2,
+                      color: "primary.main",
+                      fontSize: "1rem",
+                    }}
+                  >
+                    Question {globalQuestionNumber}
+                  </Typography>
+                  <QuestionCard
+                    session={session}
+                    currentExam={currentExamPart}
+                    currentQuestion={question}
+                    questionNumber={globalQuestionNumber}
+                    onAnswerChange={handleAnswerChange}
+                    onWritingAnswerChange={handleWritingAnswerChange}
+                    onSpeakingAnswerChange={handleSpeakingAnswerChange}
+                  />
+                </Paper>
+              );
+            })}
+          </Box>
+        </Box>
       </Box>
 
-      {/* Bottom Navigation */}
-      <BottomNavigation
-        session={session}
-        examsByType={examsByType}
-        onNavigateToQuestion={navigateToQuestion}
-      />
+      {/* Navigation and Submit Button - Full width at bottom */}
+      <Paper
+        elevation={2}
+        sx={{
+          p: 3,
+          width: "100%",
+          bgcolor: "background.paper",
+          borderTop: "1px solid",
+          borderColor: "divider",
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Button
+            variant="contained"
+            onClick={navigateToPreviousPart}
+            disabled={currentExamPartIndex === 0}
+          >
+            ← Previous Part
+          </Button>
+
+          {currentExamPartIndex === allExamsFlat.length - 1 ? (
+            <Button
+              variant="contained"
+              size="large"
+              color="success"
+              onClick={() => {
+                // Mark the exam as completed and show success dialog
+                setShowSuccessDialog(true);
+              }}
+              sx={{ px: 4 }}
+            >
+              Submit All Answers
+            </Button>
+          ) : (
+            <Button variant="contained" onClick={navigateToNextPart}>
+              Next Part →
+            </Button>
+          )}
+        </Box>
+      </Paper>
+
+      {/* Part Navigator Sidebar */}
+      <Paper
+        elevation={3}
+        sx={{
+          position: "fixed",
+          right: 20,
+          top: "50%",
+          transform: "translateY(-50%)",
+          width: 200,
+          maxHeight: "60vh",
+          overflow: "auto",
+          p: 2,
+          display: { xs: "none", lg: "block" },
+          zIndex: 1000,
+        }}
+      >
+        <Typography variant="h6" sx={{ mb: 2 }}>
+          Parts
+        </Typography>
+        {allExamsFlat.map((exam, index) => {
+          const Icon =
+            ExamTypeIcons[exam.examType as keyof typeof ExamTypeIcons];
+          const isCurrentPart = index === currentExamPartIndex;
+          let questionsInPart = 0;
+          let answeredInPart = 0;
+
+          exam.questions.forEach((q: any) => {
+            questionsInPart++;
+
+            if (session.answers[q.id]?.length > 0) {
+              answeredInPart++;
+            }
+          });
+
+          return (
+            <Button
+              key={index}
+              fullWidth
+              variant={isCurrentPart ? "contained" : "outlined"}
+              color={isCurrentPart ? "primary" : "inherit"}
+              onClick={() => navigateToPart(index)}
+              sx={{
+                mb: 1,
+                justifyContent: "flex-start",
+                textAlign: "left",
+              }}
+              startIcon={<Icon />}
+            >
+              <Box sx={{ width: "100%" }}>
+                <Typography variant="caption" display="block">
+                  Part {index + 1}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {answeredInPart}/{questionsInPart}
+                </Typography>
+              </Box>
+            </Button>
+          );
+        })}
+      </Paper>
     </Box>
   );
 }
