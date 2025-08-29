@@ -17,13 +17,16 @@ const PracticeReview = ({ examId }: PracticeReviewProps) => {
   const router = useRouter();
   const theme = useTheme();
   const [userAnswers, setUserAnswers] = useState<Record<number, any>>({});
-  
+
   // Fetch exam details
   const { data, isLoading, error } = useExamDetailQuery(examId, true);
-  
+
   // Load user's answers from localStorage
   useEffect(() => {
-    const storedAnswers = localStorage.getItem(`practice_exam_${examId}_answers`);
+    const storedAnswers = localStorage.getItem(
+      `practice_exam_${examId}_answers`,
+    );
+    
     if (storedAnswers) {
       try {
         setUserAnswers(JSON.parse(storedAnswers));
@@ -32,67 +35,70 @@ const PracticeReview = ({ examId }: PracticeReviewProps) => {
       }
     }
   }, [examId]);
-  
+
   // Extract exam data
   const examData = useMemo(() => {
     if (!data?.data) return null;
     return data.data;
   }, [data]);
-  
+
   // Calculate score and answered questions for multiple choice questions
   const score = useMemo(() => {
-    if (!examData || (examData.examType !== "LISTENING" && examData.examType !== "READING")) {
+    if (
+      !examData ||
+      (examData.examType !== "LISTENING" && examData.examType !== "READING")
+    ) {
       return null;
     }
-    
+
     let correct = 0;
     let total = 0;
     let answered = 0;
-    
+
     examData.questions.forEach((question: any) => {
       if (question.answers && question.answers.length > 0) {
         total++;
         const userAnswerId = userAnswers[question.id];
-        
+
         if (userAnswerId) {
           answered++;
           const correctAnswer = question.answers.find((a: any) => a.isCorrect);
-          
+
           if (correctAnswer && parseInt(userAnswerId) === correctAnswer.id) {
             correct++;
           }
         }
       }
     });
-    
-    return { 
-      correct, 
-      total, 
+
+    return {
+      correct,
+      total,
       answered,
-      percentage: total > 0 ? Math.round((correct / total) * 100) : 0 
+      percentage: total > 0 ? Math.round((correct / total) * 100) : 0,
     };
   }, [examData, userAnswers]);
-  
+
   // Count answered questions for writing/speaking
   const answeredCount = useMemo(() => {
     if (!examData) return { answered: 0, total: 0 };
-    
+
     if (examData.examType === "WRITING" || examData.examType === "SPEAKING") {
       const total = examData.questions.length;
       let answered = 0;
-      
+
       examData.questions.forEach((question: any) => {
         if (userAnswers[question.id]) {
           answered++;
         }
       });
-      
+
       return { answered, total };
     }
-    
+
     return null;
   }, [examData, userAnswers]);
-  
+
   // Get exam type name for display
   const getExamTypeName = (type: string) => {
     switch (type) {
@@ -108,7 +114,7 @@ const PracticeReview = ({ examId }: PracticeReviewProps) => {
         return "Practice";
     }
   };
-  
+
   // Get back route based on exam type
   const getBackRoute = (type: string) => {
     switch (type) {
@@ -124,7 +130,7 @@ const PracticeReview = ({ examId }: PracticeReviewProps) => {
         return APP_ROUTE.PRACTICE_DASHBOARD;
     }
   };
-  
+
   if (isLoading) {
     return (
       <Container>
@@ -142,7 +148,7 @@ const PracticeReview = ({ examId }: PracticeReviewProps) => {
       </Container>
     );
   }
-  
+
   if (error || !examData) {
     return (
       <Container>
@@ -161,13 +167,17 @@ const PracticeReview = ({ examId }: PracticeReviewProps) => {
       </Container>
     );
   }
-  
+
   return (
     <Container>
       <BasicBox sx={{ mt: 3, mb: 4 }}>
         <BasicStack spacing={3}>
           {/* Header */}
-          <BasicStack direction="row" justifyContent="space-between" alignItems="center">
+          <BasicStack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+          >
             <BasicTypography variant="h4" fontWeight="bold">
               Review: {getExamTypeName(examData.examType)} Exam - ID: {examId}
             </BasicTypography>
@@ -178,13 +188,13 @@ const PracticeReview = ({ examId }: PracticeReviewProps) => {
               Back to {getExamTypeName(examData.examType)} Practice
             </BasicButton>
           </BasicStack>
-          
+
           {/* Score Summary */}
           {(score || answeredCount) && (
-            <Paper 
-              elevation={2} 
-              sx={{ 
-                p: 3, 
+            <Paper
+              elevation={2}
+              sx={{
+                p: 3,
                 bgcolor: theme.palette.background.paper,
                 borderRadius: 2,
                 border: `1px solid ${theme.palette.divider}`,
@@ -195,24 +205,25 @@ const PracticeReview = ({ examId }: PracticeReviewProps) => {
                 {score && (
                   <>
                     <BasicTypography variant="h5" fontWeight="bold">
-                      Your Score: {score.correct}/{score.total} ({score.percentage}%)
+                      Your Score: {score.correct}/{score.total} (
+                      {score.percentage}%)
                     </BasicTypography>
                     <BasicTypography variant="body1" color="text.secondary">
                       Questions Answered: {score.answered} out of {score.total}
                     </BasicTypography>
                   </>
                 )}
-                
+
                 {/* Answered count for writing/speaking */}
                 {answeredCount && (
                   <BasicTypography variant="h5" fontWeight="bold">
-                    Questions Answered: {answeredCount.answered} out of {answeredCount.total}
+                    Questions Answered: {answeredCount.answered} out of{" "}
+                    {answeredCount.total}
                   </BasicTypography>
                 )}
               </BasicStack>
             </Paper>
           )}
-          
         </BasicStack>
       </BasicBox>
     </Container>

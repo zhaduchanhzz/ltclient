@@ -1,5 +1,5 @@
 import { ExamTermSession } from "@/services/types/exam";
-import { Mic, PlayArrow, Stop, VolumeUp } from "@mui/icons-material";
+import { Mic, PlayArrow, Stop } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -49,7 +49,7 @@ export default function QuestionCard({
   const audioChunks = useRef<Blob[]>([]);
 
   // Audio player states for LISTENING
-  const [audioSrc, setAudioSrc] = useState<string>("");
+  // const [audioSrc, setAudioSrc] = useState<string>("");
 
   // Writing text state
   const [writingText, setWritingText] = useState<string>("");
@@ -65,24 +65,24 @@ export default function QuestionCard({
     }
   }, [currentQuestion.id, currentExamType, session.answers]);
 
-  useEffect(() => {
-    // Convert base64 audio to playable URL for LISTENING
-    if (currentExamType === "LISTENING" && currentQuestion.questionText) {
-      try {
-        // Assuming questionText contains base64 audio data
-        const audioData = currentQuestion.questionText;
+  // useEffect(() => {
+  //   // Convert base64 audio to playable URL for LISTENING
+  //   if (currentExamType === "LISTENING" && currentQuestion.questionText) {
+  //     try {
+  //       // Assuming questionText contains base64 audio data
+  //       const audioData = currentQuestion.questionText;
 
-        if (audioData.startsWith("data:audio")) {
-          setAudioSrc(audioData);
-        } else {
-          // If it's just base64 without data URL prefix
-          setAudioSrc(`data:audio/mp3;base64,${audioData}`);
-        }
-      } catch (error) {
-        console.error("Error processing audio data:", error);
-      }
-    }
-  }, [currentQuestion, currentExamType]);
+  //       if (audioData.startsWith("data:audio")) {
+  //         setAudioSrc(audioData);
+  //       } else {
+  //         // If it's just base64 without data URL prefix
+  //         setAudioSrc(`data:audio/mp3;base64,${audioData}`);
+  //       }
+  //     } catch (error) {
+  //       console.error("Error processing audio data:", error);
+  //     }
+  //   }
+  // }, [currentQuestion, currentExamType]);
 
   // Reset audio recording state when question changes for SPEAKING
   useEffect(() => {

@@ -169,7 +169,7 @@ export const useListExamsByTypeQuery = (enabled = false) => {
     queryKey: [API_PATH.EXAMS_LIST_BY_TYPE],
     queryFn: () => {
       return HttpClient.get<null, CommonResponse<ListExamByTypeResponse>>(
-        API_PATH.EXAMS_LIST_BY_TYPE
+        API_PATH.EXAMS_LIST_BY_TYPE,
       );
     },
     enabled,

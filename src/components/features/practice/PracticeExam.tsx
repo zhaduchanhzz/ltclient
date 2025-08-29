@@ -18,16 +18,16 @@ const PracticeExam = ({ examId }: PracticeExamProps) => {
   const router = useRouter();
   const theme = useTheme();
   const [answers, setAnswers] = useState<Record<number, any>>({});
-  
+
   // Fetch exam details
   const { data, isLoading, error } = useExamDetailQuery(examId, true);
-  
+
   // Extract exam data
   const examData = useMemo(() => {
     if (!data?.data) return null;
     return data.data;
   }, [data]);
-  
+
   // Get exam type name for display
   const getExamTypeName = (type: string) => {
     switch (type) {
@@ -43,23 +43,7 @@ const PracticeExam = ({ examId }: PracticeExamProps) => {
         return "Practice";
     }
   };
-  
-  // Get review route based on exam type
-  const getReviewRoute = (type: string) => {
-    switch (type) {
-      case "LISTENING":
-        return APP_ROUTE.PRACTICE_REVIEW_LISTENING;
-      case "READING":
-        return APP_ROUTE.PRACTICE_REVIEW_READING;
-      case "WRITING":
-        return APP_ROUTE.PRACTICE_REVIEW_WRITING;
-      case "SPEAKING":
-        return APP_ROUTE.PRACTICE_REVIEW_SPEAKING;
-      default:
-        return APP_ROUTE.PRACTICE_DASHBOARD;
-    }
-  };
-  
+
   // Get back route based on exam type
   const getBackRoute = (type: string) => {
     switch (type) {
@@ -75,22 +59,25 @@ const PracticeExam = ({ examId }: PracticeExamProps) => {
         return APP_ROUTE.PRACTICE_DASHBOARD;
     }
   };
-  
+
   const handleAnswerChange = (questionId: number, answer: any) => {
-    setAnswers(prev => ({ ...prev, [questionId]: answer }));
+    setAnswers((prev) => ({ ...prev, [questionId]: answer }));
   };
-  
+
   const handleSubmit = () => {
     // Store answers in localStorage for review
-    localStorage.setItem(`practice_exam_${examId}_answers`, JSON.stringify(answers));
-    
+    localStorage.setItem(
+      `practice_exam_${examId}_answers`,
+      JSON.stringify(answers),
+    );
+
     console.log("Submitting answers:", answers);
     console.log("Exam Type:", examData?.examType);
-    
+
     // Navigate to unified review page
     router.push(`/practice/review/${examId}`);
   };
-  
+
   if (isLoading) {
     return (
       <Container>
@@ -108,7 +95,7 @@ const PracticeExam = ({ examId }: PracticeExamProps) => {
       </Container>
     );
   }
-  
+
   if (error || !examData) {
     return (
       <Container>
@@ -127,7 +114,7 @@ const PracticeExam = ({ examId }: PracticeExamProps) => {
       </Container>
     );
   }
-  
+
   if (!examData.questions || examData.questions.length === 0) {
     return (
       <Container>
@@ -146,7 +133,7 @@ const PracticeExam = ({ examId }: PracticeExamProps) => {
       </Container>
     );
   }
-  
+
   return (
     <Container>
       <BasicBox sx={{ mt: 3 }}>
@@ -171,7 +158,7 @@ const PracticeExam = ({ examId }: PracticeExamProps) => {
               </BasicTypography>
             )}
           </BasicStack>
-          
+
           {/* Display exam title if available */}
           {examData.title && (
             <BasicBox
@@ -187,25 +174,33 @@ const PracticeExam = ({ examId }: PracticeExamProps) => {
               </BasicTypography>
             </BasicBox>
           )}
-          
+
           {/* Display questions */}
           {examData.questions.map((question: any, index: number) => (
             <PracticeQuestionCard
               key={question.id || index}
               question={question}
               index={index}
-              examType={examData.examType as "LISTENING" | "READING" | "WRITING" | "SPEAKING"}
-              onAnswerChange={(answer) => handleAnswerChange(question.id || index, answer)}
+              examType={
+                examData.examType as
+                  | "LISTENING"
+                  | "READING"
+                  | "WRITING"
+                  | "SPEAKING"
+              }
+              onAnswerChange={(answer) =>
+                handleAnswerChange(question.id || index, answer)
+              }
             />
           ))}
-          
+
           {/* Submit button */}
           <BasicBox sx={{ display: "flex", justifyContent: "center", py: 3 }}>
             <BasicButton
               variant="contained"
               size="large"
               onClick={handleSubmit}
-              disabled={examData.isNeedVip && examData.isNeedVip}
+              // disabled={examData.isNeedVip === "true"}
             >
               Nộp bài
             </BasicButton>

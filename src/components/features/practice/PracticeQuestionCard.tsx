@@ -37,30 +37,32 @@ export default function PracticeQuestionCard({
 }: PracticeQuestionCardProps) {
   // State for multiple choice answers (LISTENING/READING)
   const [selectedAnswer, setSelectedAnswer] = useState<string>("");
-  
+
   // State for writing answer
   const [writingText, setWritingText] = useState<string>("");
-  
+
   // Audio recording states for SPEAKING
   const [isRecording, setIsRecording] = useState(false);
   const [audioURL, setAudioURL] = useState<string | null>(null);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
-  
+
   // Handle multiple choice answer selection
-  const handleMultipleChoiceChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMultipleChoiceChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const answerId = event.target.value;
     setSelectedAnswer(answerId);
     onAnswerChange(parseInt(answerId));
   };
-  
+
   // Handle writing text change
   const handleWritingChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const text = event.target.value;
     setWritingText(text);
     onAnswerChange(text);
   };
-  
+
   // Start audio recording for SPEAKING
   const startRecording = async () => {
     try {
@@ -68,32 +70,35 @@ export default function PracticeQuestionCard({
       const recorder = new MediaRecorder(stream);
       mediaRecorder.current = recorder;
       audioChunks.current = [];
-      
+
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           audioChunks.current.push(event.data);
         }
       };
-      
+
       recorder.onstop = () => {
         const audioBlob = new Blob(audioChunks.current, { type: "audio/mp3" });
         const url = URL.createObjectURL(audioBlob);
         setAudioURL(url);
-        
+
         // Convert to base64 for submission
         const reader = new FileReader();
+
         reader.onloadend = () => {
           const base64String = reader.result?.toString().split(",")[1];
+
           if (base64String) {
             onAnswerChange(base64String);
           }
         };
-        reader.readAsDataURL(audioBlob);
         
+        reader.readAsDataURL(audioBlob);
+
         // Stop all tracks
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach((track) => track.stop());
       };
-      
+
       recorder.start();
       setIsRecording(true);
     } catch (error) {
@@ -101,7 +106,7 @@ export default function PracticeQuestionCard({
       alert("Could not access microphone. Please check permissions.");
     }
   };
-  
+
   // Stop audio recording
   const stopRecording = () => {
     if (mediaRecorder.current && mediaRecorder.current.state === "recording") {
@@ -109,7 +114,7 @@ export default function PracticeQuestionCard({
       setIsRecording(false);
     }
   };
-  
+
   // Play recorded audio
   const playAudio = () => {
     if (audioURL) {
@@ -117,7 +122,7 @@ export default function PracticeQuestionCard({
       audio.play();
     }
   };
-  
+
   // Cleanup audio URL on unmount
   useEffect(() => {
     return () => {
@@ -126,37 +131,38 @@ export default function PracticeQuestionCard({
       }
     };
   }, [audioURL]);
-  
+
   return (
     <Card sx={{ mb: 2 }}>
       <CardContent>
         <Typography variant="h6" gutterBottom>
           Question {index + 1}
         </Typography>
-        
+
         <Typography variant="body1" paragraph sx={{ whiteSpace: "pre-wrap" }}>
           {question.questionText}
         </Typography>
-        
+
         {/* Multiple Choice Questions (LISTENING/READING) */}
-        {(examType === "LISTENING" || examType === "READING") && question.answers && (
-          <FormControl component="fieldset" fullWidth>
-            <RadioGroup
-              value={selectedAnswer}
-              onChange={handleMultipleChoiceChange}
-            >
-              {question.answers.map((answer) => (
-                <FormControlLabel
-                  key={answer.id}
-                  value={answer.id.toString()}
-                  control={<Radio />}
-                  label={answer.answerText}
-                />
-              ))}
-            </RadioGroup>
-          </FormControl>
-        )}
-        
+        {(examType === "LISTENING" || examType === "READING") &&
+          question.answers && (
+            <FormControl component="fieldset" fullWidth>
+              <RadioGroup
+                value={selectedAnswer}
+                onChange={handleMultipleChoiceChange}
+              >
+                {question.answers.map((answer) => (
+                  <FormControlLabel
+                    key={answer.id}
+                    value={answer.id.toString()}
+                    control={<Radio />}
+                    label={answer.answerText}
+                  />
+                ))}
+              </RadioGroup>
+            </FormControl>
+          )}
+
         {/* Writing Questions */}
         {examType === "WRITING" && (
           <TextField
@@ -170,7 +176,7 @@ export default function PracticeQuestionCard({
             sx={{ mt: 2 }}
           />
         )}
-        
+
         {/* Speaking Questions */}
         {examType === "SPEAKING" && (
           <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 2 }}>
@@ -194,7 +200,7 @@ export default function PracticeQuestionCard({
                   Stop Recording
                 </Button>
               )}
-              
+
               {audioURL && (
                 <Button
                   variant="outlined"
@@ -205,13 +211,13 @@ export default function PracticeQuestionCard({
                 </Button>
               )}
             </Box>
-            
+
             {isRecording && (
               <Typography variant="body2" color="error">
                 Recording in progress...
               </Typography>
             )}
-            
+
             {audioURL && !isRecording && (
               <Typography variant="body2" color="success.main">
                 Recording completed

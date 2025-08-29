@@ -33,7 +33,6 @@ export default function PracticeReviewQuestionCard({
   examType,
   userAnswer,
 }: PracticeReviewQuestionCardProps) {
-  
   // Play audio for speaking review
   const playAudio = (base64Audio: string) => {
     try {
@@ -43,52 +42,56 @@ export default function PracticeReviewQuestionCard({
       console.error("Error playing audio:", error);
     }
   };
-  
+
   return (
     <Card sx={{ mb: 2 }}>
       <CardContent>
         <Typography variant="h6" gutterBottom>
           Question {index + 1}
         </Typography>
-        
+
         <Typography variant="body1" paragraph sx={{ whiteSpace: "pre-wrap" }}>
           {question.questionText}
         </Typography>
-        
+
         {/* Multiple Choice Review (LISTENING/READING) */}
-        {(examType === "LISTENING" || examType === "READING") && question.answers && (
-          <Box>
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-              Your Answer:
-            </Typography>
-            {userAnswer ? (
-              <RadioGroup value={userAnswer.toString()}>
-                {question.answers.map((answer) => {
-                  const isUserAnswer = parseInt(userAnswer) === answer.id;
-                  
-                  return (
-                    <FormControlLabel
-                      key={answer.id}
-                      value={answer.id.toString()}
-                      control={
-                        <Radio 
-                          disabled 
-                          checked={isUserAnswer}
-                        />
-                      }
-                      label={answer.answerText}
-                    />
-                  );
-                })}
-              </RadioGroup>
-            ) : (
-              <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic", ml: 2 }}>
-                Not answered
+        {(examType === "LISTENING" || examType === "READING") &&
+          question.answers && (
+            <Box>
+              <Typography
+                variant="subtitle2"
+                color="text.secondary"
+                gutterBottom
+              >
+                Your Answer:
               </Typography>
-            )}
-          </Box>
-        )}
-        
+              {userAnswer ? (
+                <RadioGroup value={userAnswer.toString()}>
+                  {question.answers.map((answer) => {
+                    const isUserAnswer = parseInt(userAnswer) === answer.id;
+
+                    return (
+                      <FormControlLabel
+                        key={answer.id}
+                        value={answer.id.toString()}
+                        control={<Radio disabled checked={isUserAnswer} />}
+                        label={answer.answerText}
+                      />
+                    );
+                  })}
+                </RadioGroup>
+              ) : (
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ fontStyle: "italic", ml: 2 }}
+                >
+                  Not answered
+                </Typography>
+              )}
+            </Box>
+          )}
+
         {/* Writing Review */}
         {examType === "WRITING" && (
           <Box>
@@ -104,17 +107,17 @@ export default function PracticeReviewQuestionCard({
               InputProps={{
                 readOnly: true,
               }}
-              sx={{ 
+              sx={{
                 mt: 1,
                 backgroundColor: "background.paper",
                 "& .MuiInputBase-input": {
                   color: userAnswer ? "text.primary" : "text.secondary",
-                }
+                },
               }}
             />
           </Box>
         )}
-        
+
         {/* Speaking Review */}
         {examType === "SPEAKING" && (
           <Box sx={{ mt: 2 }}>
@@ -131,7 +134,11 @@ export default function PracticeReviewQuestionCard({
                 Play Your Recording
               </Button>
             ) : (
-              <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ fontStyle: "italic" }}
+              >
                 No recording submitted
               </Typography>
             )}

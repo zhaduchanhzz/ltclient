@@ -14,10 +14,10 @@ type PracticeDashBoardProps = {};
 const PracticeDashBoard = (_: PracticeDashBoardProps) => {
   const theme = useTheme();
   const router = useRouter();
-  
+
   // Fetch exams by type
-  const { data, isLoading, error } = useListExamsByTypeQuery(true);
-  
+  const { data, isLoading } = useListExamsByTypeQuery(true);
+
   // Calculate counts for each exam type
   const examCounts = useMemo(() => {
     if (!data?.data) {
@@ -28,20 +28,20 @@ const PracticeDashBoard = (_: PracticeDashBoardProps) => {
         SPEAKING: 0,
       };
     }
-    
+
     const counts: Record<string, number> = {
       LISTENING: 0,
       READING: 0,
       WRITING: 0,
       SPEAKING: 0,
     };
-    
+
     data.data.forEach((examType) => {
       if (counts[examType.examType] !== undefined) {
         counts[examType.examType] = examType.exams.length;
       }
     });
-    
+
     return counts;
   }, [data]);
 
@@ -93,7 +93,11 @@ const PracticeDashBoard = (_: PracticeDashBoardProps) => {
               Đề thi nghe
             </BasicTypography>
             <BasicTypography variant="h6" component="span">
-              {isLoading ? <CircularProgress size={20} /> : examCounts.LISTENING}
+              {isLoading ? (
+                <CircularProgress size={20} />
+              ) : (
+                examCounts.LISTENING
+              )}
             </BasicTypography>
           </BasicStack>
           <BasicButton
