@@ -943,10 +943,16 @@ export default function ExamPage() {
               borderRadius: 2,
             }}
           >
-            <Typography sx={{ fontSize: "1rem" }}>
-              {currentExamPart.title ||
-                `${currentExamPart.examType} - Part ${currentExamPartIndex + 1}`}
-            </Typography>
+            {currentExamPart.title ? (
+              <Box
+                sx={{ fontSize: "1rem", "& img": { maxWidth: "100%", height: "auto" } }}
+                dangerouslySetInnerHTML={{ __html: currentExamPart.title }}
+              />
+            ) : (
+              <Typography sx={{ fontSize: "1rem" }}>
+                {`${currentExamPart.examType} - Part ${currentExamPartIndex + 1}`}
+              </Typography>
+            )}
             <Typography variant="body2" sx={{ mt: 1, opacity: 0.9 }}>
               Questions {getGlobalQuestionOffset + 1} -{" "}
               {getGlobalQuestionOffset + currentExamPart.questions.length} •
@@ -960,15 +966,14 @@ export default function ExamPage() {
               <Typography sx={{ mb: 2, fontSize: "1rem" }}>
                 Instructions / Reading Passage
               </Typography>
-              <Typography
-                variant="body1"
+              <Box
                 sx={{
-                  whiteSpace: "pre-wrap",
                   lineHeight: 1.8,
+                  "& img": { maxWidth: "100%", height: "auto" },
+                  "& blockquote": { borderLeft: "4px solid", borderLeftColor: "divider", pl: 2, ml: 0 },
                 }}
-              >
-                {currentExamPart.description}
-              </Typography>
+                dangerouslySetInnerHTML={{ __html: currentExamPart.description }}
+              />
             </Paper>
           )}
 
@@ -1039,6 +1044,50 @@ export default function ExamPage() {
         </Box>
       </Box>
 
+      {/* Horizontal Part Navigator */}
+      <Paper
+        elevation={2}
+        sx={{
+          p: 2,
+          bgcolor: "background.paper",
+          borderTop: "1px solid",
+          borderBottom: "1px solid",
+          borderColor: "divider",
+        }}
+      >
+        <Box sx={{ display: "flex", gap: 1, overflowX: "auto", pb: 1 }}>
+          {allExamsFlat.map((exam, index) => {
+            const Icon =
+              ExamTypeIcons[exam.examType as keyof typeof ExamTypeIcons];
+            const isCurrentPart = index === currentExamPartIndex;
+            let questionsInPart = 0;
+            let answeredInPart = 0;
+
+            exam.questions.forEach((q: any) => {
+              questionsInPart++;
+
+              if (session.answers[q.id]?.length > 0) {
+                answeredInPart++;
+              }
+            });
+
+            return (
+              <Button
+                key={index}
+                variant={isCurrentPart ? "contained" : "outlined"}
+                color={isCurrentPart ? "primary" : "inherit"}
+                onClick={() => navigateToPart(index)}
+                startIcon={<Icon />}
+                sx={{ whiteSpace: "nowrap" }}
+                size="small"
+              >
+                {`Part ${index + 1} (${answeredInPart}/${questionsInPart})`}
+              </Button>
+            );
+          })}
+        </Box>
+      </Paper>
+
       {/* Navigation and Submit Button - Full width at bottom */}
       <Paper
         elevation={2}
@@ -1084,66 +1133,8 @@ export default function ExamPage() {
         </Box>
       </Paper>
 
-      {/* Part Navigator Sidebar */}
-      <Paper
-        elevation={3}
-        sx={{
-          position: "fixed",
-          right: 20,
-          top: "50%",
-          transform: "translateY(-50%)",
-          width: 200,
-          maxHeight: "60vh",
-          overflow: "auto",
-          p: 2,
-          display: { xs: "none", lg: "block" },
-          zIndex: 1000,
-        }}
-      >
-        <Typography variant="h6" sx={{ mb: 2 }}>
-          Parts
-        </Typography>
-        {allExamsFlat.map((exam, index) => {
-          const Icon =
-            ExamTypeIcons[exam.examType as keyof typeof ExamTypeIcons];
-          const isCurrentPart = index === currentExamPartIndex;
-          let questionsInPart = 0;
-          let answeredInPart = 0;
-
-          exam.questions.forEach((q: any) => {
-            questionsInPart++;
-
-            if (session.answers[q.id]?.length > 0) {
-              answeredInPart++;
-            }
-          });
-
-          return (
-            <Button
-              key={index}
-              fullWidth
-              variant={isCurrentPart ? "contained" : "outlined"}
-              color={isCurrentPart ? "primary" : "inherit"}
-              onClick={() => navigateToPart(index)}
-              sx={{
-                mb: 1,
-                justifyContent: "flex-start",
-                textAlign: "left",
-              }}
-              startIcon={<Icon />}
-            >
-              <Box sx={{ width: "100%" }}>
-                <Typography variant="caption" display="block">
-                  Part {index + 1}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {answeredInPart}/{questionsInPart}
-                </Typography>
-              </Box>
-            </Button>
-          );
-        })}
-      </Paper>
+      {/* Part Navigator Sidebar (converted to horizontal bar above bottom controls) */}
+      {/* Removed fixed right sidebar to use a horizontal navigator placed earlier in the layout. */}
 
       {/* Submission Result Dialog */}
       <Dialog 

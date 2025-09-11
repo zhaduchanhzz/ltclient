@@ -47,6 +47,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useState } from "react";
+import Ckeditor from "@/components/thirdparty/Ckeditor";
 
 interface ExamFormData {
   id?: number;
@@ -54,9 +55,9 @@ interface ExamFormData {
   examType: "LISTENING" | "READING" | "WRITING" | "SPEAKING";
   description: string;
   isNeedVip: boolean;
+  examAudioFile?: string; // Single audio file for LISTENING exams
   questions: Array<{
     questionText: string;
-    audioFile?: string;
     answers?: Array<{
       answerText: string;
       isCorrect: boolean;
@@ -87,6 +88,7 @@ const ExamsPage = () => {
     examType: "LISTENING",
     description: "",
     isNeedVip: false,
+    examAudioFile: "",
     questions: [getInitialQuestionForType("LISTENING")],
   });
 
@@ -95,7 +97,6 @@ const ExamsPage = () => {
       case "LISTENING":
         return {
           questionText: "",
-          audioFile: "",
           answers: [
             { answerText: "", isCorrect: false },
             { answerText: "", isCorrect: false },
@@ -150,7 +151,14 @@ const ExamsPage = () => {
         examType: exam.examType,
         description: exam.description,
         isNeedVip: exam.isNeedVip,
-        questions: exam.questions || [getInitialQuestionForType(exam.examType)],
+        examAudioFile:
+          exam.examType === "LISTENING"
+            ? (exam.questions?.[0]?.audioFile || "")
+            : "",
+        questions: (exam.questions || [getInitialQuestionForType(exam.examType)]).map((q: any) => ({
+          questionText: q.questionText,
+          answers: q.answers,
+        })),
       });
     } else {
       setIsEditMode(false);
@@ -160,6 +168,7 @@ const ExamsPage = () => {
         examType: "LISTENING",
         description: "",
         isNeedVip: false,
+        examAudioFile: "",
         questions: [initialQuestion],
       });
     }
@@ -185,12 +194,25 @@ const ExamsPage = () => {
         handleCloseDialog();
         return;
       } else {
+        const questions = formData.questions.map((q) => {
+          if (formData.examType === "LISTENING") {
+            // Propagate single exam audio file to each question for backend compatibility
+            return {
+              ...q,
+              audioFile: formData.examAudioFile,
+            } as any;
+          }
+
+          // For other types, do not include audioFile
+          return { ...q } as any;
+        });
+
         const submitData: CreateExamRequest = {
           title: formData.title,
           examType: formData.examType,
           description: formData.description,
           isNeedVip: formData.isNeedVip,
-          questions: formData.questions,
+          questions: questions as any,
         };
 
         await createExamMutation.mutateAsync(submitData);
@@ -283,8 +305,7 @@ const ExamsPage = () => {
     setFormData({ ...formData, questions: updatedQuestions });
   };
 
-  const handleAudioFileUpload = (
-    questionIndex: number,
+  const handleExamAudioFileUpload = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
@@ -294,7 +315,7 @@ const ExamsPage = () => {
 
       reader.onload = (e) => {
         const base64 = e.target?.result as string;
-        updateQuestion(questionIndex, "audioFile", base64);
+        setFormData((prev) => ({ ...prev, examAudioFile: base64 }));
       };
 
       reader.readAsDataURL(file);
@@ -359,6 +380,8 @@ const ExamsPage = () => {
         return "default";
     }
   };
+
+  const stripHtml = (html: string) => (html ? html.replace(/<[^>]*>/g, "").trim() : "");
 
   if (isLoading) {
     return (
@@ -439,7 +462,9 @@ const ExamsPage = () => {
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((exam) => (
                   <TableRow key={exam.id}>
-                    <TableCell>{exam.title}</TableCell>
+                    <TableCell>
+                      {exam.title.length > 100 ? exam.title.substring(0, 50) + "..." : exam.title}
+                    </TableCell>
                     <TableCell>
                       <Chip
                         label={exam.examType}
@@ -448,9 +473,9 @@ const ExamsPage = () => {
                       />
                     </TableCell>
                     <TableCell>
-                      {exam.description.length > 50
-                        ? `${exam.description.substring(0, 50)}...`
-                        : exam.description}
+                      {stripHtml(exam.description).length > 50
+                        ? `${stripHtml(exam.description).substring(0, 50)}...`
+                        : stripHtml(exam.description)}
                     </TableCell>
                     <TableCell>{exam.questions.length} câu hỏi</TableCell>
                     <TableCell>
@@ -532,6 +557,7 @@ const ExamsPage = () => {
                 setFormData({
                   ...formData,
                   examType: newExamType,
+                  examAudioFile: "",
                   questions: [initialQuestion],
                 });
               }}
@@ -542,15 +568,11 @@ const ExamsPage = () => {
               <MenuItem value="SPEAKING">SPEAKING</MenuItem>
             </TextField>
 
-            <TextField
-              fullWidth
-              multiline
-              rows={3}
-              label="Mô tả"
+            <Ckeditor
               value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
+              onChange={(v) => setFormData({ ...formData, description: v })}
+              placeholder="Mô tả"
+              minHeight={54}
             />
 
             <FormControlLabel
@@ -564,6 +586,30 @@ const ExamsPage = () => {
               }
               label="VIP Required"
             />
+
+            {formData.examType === "LISTENING" && (
+              <Box>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  File âm thanh (cho toàn bộ bài nghe)
+                </Typography>
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <Button variant="outlined" component="label" size="small">
+                    Chọn file âm thanh
+                    <input
+                      type="file"
+                      hidden
+                      accept="audio/*"
+                      onChange={handleExamAudioFileUpload}
+                    />
+                  </Button>
+                  {formData.examAudioFile && (
+                    <Typography variant="body2" color="text.secondary">
+                      Đã tải lên file âm thanh
+                    </Typography>
+                  )}
+                </Stack>
+              </Box>
+            )}
 
             <Divider />
 
@@ -595,10 +641,11 @@ const ExamsPage = () => {
                     >
                       <Typography>
                         Câu hỏi {questionIndex + 1}:{" "}
-                        {question.questionText || "Chưa có câu hỏi"}
+                        {stripHtml(question.questionText) || "Chưa có câu hỏi"}
                       </Typography>
                       {formData.questions.length > 1 && (
                         <IconButton
+                          component="span"
                           size="small"
                           color="error"
                           onClick={(e) => {
@@ -613,50 +660,15 @@ const ExamsPage = () => {
                   </AccordionSummary>
                   <AccordionDetails>
                     <Stack spacing={2}>
-                      <TextField
-                        fullWidth
-                        label="Câu hỏi"
+                      <Ckeditor
                         value={question.questionText}
-                        onChange={(e) =>
-                          updateQuestion(
-                            questionIndex,
-                            "questionText",
-                            e.target.value,
-                          )
+                        onChange={(v) =>
+                          updateQuestion(questionIndex, "questionText", v)
                         }
-                        multiline
-                        rows={2}
+                        placeholder="Nhập nội dung câu hỏi"
+                        minHeight={54}
                       />
 
-                      {formData.examType === "LISTENING" && (
-                        <Box>
-                          <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                            File âm thanh
-                          </Typography>
-                          <Stack direction="row" spacing={2} alignItems="center">
-                            <Button
-                              variant="outlined"
-                              component="label"
-                              size="small"
-                            >
-                              Chọn file âm thanh
-                              <input
-                                type="file"
-                                hidden
-                                accept="audio/*"
-                                onChange={(e) =>
-                                  handleAudioFileUpload(questionIndex, e)
-                                }
-                              />
-                            </Button>
-                            {question.audioFile && (
-                              <Typography variant="body2" color="text.secondary">
-                                Đã tải lên file âm thanh
-                              </Typography>
-                            )}
-                          </Stack>
-                        </Box>
-                      )}
 
                       {/* Show answers section only for LISTENING and READING */}
                       {(formData.examType === "LISTENING" ||
