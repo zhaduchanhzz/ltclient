@@ -48,6 +48,7 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import Ckeditor from "@/components/thirdparty/Ckeditor";
+import { usePostFileMutation } from "@/services/apis/upload";
 
 interface ExamFormData {
   id?: number;
@@ -75,6 +76,7 @@ const ExamsPage = () => {
   } = useGetAllExamsQuery(true);
   const createExamMutation = useCreateExamMutation();
   const deleteExamMutation = useDeleteExamMutation();
+  const { mutate: uploadFile } = usePostFileMutation();
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
@@ -315,10 +317,19 @@ const ExamsPage = () => {
 
       reader.onload = (e) => {
         const base64 = e.target?.result as string;
-        setFormData((prev) => ({ ...prev, examAudioFile: base64 }));
+        setFormData((prev) => ({ ...prev, examAudioFilePreview: base64 }));
       };
 
       reader.readAsDataURL(file);
+
+      uploadFile(file, {
+        onSuccess: (res: any) => {
+          setFormData((prev) => ({
+            ...prev,
+            examAudioFile: res.data,
+          }));
+        },
+      });
     }
   };
 

@@ -1044,50 +1044,6 @@ export default function ExamPage() {
         </Box>
       </Box>
 
-      {/* Horizontal Part Navigator */}
-      <Paper
-        elevation={2}
-        sx={{
-          p: 2,
-          bgcolor: "background.paper",
-          borderTop: "1px solid",
-          borderBottom: "1px solid",
-          borderColor: "divider",
-        }}
-      >
-        <Box sx={{ display: "flex", gap: 1, overflowX: "auto", pb: 1 }}>
-          {allExamsFlat.map((exam, index) => {
-            const Icon =
-              ExamTypeIcons[exam.examType as keyof typeof ExamTypeIcons];
-            const isCurrentPart = index === currentExamPartIndex;
-            let questionsInPart = 0;
-            let answeredInPart = 0;
-
-            exam.questions.forEach((q: any) => {
-              questionsInPart++;
-
-              if (session.answers[q.id]?.length > 0) {
-                answeredInPart++;
-              }
-            });
-
-            return (
-              <Button
-                key={index}
-                variant={isCurrentPart ? "contained" : "outlined"}
-                color={isCurrentPart ? "primary" : "inherit"}
-                onClick={() => navigateToPart(index)}
-                startIcon={<Icon />}
-                sx={{ whiteSpace: "nowrap" }}
-                size="small"
-              >
-                {`Part ${index + 1} (${answeredInPart}/${questionsInPart})`}
-              </Button>
-            );
-          })}
-        </Box>
-      </Paper>
-
       {/* Navigation and Submit Button - Full width at bottom */}
       <Paper
         elevation={2}
@@ -1113,6 +1069,38 @@ export default function ExamPage() {
           >
             ← Previous Part
           </Button>
+
+          <Box sx={{ display: "flex", gap: 1, overflowX: "auto" }}>
+            {allExamsFlat.map((exam, index) => {
+              const Icon =
+                ExamTypeIcons[exam.examType as keyof typeof ExamTypeIcons];
+              const isCurrentPart = index === currentExamPartIndex;
+              let questionsInPart = 0;
+              let answeredInPart = 0;
+
+              exam.questions.forEach((q: any) => {
+                questionsInPart++;
+
+                if (session.answers[q.id]?.length > 0) {
+                  answeredInPart++;
+                }
+              });
+
+              return (
+                <Button
+                  key={index}
+                  variant={isCurrentPart ? "contained" : "outlined"}
+                  color={isCurrentPart ? "primary" : "inherit"}
+                  onClick={() => navigateToPart(index)}
+                  startIcon={<Icon />}
+                  sx={{ whiteSpace: "nowrap" }}
+                  size="small"
+                >
+                  {`Part ${index + 1} (${answeredInPart}/${questionsInPart})`}
+                </Button>
+              );
+            })}
+          </Box>
 
           {currentExamPartIndex === allExamsFlat.length - 1 ? (
             <Button
