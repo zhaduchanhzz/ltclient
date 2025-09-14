@@ -95,6 +95,7 @@ export default function ExamPage() {
     message: string;
     failedTypes?: string[];
     partial?: boolean;
+    details?: any[];
   }>({ open: false, success: false, message: "" });
 
   // Get all exams in a flat array
@@ -810,12 +811,13 @@ export default function ExamPage() {
       const result = await submitAllExams();
 
       if (result.success) {
-        // Success - show success dialog
+        // Success - show success dialog with details
         setSubmissionDialog({
           open: true,
           success: true,
           message: result.message || "Exam submitted successfully!",
           failedTypes: [],
+          details: Array.isArray(result.details) ? result.details : result.details ? [result.details] : [],
         });
       } else {
         // Error - show error dialog with links
@@ -825,6 +827,7 @@ export default function ExamPage() {
           message: result.error || "Failed to submit exam",
           failedTypes: result.failedTypes || [],
           partial: result.partial,
+          details: Array.isArray(result.details) ? result.details : result.details ? [result.details] : [],
         });
       }
     } catch (error) {
@@ -1145,6 +1148,72 @@ export default function ExamPage() {
           <Typography variant="body1" sx={{ mb: 2 }}>
             {submissionDialog.message}
           </Typography>
+
+          {/* Render returned exam results for the student when available */}
+          {submissionDialog.success && submissionDialog.details && submissionDialog.details.length > 0 && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="h6" sx={{ mb: 1, fontWeight: "bold" }}>
+                Kết quả chi tiết
+              </Typography>
+              <Stack spacing={2}>
+                {submissionDialog.details.map((detail: any, idx: number) => {
+                  const data = detail?.data ?? detail; // support both response.data or direct data
+                  if (!data) return null;
+                  const Icon = ExamTypeIcons[data.examType as keyof typeof ExamTypeIcons] || Quiz;
+                  const color = ExamTypeColors[data.examType as keyof typeof ExamTypeColors] || "#1976d2";
+
+                  return (
+                    <Card key={idx} sx={{ borderLeft: `4px solid ${color}` }}>
+                      <CardContent>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                          <Avatar sx={{ bgcolor: color, width: 32, height: 32 }}>
+                            <Icon sx={{ fontSize: 18 }} />
+                          </Avatar>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                            {data.examType}
+                          </Typography>
+                        </Box>
+
+                        {Array.isArray(data.userResponses) && data.userResponses.length > 0 ? (
+                          <Box sx={{ mt: 1 }}>
+                            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                              Câu trả lời của bạn:
+                            </Typography>
+                            <Stack spacing={1} sx={{ maxHeight: 260, overflowY: "auto" }}>
+                              {data.userResponses.map((ur: any, i: number) => (
+                                <Paper key={i} variant="outlined" sx={{ p: 1.5 }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 600, mb: .5 }}>
+                                    Q{ur.questionId}: {ur.questionText}
+                                  </Typography>
+                                  <Typography variant="body2" sx={{ mb: .5 }}>
+                                    Trả lời: {ur.content}
+                                  </Typography>
+                                  {typeof ur.score !== "undefined" && (
+                                    <Typography variant="caption" color={ur.score > 0 ? "success.main" : "error.main"}>
+                                      Điểm: {ur.score}
+                                    </Typography>
+                                  )}
+                                  {ur.submittedAt && (
+                                    <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
+                                      Nộp lúc: {new Date(ur.submittedAt).toLocaleString()}
+                                    </Typography>
+                                  )}
+                                </Paper>
+                              ))}
+                            </Stack>
+                          </Box>
+                        ) : (
+                          <Typography variant="body2" sx={{ mt: 1 }} color="text.secondary">
+                            Chưa có dữ liệu câu trả lời.
+                          </Typography>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </Stack>
+            </Box>
+          )}
 
           {/* Show links for failed exam types */}
           {!submissionDialog.success && submissionDialog.failedTypes && submissionDialog.failedTypes.length > 0 && (

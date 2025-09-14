@@ -999,6 +999,7 @@ export function useExamLogic() {
         success: boolean;
         error?: string;
       }[] = [];
+      const submittedDetails: ExamSubmitResponse[] = [];
 
       // Group exams by type for organized submission
       const examGroups: Record<string, any[]> = {};
@@ -1035,8 +1036,13 @@ export function useExamLogic() {
 
             const promise = submitExamMutation
               .mutateAsync(submitRequest)
-              .then(() => {
+              .then((res) => {
                 submissionResults.push({ examType, success: true });
+
+                if (res?.data) {
+                  submittedDetails.push(res.data);
+                }
+
                 console.log(
                   `Successfully submitted ${examType} exam ${exam.id}`,
                 );
@@ -1081,8 +1087,13 @@ export function useExamLogic() {
 
           const promise = submitExamMutation
             .mutateAsync(submitRequest)
-            .then(() => {
+            .then((res) => {
               submissionResults.push({ examType: "WRITING", success: true });
+
+              if (res?.data) {
+                submittedDetails.push(res.data);
+              }
+
               console.log(`Successfully submitted WRITING exam ${exam.id}`);
             })
             .catch((error) => {
@@ -1119,8 +1130,13 @@ export function useExamLogic() {
 
             const promise = submitExamMutation
               .mutateAsync(submitRequest)
-              .then(() => {
+              .then((res) => {
                 submissionResults.push({ examType: "SPEAKING", success: true });
+
+                if (res?.data) {
+                  submittedDetails.push(res.data);
+                }
+
                 console.log(
                   `Successfully submitted SPEAKING question ${question.id} for exam ${exam.id}`,
                 );
@@ -1163,6 +1179,7 @@ export function useExamLogic() {
           success: true,
           message: "Exam submitted successfully!",
           failedTypes: [],
+          details: submittedDetails,
         };
       } else if (successCount > 0) {
         // Partial success
@@ -1171,6 +1188,7 @@ export function useExamLogic() {
           error: `Partially submitted. Failed: ${failedTypes.join(", ")}`,
           failedTypes,
           partial: true,
+          details: submittedDetails,
         };
       } else {
         // Complete failure
