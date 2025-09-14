@@ -23,11 +23,11 @@ export type CreateExamRequest = {
   description: string;
   isNeedVip: boolean;
   questions: CreateExamQuestion[];
+  audioFile?: string; // Present only for LISTENING exams
 };
 
 export type CreateExamQuestion = {
   questionText: string;
-  audioFile?: string; // Base64 audio for LISTENING exams
   answers?: CreateExamAnswer[]; // Optional - not used for SPEAKING
 };
 
@@ -42,13 +42,13 @@ export type ExamResponse = {
   title: string;
   description: string;
   isNeedVip: boolean;
+  audioFile?: string; // Present only for LISTENING exams
   questions: ExamQuestionResponse[];
 };
 
 export type ExamQuestionResponse = {
   id: number;
   questionText: string;
-  audioFile?: string; // Base64 audio for LISTENING exams
   answers?: ExamAnswerResponse[]; // Optional - not used for SPEAKING
 };
 

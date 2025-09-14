@@ -4,6 +4,7 @@ import { useMediaQuery, useTheme } from "@mui/material";
 import { useSubmitExamMutation } from "@/services/apis/exam";
 import {
   ExamSubmitRequest,
+  ExamSubmitResponse,
   ExamTermSession,
   SimulationExam,
   TakeExamRequest,

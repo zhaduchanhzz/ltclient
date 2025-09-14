@@ -46,6 +46,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useState } from "react";
+import Ckeditor from "@/components/thirdparty/Ckeditor";
 
 interface BlogPostFormData {
   id?: number;
@@ -437,13 +438,19 @@ const PostsPage = () => {
               <Typography variant="subtitle2" gutterBottom>
                 Nội dung *
               </Typography>
-              <RichTextEditor
+              {/*<RichTextEditor*/}
+              {/*  value={formData.content}*/}
+              {/*  onChange={(value) =>*/}
+              {/*    setFormData({ ...formData, content: value })*/}
+              {/*  }*/}
+              {/*  placeholder="Nhập nội dung bài viết..."*/}
+              {/*  minHeight={300}*/}
+              {/*/>*/}
+              <Ckeditor
                 value={formData.content}
-                onChange={(value) =>
-                  setFormData({ ...formData, content: value })
-                }
+                onChange={(v) => setFormData({ ...formData, content: v })}
                 placeholder="Nhập nội dung bài viết..."
-                minHeight={300}
+                minHeight={150}
               />
             </Box>
           </Stack>

@@ -76,7 +76,7 @@ const ExamsPage = () => {
   } = useGetAllExamsQuery(true);
   const createExamMutation = useCreateExamMutation();
   const deleteExamMutation = useDeleteExamMutation();
-  const { mutate: uploadFile } = usePostFileMutation();
+  const { mutate: uploadFile, isPending } = usePostFileMutation();
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
@@ -155,7 +155,7 @@ const ExamsPage = () => {
         isNeedVip: exam.isNeedVip,
         examAudioFile:
           exam.examType === "LISTENING"
-            ? (exam.questions?.[0]?.audioFile || "")
+            ? (exam.audioFile || exam.questions?.[0]?.audioFile || "")
             : "",
         questions: (exam.questions || [getInitialQuestionForType(exam.examType)]).map((q: any) => ({
           questionText: q.questionText,
@@ -196,18 +196,9 @@ const ExamsPage = () => {
         handleCloseDialog();
         return;
       } else {
-        const questions = formData.questions.map((q) => {
-          if (formData.examType === "LISTENING") {
-            // Propagate single exam audio file to each question for backend compatibility
-            return {
-              ...q,
-              audioFile: formData.examAudioFile,
-            } as any;
-          }
-
-          // For other types, do not include audioFile
-          return { ...q } as any;
-        });
+        const questions = formData.questions.map((q) => ({
+          ...q,
+        }));
 
         const submitData: CreateExamRequest = {
           title: formData.title,
@@ -215,6 +206,9 @@ const ExamsPage = () => {
           description: formData.description,
           isNeedVip: formData.isNeedVip,
           questions: questions as any,
+          ...(formData.examType === "LISTENING" && formData.examAudioFile
+            ? { audioFile: formData.examAudioFile }
+            : {}),
         };
 
         await createExamMutation.mutateAsync(submitData);
@@ -307,7 +301,7 @@ const ExamsPage = () => {
     setFormData({ ...formData, questions: updatedQuestions });
   };
 
-  const handleExamAudioFileUpload = (
+  const handleaudioFileUpload = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
@@ -317,7 +311,7 @@ const ExamsPage = () => {
 
       reader.onload = (e) => {
         const base64 = e.target?.result as string;
-        setFormData((prev) => ({ ...prev, examAudioFilePreview: base64 }));
+        setFormData((prev) => ({ ...prev, audioFilePreview: base64 }));
       };
 
       reader.readAsDataURL(file);
@@ -326,7 +320,7 @@ const ExamsPage = () => {
         onSuccess: (res: any) => {
           setFormData((prev) => ({
             ...prev,
-            examAudioFile: res.data,
+            examAudioFile: res,
           }));
         },
       });
@@ -604,18 +598,30 @@ const ExamsPage = () => {
                   File âm thanh (cho toàn bộ bài nghe)
                 </Typography>
                 <Stack direction="row" spacing={2} alignItems="center">
-                  <Button variant="outlined" component="label" size="small">
-                    Chọn file âm thanh
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    size="small"
+                    disabled={isPending} // chặn bấm khi đang upload
+                  >
+                    {isPending ? "Đang tải..." : "Chọn file âm thanh"}
                     <input
                       type="file"
                       hidden
                       accept="audio/*"
-                      onChange={handleExamAudioFileUpload}
+                      onChange={handleaudioFileUpload}
                     />
                   </Button>
-                  {formData.examAudioFile && (
+
+                  {isPending && (
                     <Typography variant="body2" color="text.secondary">
-                      Đã tải lên file âm thanh
+                      Đang tải file âm thanh...
+                    </Typography>
+                  )}
+
+                  {formData.examAudioFile && !isPending && (
+                    <Typography variant="body2" color="text.secondary">
+                      Đã tải lên file âm thanh {formData.examAudioFile}
                     </Typography>
                   )}
                 </Stack>
