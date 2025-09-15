@@ -5,6 +5,8 @@ import {
   ListItemIcon,
   ListItemText,
   ListItemButton,
+  Box,
+  Typography,
 } from "@mui/material";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import PeopleIcon from "@mui/icons-material/People";
@@ -12,6 +14,9 @@ import SchoolIcon from "@mui/icons-material/School";
 import ArticleIcon from "@mui/icons-material/Article";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { useRouter, usePathname } from "next/navigation";
+import Image from "next/image";
+import { AppConfig } from "@/config/app-config";
+import HomeIcon from "@mui/icons-material/Home";
 
 interface AdminSidebarProps {
   open: boolean;
@@ -44,7 +49,29 @@ export default function AdminSidebar({ open, drawerWidth }: AdminSidebarProps) {
       }}
       open={open}
     >
-      <List sx={{ mt: 8 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: 64,
+          borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
+        }}
+        onClick={() => router.push("/")}
+      >
+        {AppConfig.logoUrl && (
+          <Image
+            src={AppConfig.logoUrl}
+            alt="Logo"
+            width={120}
+            height={40}
+            style={{ objectFit: "contain" }}
+          />
+        )}
+      </Box>
+
+      {/* Menu */}
+      <List sx={{ mt: 0 }}>
         {menuItems.map((item) => (
           <ListItem key={item.text} disablePadding>
             <ListItemButton

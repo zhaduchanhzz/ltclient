@@ -3,6 +3,7 @@ body {
   height: 100%;
   width: 100%;
 }
+
 body {
   overflow-y: auto;
   overflow-x: auto;
@@ -22,4 +23,44 @@ h6 {
 #nprogress .bar {
   z-index: 1200 !important;
   height: 3px !important;
+}
+
+/* ===== Scrollbar Styles ===== */
+
+/* Firefox */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #888 transparent;
+}
+
+/* Chrome, Edge, Safari */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}
+
+/* Dark mode */
+html[data-theme="dark"] {
+  scrollbar-color: #555 transparent; /* Firefox */
+}
+
+html[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background-color: #555;
+}
+
+html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background-color: #777;
 }

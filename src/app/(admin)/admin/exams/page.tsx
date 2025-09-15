@@ -61,6 +61,7 @@ interface ExamFormData {
   isNeedVip: boolean;
   audioFile?: string; // Single audio file for LISTENING exams
   questions: Array<{
+    id?: number;
     questionText: string;
     answers?: Array<{
       answerText: string;
@@ -162,6 +163,7 @@ const ExamsPage = () => {
             ? (exam.audioFile || exam.questions?.[0]?.audioFile || "")
             : "",
         questions: (exam.questions || [getInitialQuestionForType(exam.examType)]).map((q: any) => ({
+          id: q.id,
           questionText: q.questionText,
           answers: q.answers,
         })),
