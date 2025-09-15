@@ -6,6 +6,7 @@ import {
   useCreateExamMutation,
   useDeleteExamMutation,
   useGetAllExamsQuery,
+  useUpdateExamMutation,
 } from "@/services/apis/exam";
 import { CreateExamRequest } from "@/services/types/exam";
 import {
@@ -49,6 +50,8 @@ import {
 import { useState } from "react";
 import Ckeditor from "@/components/thirdparty/Ckeditor";
 import { usePostFileMutation } from "@/services/apis/upload";
+import { API_PATH } from "@/consts/api-path";
+import { ApiServerURL } from "@/utils/config";
 
 interface ExamFormData {
   id?: number;
@@ -56,7 +59,7 @@ interface ExamFormData {
   examType: "LISTENING" | "READING" | "WRITING" | "SPEAKING";
   description: string;
   isNeedVip: boolean;
-  examAudioFile?: string; // Single audio file for LISTENING exams
+  audioFile?: string; // Single audio file for LISTENING exams
   questions: Array<{
     questionText: string;
     answers?: Array<{
@@ -76,6 +79,7 @@ const ExamsPage = () => {
   } = useGetAllExamsQuery(true);
   const createExamMutation = useCreateExamMutation();
   const deleteExamMutation = useDeleteExamMutation();
+  const updateExamMutation = useUpdateExamMutation();
   const { mutate: uploadFile, isPending } = usePostFileMutation();
 
   const [page, setPage] = useState(0);
@@ -90,7 +94,7 @@ const ExamsPage = () => {
     examType: "LISTENING",
     description: "",
     isNeedVip: false,
-    examAudioFile: "",
+    audioFile: "",
     questions: [getInitialQuestionForType("LISTENING")],
   });
 
@@ -153,7 +157,7 @@ const ExamsPage = () => {
         examType: exam.examType,
         description: exam.description,
         isNeedVip: exam.isNeedVip,
-        examAudioFile:
+        audioFile:
           exam.examType === "LISTENING"
             ? (exam.audioFile || exam.questions?.[0]?.audioFile || "")
             : "",
@@ -170,7 +174,7 @@ const ExamsPage = () => {
         examType: "LISTENING",
         description: "",
         isNeedVip: false,
-        examAudioFile: "",
+        audioFile: "",
         questions: [initialQuestion],
       });
     }
@@ -185,16 +189,29 @@ const ExamsPage = () => {
   const handleSubmit = async () => {
     try {
       if (isEditMode) {
-        // TODO: The update API expects Exam type but we have SimulationExam data
-        // This might need backend API adjustment or different endpoint
+        const questions = formData.questions.map((q) => ({
+          ...q,
+        }));
+
+        const submitData: any = {
+          id: formData.id,
+          title: formData.title,
+          examType: formData.examType,
+          description: formData.description,
+          isNeedVip: formData.isNeedVip,
+          questions: questions as any,
+          ...(formData.examType === "LISTENING" && formData.audioFile
+            ? { audioFile: formData.audioFile }
+            : {}),
+        };
+
+        await updateExamMutation.mutateAsync(submitData);
         updateAppState({
           appAlertInfo: {
-            message: "Chức năng cập nhật đang được phát triển",
-            severity: "info",
+            message: "Cập nhật đề thi thành công",
+            severity: "success",
           },
         });
-        handleCloseDialog();
-        return;
       } else {
         const questions = formData.questions.map((q) => ({
           ...q,
@@ -206,8 +223,8 @@ const ExamsPage = () => {
           description: formData.description,
           isNeedVip: formData.isNeedVip,
           questions: questions as any,
-          ...(formData.examType === "LISTENING" && formData.examAudioFile
-            ? { audioFile: formData.examAudioFile }
+          ...(formData.examType === "LISTENING" && formData.audioFile
+            ? { audioFile: formData.audioFile }
             : {}),
         };
 
@@ -320,7 +337,7 @@ const ExamsPage = () => {
         onSuccess: (res: any) => {
           setFormData((prev) => ({
             ...prev,
-            examAudioFile: res,
+            audioFile: res,
           }));
         },
       });
@@ -562,7 +579,7 @@ const ExamsPage = () => {
                 setFormData({
                   ...formData,
                   examType: newExamType,
-                  examAudioFile: "",
+                  audioFile: "",
                   questions: [initialQuestion],
                 });
               }}
@@ -613,16 +630,18 @@ const ExamsPage = () => {
                     />
                   </Button>
 
-                  {isPending && (
-                    <Typography variant="body2" color="text.secondary">
-                      Đang tải file âm thanh...
-                    </Typography>
-                  )}
+                  {formData.audioFile && !isPending && (
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <Typography variant="body2" color="text.secondary">
+                        Đã tải lên file âm thanh <br />
+                        {formData.audioFile}
+                      </Typography>
 
-                  {formData.examAudioFile && !isPending && (
-                    <Typography variant="body2" color="text.secondary">
-                      Đã tải lên file âm thanh {formData.examAudioFile}
-                    </Typography>
+                      <audio controls style={{ height: 30 }}>
+                        <source src={ApiServerURL + API_PATH.DOWNLOAD_FILE + formData.audioFile} type="audio/mpeg" />
+                        Trình duyệt của bạn không hỗ trợ audio.
+                      </audio>
+                    </Stack>
                   )}
                 </Stack>
               </Box>

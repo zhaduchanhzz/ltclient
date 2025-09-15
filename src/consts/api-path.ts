@@ -21,5 +21,6 @@ export const API_PATH = {
   ADMIN_DELETE_USER: "/admin/delete/user",
   LECTURER_USER_RESPONSES: "/lecturer/user-responses",
   LECTURER_GRADE: "/lecturer/grade",
-  UPLOAD_FILE: "audio/upload",
+  UPLOAD_FILE: "/audio/upload",
+  DOWNLOAD_FILE: "/audio/",
 };

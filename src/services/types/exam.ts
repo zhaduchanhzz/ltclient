@@ -26,6 +26,16 @@ export type CreateExamRequest = {
   audioFile?: string; // Present only for LISTENING exams
 };
 
+export type UpdateExamRequest = {
+  id: number;
+  examType: "LISTENING" | "READING" | "WRITING" | "SPEAKING";
+  title: string;
+  description: string;
+  isNeedVip: boolean;
+  questions: CreateExamQuestion[];
+  audioFile?: string; // Present only for LISTENING exams
+};
+
 export type CreateExamQuestion = {
   questionText: string;
   answers?: CreateExamAnswer[]; // Optional - not used for SPEAKING

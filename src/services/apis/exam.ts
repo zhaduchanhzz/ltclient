@@ -5,6 +5,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   CreateExamRequest,
   Exam,
+  ExamResponse,
   ExamFilterParams,
   ExamsDetail,
   ExamSubmitRequest,
@@ -14,6 +15,7 @@ import {
   ListExamByTypeResponse,
   SimulationExam,
   TakeExamResponse,
+  UpdateExamRequest,
   UserHistoryResponse,
   UserWriting,
 } from "../types/exam";
@@ -69,8 +71,8 @@ export const useCreateExamMutation = () => {
 
 export const useUpdateExamMutation = () => {
   return useMutation({
-    mutationFn: (data: Exam) => {
-      return HttpClient.put<Exam, CommonResponse<Exam>>(API_PATH.EXAMS, data);
+    mutationFn: (data: UpdateExamRequest) => {
+      return HttpClient.put<UpdateExamRequest, CommonResponse<ExamResponse>>(API_PATH.EXAMS + `/${data.id}`, data);
     },
   });
 };
