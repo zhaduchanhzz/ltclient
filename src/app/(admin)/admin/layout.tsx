@@ -10,7 +10,7 @@ import CookieStorage from "@/utils/cookie-storage";
 import { APP_COOKIE_KEY } from "@/consts";
 import NotFound from "@/app/not-found";
 
-const drawerWidth = 240;
+const drawerWidth = 255;
 
 export default function AdminLayout({
   children,

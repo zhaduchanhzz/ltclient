@@ -24,11 +24,11 @@ interface AdminSidebarProps {
 }
 
 const menuItems = [
-  { text: "Dashboard", icon: <DashboardIcon />, path: "/admin" },
-  { text: "Users", icon: <PeopleIcon />, path: "/admin/users" },
-  { text: "Orders", icon: <ShoppingCartIcon />, path: "/admin/orders" },
-  { text: "Exams", icon: <SchoolIcon />, path: "/admin/exams" },
-  { text: "Blog Posts", icon: <ArticleIcon />, path: "/admin/posts" },
+  { text: "Tổng quan", icon: <DashboardIcon />, path: "/admin" },
+  { text: "Quản lý người dùng", icon: <PeopleIcon />, path: "/admin/users" },
+  { text: "Quản lý đơn hàng", icon: <ShoppingCartIcon />, path: "/admin/orders" },
+  { text: "Quản lý bài thi", icon: <SchoolIcon />, path: "/admin/exams" },
+  { text: "Quản lý Blog", icon: <ArticleIcon />, path: "/admin/posts" },
 ];
 
 export default function AdminSidebar({ open, drawerWidth }: AdminSidebarProps) {
@@ -77,12 +77,28 @@ export default function AdminSidebar({ open, drawerWidth }: AdminSidebarProps) {
             <ListItemButton
               selected={pathname === item.path}
               onClick={() => router.push(item.path)}
+              sx={{
+                "&.Mui-selected": {
+                  backgroundColor: "primary.main",
+                  color: "white",
+                  "& .MuiListItemIcon-root": {
+                    color: "white",
+                  },
+                  "& .MuiListItemText-primary": {
+                    fontWeight: "bold",
+                  },
+                },
+                "&.Mui-selected:hover": {
+                  backgroundColor: "primary.dark",
+                },
+              }}
             >
               <ListItemIcon>{item.icon}</ListItemIcon>
               <ListItemText primary={item.text} />
             </ListItemButton>
           </ListItem>
         ))}
+
       </List>
     </Drawer>
   );

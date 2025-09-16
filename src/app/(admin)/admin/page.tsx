@@ -77,7 +77,7 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <Box sx={{ py: 3 }}>
+    <Box>
       <Stack
         direction="row"
         alignItems="center"

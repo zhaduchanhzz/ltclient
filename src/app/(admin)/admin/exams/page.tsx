@@ -433,14 +433,17 @@ const ExamsPage = () => {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box>
       <Stack
         direction="row"
         justifyContent="space-between"
         alignItems="center"
-        sx={{ mb: 3 }}
       >
-        <Typography variant="h4" component="h1" sx={{ fontWeight: "bold" }}>
+        <Typography
+          component="h1"
+          variant="h4"
+          sx={{ fontWeight: "bold", color: "text.primary" }}
+        >
           Quản lý đề thi
         </Typography>
         <Button
