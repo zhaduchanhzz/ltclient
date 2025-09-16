@@ -23,4 +23,5 @@ export const API_PATH = {
   LECTURER_GRADE: "/lecturer/grade",
   UPLOAD_FILE: "/audio/upload",
   DOWNLOAD_FILE: "/audio/",
+  HISTORY: "/history",
 };

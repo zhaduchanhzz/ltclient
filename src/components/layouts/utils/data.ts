@@ -5,6 +5,7 @@ export const navLinks: { href: string; name: string }[] = [
   { name: "Luyện đề", href: APP_ROUTE.PRACTICE_DASHBOARD },
   { name: "Gói cước", href: APP_ROUTE.SUBSCRIPTION },
   { name: "Lịch thi", href: APP_ROUTE.EXAM_SCHEDULE },
+  { name: "Lịch sử thi", href: APP_ROUTE.HISTORY },
 ];
 
 export const articleMenuLinks: { href: string; name: string }[] = [

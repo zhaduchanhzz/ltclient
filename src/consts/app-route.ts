@@ -59,4 +59,6 @@ export const APP_ROUTE = {
   WHAT_IS_VSTEP: "/what-is-vstep",
 
   WHO_IS_VSTEP_FOR: "who-is-vstep-for",
+
+  HISTORY: "/history",
 };
