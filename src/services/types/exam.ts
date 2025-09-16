@@ -173,6 +173,7 @@ export type SimulationExam = {
   title: string;
   description: string;
   isNeedVip: boolean;
+  audioFile?: string;
   questions: SimulationQuestion[];
 };
 

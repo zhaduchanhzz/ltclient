@@ -37,6 +37,8 @@ import { useMemo, useState } from "react";
 import ExamHeader from "./components/ExamHeader";
 import QuestionCard from "./components/QuestionCard";
 import { useExamLogic } from "./hooks/useExamLogic";
+import { API_PATH } from "@/consts/api-path";
+import { ApiServerURL } from "@/utils/config";
 
 const EXAM_TIME_LIMITS = {
   LISTENING: 47,
@@ -962,6 +964,21 @@ export default function ExamPage() {
               {partAnswered} of {partTotal} answered
             </Typography>
           </Paper>
+
+          {/* Listening media (if available) */}
+          {currentExamPart.examType === "LISTENING" && currentExamPart.audioFile && (
+            <Paper elevation={1} sx={{ p: 3, mb: 3 }}>
+              <Typography sx={{ mb: 2, fontSize: "1rem" }}>
+                Listening Audio
+              </Typography>
+              <Stack spacing={2}>
+                <audio controls style={{ width: "100%" }}>
+                  <source src={ApiServerURL + API_PATH.DOWNLOAD_FILE + currentExamPart.audioFile} />
+                  Your browser does not support the audio element.
+                </audio>
+              </Stack>
+            </Paper>
+          )}
 
           {/* Part Description / Content */}
           {currentExamPart.description && (

@@ -599,7 +599,7 @@ const ExamsPage = () => {
               value={formData.description}
               onChange={(v) => setFormData({ ...formData, description: v })}
               placeholder="Mô tả"
-              minHeight={54}
+              minHeight={150}
             />
 
             <FormControlLabel
@@ -649,6 +649,7 @@ const ExamsPage = () => {
                     </Stack>
                   )}
                 </Stack>
+
               </Box>
             )}
 
@@ -707,7 +708,7 @@ const ExamsPage = () => {
                           updateQuestion(questionIndex, "questionText", v)
                         }
                         placeholder="Nhập nội dung câu hỏi"
-                        minHeight={54}
+                        minHeight={100}
                       />
 
 

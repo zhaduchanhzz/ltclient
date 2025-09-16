@@ -12,6 +12,31 @@ interface CkeditorProps {
   minHeight?: number;
 }
 
+class MyUploadAdapter {
+  private loader: any;
+  constructor(loader: any) {
+    this.loader = loader;
+  }
+
+  upload() {
+    return this.loader.file.then(
+      (file: File) =>
+        new Promise((resolve, reject) => {
+          const reader = new FileReader();
+
+          reader.onload = () => {
+            resolve({ default: reader.result as string });
+          };
+
+          reader.onerror = (err) => reject(err);
+          reader.readAsDataURL(file);
+        }),
+    );
+  }
+
+  abort() {}
+}
+
 const Ckeditor: React.FC<CkeditorProps> = ({
   value,
   onChange,
@@ -36,6 +61,8 @@ const Ckeditor: React.FC<CkeditorProps> = ({
                 "link",
                 "bulletedList",
                 "numberedList",
+                "|",
+                "uploadImage",
                 "blockQuote",
                 "undo",
                 "redo",
@@ -47,12 +74,14 @@ const Ckeditor: React.FC<CkeditorProps> = ({
             const data = editor.getData();
             onChange(data);
           }}
-          onReady={(editor) => {
-            const editableElement = editor.ui.getEditableElement();
+          onReady={(editor: any) => {
+            editor.plugins.get("FileRepository").createUploadAdapter = (loader: any) =>
+            new MyUploadAdapter(loader);
 
-            if (editableElement) {
-              editableElement.style.minHeight = `${minHeight}px`;
-            }
+            editor.editing.view.change((writer: any) => {
+              const viewEditable = editor.editing.view.document.getRoot();
+              writer.setStyle("min-height", `${minHeight}px`, viewEditable);
+            });
           }}
         />
       </Box>
