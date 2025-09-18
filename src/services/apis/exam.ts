@@ -18,6 +18,8 @@ import {
   UpdateExamRequest,
   UserHistoryResponse,
   UserWriting,
+  BulkExamSubmitRequest,
+  BulkExamSubmitResponseData,
 } from "../types/exam";
 
 export const useExamsQuery = (enabled = false) => {
@@ -150,6 +152,18 @@ export const useSubmitExamMutation = () => {
       return HttpClient.post<
         ExamSubmitRequest,
         CommonResponse<ExamSubmitResponse>
+      >(API_PATH.EXAMS + "/submit", data);
+    },
+  });
+};
+
+// Unified bulk submission (same endpoint, unified body)
+export const useSubmitAllExamsMutation = () => {
+  return useMutation({
+    mutationFn: (data: BulkExamSubmitRequest) => {
+      return HttpClient.post<
+        BulkExamSubmitRequest,
+        CommonResponse<BulkExamSubmitResponseData>
       >(API_PATH.EXAMS + "/submit", data);
     },
   });

@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useMediaQuery, useTheme } from "@mui/material";
-import { useSubmitExamMutation } from "@/services/apis/exam";
+import { useSubmitExamMutation, useSubmitAllExamsMutation } from "@/services/apis/exam";
 import {
   ExamSubmitRequest,
-  ExamSubmitResponse,
   ExamTermSession,
   SimulationExam,
   TakeExamRequest,
@@ -43,6 +42,7 @@ export function useExamLogic() {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { id: examId } = useParams() as { id: string };
   const submitExamMutation = useSubmitExamMutation();
+    const submitAllExamsMutation = useSubmitAllExamsMutation();
   const { userInfo } = useAuthContext();
 
   // Track submitted speaking questions to avoid duplicates
@@ -989,227 +989,76 @@ export function useExamLogic() {
     }
   }, [session, submitExamMutation, clearPersistedState, allExams]);
 
-  // Submit all exams at once (for final submission with all exam types)
+  // Submit all exams at once (unified single API call)
   const submitAllExams = useCallback(async () => {
     if (!session) return { success: false, error: "No session available" };
 
     try {
-      const submissionPromises: Promise<any>[] = [];
-      const submissionResults: {
-        examType: string;
-        success: boolean;
-        error?: string;
-      }[] = [];
-      const submittedDetails: ExamSubmitResponse[] = [];
+      // Build a map of examId -> responses for all types
+      const examResponsesMap: Record<number, Record<string, string>> = {};
 
-      // Group exams by type for organized submission
-      const examGroups: Record<string, any[]> = {};
       allExams.forEach((exam) => {
-        if (!examGroups[exam.examType]) {
-          examGroups[exam.examType] = [];
-        }
-        
-        examGroups[exam.examType].push(exam);
-      });
+        exam.questions.forEach((q) => {
+          const answers = session.answers[q.id];
+          if (!answers || answers.length === 0) return;
 
-      // Submit LISTENING and READING exams
-      ["LISTENING", "READING"].forEach((examType) => {
-        const typeExams = examGroups[examType] || [];
+          if (!examResponsesMap[exam.id]) examResponsesMap[exam.id] = {};
 
-        typeExams.forEach((exam) => {
-          const responses: Record<string, string> = {};
-
-          exam.questions.forEach((question: any) => {
-            const answers = session.answers[question.id];
-
-            if (answers && answers.length > 0) {
-              // For multiple choice, join answer IDs with comma
-              responses[question.id] = answers.join(",");
-            }
-          });
-
-          if (Object.keys(responses).length > 0) {
-            const submitRequest: ExamSubmitRequest = {
-              examId: exam.id,
-              responses,
-              termId: session.termId,
-            };
-
-            const promise = submitExamMutation
-              .mutateAsync(submitRequest)
-              .then((res) => {
-                submissionResults.push({ examType, success: true });
-
-                if (res?.data) {
-                  submittedDetails.push(res.data);
-                }
-
-                console.log(
-                  `Successfully submitted ${examType} exam ${exam.id}`,
-                );
-              })
-              .catch((error) => {
-                submissionResults.push({
-                  examType,
-                  success: false,
-                  error: error.message,
-                });
-                console.error(
-                  `Failed to submit ${examType} exam ${exam.id}:`,
-                  error,
-                );
-              });
-
-            submissionPromises.push(promise);
+          if (exam.examType === "LISTENING" || exam.examType === "READING") {
+            // Multiple choice: join selected answer IDs with comma
+            examResponsesMap[exam.id][q.id.toString()] = answers.join(",");
+          } else if (exam.examType === "WRITING") {
+            // Text answer
+            examResponsesMap[exam.id][q.id.toString()] = answers[0] || "";
+          } else if (exam.examType === "SPEAKING") {
+            // Place base64 audio directly as content in responses
+            examResponsesMap[exam.id][q.id.toString()] = answers[0] || "";
           }
         });
       });
 
-      // Submit WRITING exams
-      const writingExams = examGroups["WRITING"] || [];
-      writingExams.forEach((exam) => {
-        const responses: Record<string, string> = {};
+      const payload = {
+        termId: session.termId,
+        exams: Object.entries(examResponsesMap).map(([examId, responses]) => ({
+          examId: parseInt(examId),
+          responses,
+        })),
+      };
 
-        exam.questions.forEach((question: any) => {
-          const answers = session.answers[question.id];
+      // Call the unified endpoint (same path), expecting bulk response
+      const res = await submitAllExamsMutation.mutateAsync(payload as any);
 
-          if (answers && answers.length > 0) {
-            // For writing, the answer is the text content
-            responses[question.id] = answers[0] || "";
-          }
-        });
+      const success = !!res?.success;
+      const message = res?.message || (success ? "Exam submitted successfully!" : "Submit failed");
+      const details = res?.data?.results || [];
 
-        if (Object.keys(responses).length > 0) {
-          const submitRequest: ExamSubmitRequest = {
-            examId: exam.id,
-            responses,
-            termId: session.termId,
-          };
-
-          const promise = submitExamMutation
-            .mutateAsync(submitRequest)
-            .then((res) => {
-              submissionResults.push({ examType: "WRITING", success: true });
-
-              if (res?.data) {
-                submittedDetails.push(res.data);
-              }
-
-              console.log(`Successfully submitted WRITING exam ${exam.id}`);
-            })
-            .catch((error) => {
-              submissionResults.push({
-                examType: "WRITING",
-                success: false,
-                error: error.message,
-              });
-              console.error(`Failed to submit WRITING exam ${exam.id}:`, error);
-            });
-
-          submissionPromises.push(promise);
-        }
-      });
-
-      // Submit SPEAKING exams
-      const speakingExams = examGroups["SPEAKING"] || [];
-      speakingExams.forEach((exam) => {
-        exam.questions.forEach((question: any) => {
-          const answers = session.answers[question.id];
-
-          if (answers && answers.length > 0) {
-            const speakingFile = answers[0]; // Base64 audio data
-            const responses: Record<string, string> = {
-              [question.id]: "speaking_response",
-            };
-
-            const submitRequest: ExamSubmitRequest = {
-              examId: exam.id,
-              responses,
-              termId: session.termId,
-              speakingFile,
-            };
-
-            const promise = submitExamMutation
-              .mutateAsync(submitRequest)
-              .then((res) => {
-                submissionResults.push({ examType: "SPEAKING", success: true });
-
-                if (res?.data) {
-                  submittedDetails.push(res.data);
-                }
-
-                console.log(
-                  `Successfully submitted SPEAKING question ${question.id} for exam ${exam.id}`,
-                );
-              })
-              .catch((error) => {
-                submissionResults.push({
-                  examType: "SPEAKING",
-                  success: false,
-                  error: error.message,
-                });
-                console.error(
-                  `Failed to submit SPEAKING question ${question.id}:`,
-                  error,
-                );
-              });
-
-            submissionPromises.push(promise);
-          }
-        });
-      });
-
-      // Wait for all submissions to complete
-      await Promise.allSettled(submissionPromises);
-
-      // Check results
-      const successCount = submissionResults.filter((r) => r.success).length;
-      const failCount = submissionResults.filter((r) => !r.success).length;
-
-      // Get unique failed exam types
-      const failedTypes = submissionResults
-        .filter((r) => !r.success)
-        .map((r) => r.examType)
-        .filter((v, i, a) => a.indexOf(v) === i); // unique
-
-      if (failCount === 0) {
-        // All submissions successful
+      if (success) {
         setSession((prev) => (prev ? { ...prev, isCompleted: true } : null));
         clearPersistedState();
         return {
           success: true,
-          message: "Exam submitted successfully!",
+          message,
           failedTypes: [],
-          details: submittedDetails,
-        };
-      } else if (successCount > 0) {
-        // Partial success
-        return {
-          success: false,
-          error: `Partially submitted. Failed: ${failedTypes.join(", ")}`,
-          failedTypes,
-          partial: true,
-          details: submittedDetails,
-        };
-      } else {
-        // Complete failure
-        return {
-          success: false,
-          error: "Failed to submit exam. Please try again.",
-          failedTypes,
-          partial: false,
+          details,
         };
       }
-    } catch (error) {
-      console.error("Failed to submit all exams:", error);
+
       return {
         success: false,
-        error: "An unexpected error occurred during submission.",
-        failedTypes: ["WRITING", "SPEAKING"], // Show both links on unexpected error
+        error: message || "Failed to submit exam.",
+        partial: false,
+        details,
+      };
+    } catch (error: any) {
+      console.error("Failed to submit all exams (unified):", error);
+      const errMsg = error?.message || "An unexpected error occurred during submission.";
+      return {
+        success: false,
+        error: errMsg,
         partial: false,
       };
     }
-  }, [session, submitExamMutation, clearPersistedState, allExams]);
+  }, [session, submitAllExamsMutation, clearPersistedState, allExams]);
 
   // Navigate to specific question index within the current exam type
   const navigateToQuestion = useCallback(

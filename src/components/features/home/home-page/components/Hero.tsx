@@ -52,7 +52,7 @@ const Hero = () => {
             alignItems: "center",
           }}
         >
-          <Link href={isAuthenticated ? "/exam" : "/login"}>
+          <Link href={isAuthenticated ? "/exam/room" : "/login"}>
             <BasicButton
               sx={{
                 backgroundColor: "theme.palette.primary.main",

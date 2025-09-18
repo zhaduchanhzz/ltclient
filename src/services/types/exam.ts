@@ -260,3 +260,28 @@ export type ExamByType = {
 };
 
 export type ListExamByTypeResponse = ExamByType[];
+
+// Bulk (unified) exam submission types
+export type BulkExamSubmitRequest = {
+  termId: number;
+  exams: {
+    examId: number;
+    responses: Record<string, string>;
+  }[];
+};
+
+export type BulkExamSubmitResultItem = {
+  id: number;
+  userId: number;
+  examId: number;
+  examType: "LISTENING" | "READING" | "WRITING" | "SPEAKING";
+  content: string;
+  score: number;
+  selectedTrue: number;
+  totalQuestion: number;
+};
+
+export type BulkExamSubmitResponseData = {
+  termId: number;
+  results: BulkExamSubmitResultItem[];
+};
