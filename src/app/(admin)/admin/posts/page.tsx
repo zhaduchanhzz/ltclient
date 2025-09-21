@@ -1,7 +1,6 @@
 "use client";
 
 import ConfirmDialog from "@/components/common/Dialog/ConfirmDialog";
-import RichTextEditor from "@/components/common/RichTextEditor";
 import { useAppContextHandle } from "@/contexts/AppContext";
 import {
   useCreateBlogPostMutation,

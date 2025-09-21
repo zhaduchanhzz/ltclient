@@ -6,7 +6,6 @@ import {
   ListItemText,
   ListItemButton,
   Box,
-  Typography,
 } from "@mui/material";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import PeopleIcon from "@mui/icons-material/People";
@@ -16,7 +15,6 @@ import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import { AppConfig } from "@/config/app-config";
-import HomeIcon from "@mui/icons-material/Home";
 
 interface AdminSidebarProps {
   open: boolean;

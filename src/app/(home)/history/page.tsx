@@ -272,7 +272,7 @@ const History: React.FC = () => {
                         <TableCell>{it.durationMin} phút</TableCell>
                         <TableCell>{typeof it.score === "number" ? it.score : "—"}</TableCell>
                         <TableCell>
-                          <Chip size="small" label={it.status === "Passed" ? "Đạt" : it.status === "Failed" ? "Chưa đạt" : "Đang chấm"} color={statusColor(it)} variant="filled" />
+                          <Chip size="small" label={it.status === "Passed" ? "Đạt" : it.status === "Failed" ? "Chưa đạt" : "Đang chấm"} color={statusColor(it.status)} variant="filled" />
                         </TableCell>
                         <TableCell align="right">
                           <IconButton color="primary" aria-label="Xem chi tiết">
@@ -305,7 +305,7 @@ const History: React.FC = () => {
                         Điểm: {typeof it.score === "number" ? it.score : "—"}
                       </Typography>
                       <Stack direction="row" spacing={1} alignItems="center">
-                        <Chip size="small" label={it.status === "Passed" ? "Đạt" : it.status === "Failed" ? "Chưa đạt" : "Đang chấm"} color={statusColor(it)} />
+                        <Chip size="small" label={it.status === "Passed" ? "Đạt" : it.status === "Failed" ? "Chưa đạt" : "Đang chấm"} color={statusColor(it.status)} />
                         <IconButton color="primary" aria-label="Xem chi tiết">
                           <ArrowForwardIcon />
                         </IconButton>
