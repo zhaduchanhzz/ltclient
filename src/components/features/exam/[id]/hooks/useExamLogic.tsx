@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useMediaQuery, useTheme } from "@mui/material";
-import { useSubmitExamMutation, useSubmitAllExamsMutation } from "@/services/apis/exam";
+import { useSubmitExamMutation, useSubmitAllExamsMutation, useGradingRequestMutation } from "@/services/apis/exam";
 import {
   ExamSubmitRequest,
   ExamTermSession,
@@ -42,7 +42,8 @@ export function useExamLogic() {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { id: examId } = useParams() as { id: string };
   const submitExamMutation = useSubmitExamMutation();
-    const submitAllExamsMutation = useSubmitAllExamsMutation();
+  const submitAllExamsMutation = useSubmitAllExamsMutation();
+  const gradingRequestMutation = useGradingRequestMutation();
   const { userInfo } = useAuthContext();
 
   // Track submitted speaking questions to avoid duplicates
@@ -763,6 +764,22 @@ export function useExamLogic() {
       setShowSuccessDialog(true);
       setSession((prev) => (prev ? { ...prev, isCompleted: true } : null));
 
+      // Send grading request for all SPEAKING parts automatically
+      try {
+        const speakingExams = (examsByType["SPEAKING"] || []).map((e) => e.id);
+
+        if (speakingExams.length > 0) {
+          await Promise.allSettled(
+            speakingExams.map((id) =>
+              gradingRequestMutation.mutateAsync({ termId: session.termId, examId: id }),
+            ),
+          );
+          console.log("Grading requests submitted for speaking exams:", speakingExams);
+        }
+      } catch (e) {
+        console.error("Failed to send grading request(s) for speaking:", e);
+      }
+
       // Clear persisted state after successful submission
       clearPersistedState();
     } catch (error) {
@@ -923,6 +940,22 @@ export function useExamLogic() {
 
       console.log("All writing exams submitted successfully");
 
+      // After successful writing submissions, send grading request(s) for WRITING exams
+      try {
+        const examIdsForGrading = Object.keys(writingExamSubmissions).map((id) => parseInt(id));
+
+        if (examIdsForGrading.length > 0) {
+          await Promise.allSettled(
+            examIdsForGrading.map((id) =>
+              gradingRequestMutation.mutateAsync({ termId: session.termId, examId: id }),
+            ),
+          );
+          console.log("Grading requests submitted for writing exams:", examIdsForGrading);
+        }
+      } catch (e) {
+        console.error("Failed to send grading request(s) for writing exams:", e);
+      }
+
       // Continue to next section
       completeSection("WRITING");
     } catch (error) {
@@ -1033,6 +1066,24 @@ export function useExamLogic() {
       const details = res?.data?.results || [];
 
       if (success) {
+        // After unified success, send grading requests for WRITING/SPEAKING parts
+        try {
+          const gradableIds = allExams
+            .filter((e) => e.examType === "WRITING" || e.examType === "SPEAKING")
+            .map((e) => e.id);
+
+          if (gradableIds.length > 0) {
+            await Promise.allSettled(
+              gradableIds.map((id) =>
+                gradingRequestMutation.mutateAsync({ termId: session.termId, examId: id }),
+              ),
+            );
+            console.log("Grading requests submitted for unified submit:", gradableIds);
+          }
+        } catch (e) {
+          console.error("Failed to send grading request(s) after unified submit:", e);
+        }
+
         setSession((prev) => (prev ? { ...prev, isCompleted: true } : null));
         clearPersistedState();
         return {

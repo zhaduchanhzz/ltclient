@@ -33,12 +33,13 @@ import {
   Typography,
   Zoom,
 } from "@mui/material";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ExamHeader from "./components/ExamHeader";
 import QuestionCard from "./components/QuestionCard";
 import { useExamLogic } from "./hooks/useExamLogic";
 import { API_PATH } from "@/consts/api-path";
 import { ApiServerURL } from "@/utils/config";
+import { useAppContextHandle } from "@/contexts/AppContext";
 
 const EXAM_TIME_LIMITS = {
   LISTENING: 47,
@@ -81,6 +82,7 @@ export default function ExamPage() {
     submitAllExams,
   } = useExamLogic();
 
+  const { updateAppState } = useAppContextHandle();
   const gradingRequestMutation = useGradingRequestMutation();
   const [gradingProgress, setGradingProgress] = useState<{
     isGrading: boolean;
@@ -88,6 +90,25 @@ export default function ExamPage() {
     total: number;
     currentExamType?: string;
   }>({ isGrading: false, current: 0, total: 0 });
+
+  // Track per-exam grading requests (loading state)
+  const [requestingExamIds, setRequestingExamIds] = useState<number[]>([]);
+
+  const requestGradingForExam = async (examId: number) => {
+
+    if (!session?.termId || !examId) return;
+
+    try {
+      setRequestingExamIds((prev) => [...new Set([...prev, examId])]);
+      await gradingRequestMutation.mutateAsync({ termId: session.termId, examId });
+      updateAppState({ appAlertInfo: { message: `Đã gửi yêu cầu chấm điểm cho Exam #${examId}` , severity: "success" } });
+    } catch (e) {
+      console.error("Failed to request grading for exam", examId, e);
+      updateAppState({ appAlertInfo: { message: `Gửi yêu cầu chấm điểm thất bại cho Exam #${examId}. Vui lòng thử lại.` , severity: "error" } });
+    } finally {
+      setRequestingExamIds((prev) => prev.filter((id) => id !== examId));
+    }
+  };
 
   // State for submission
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -118,8 +139,49 @@ export default function ExamPage() {
   // Track current exam part index (instead of individual questions)
   const [currentExamPartIndex, setCurrentExamPartIndex] = useState(0);
 
+  // Refs and state to manage scroll behavior per part
+  const leftPanelRef = useRef<HTMLDivElement | null>(null);
+  const rightPanelRef = useRef<HTMLDivElement | null>(null);
+  const scrollPositionsRef = useRef<Record<number, { left: number; right: number }>>({});
+  const visitedPartsRef = useRef<Set<number>>(new Set([0]));
+
   // Get current exam part
   const currentExamPart = allExamsFlat[currentExamPartIndex];
+
+  // Restore or reset scroll when switching parts
+  useEffect(() => {
+    const left = leftPanelRef.current;
+    const right = rightPanelRef.current;
+    const saved = scrollPositionsRef.current[currentExamPartIndex];
+
+    const apply = () => {
+      if (saved) {
+        if (left) left.scrollTop = saved.left || 0;
+        if (right) right.scrollTop = saved.right || 0;
+      } else {
+        if (left) left.scrollTop = 0;
+        if (right) right.scrollTop = 0;
+      }
+
+      visitedPartsRef.current.add(currentExamPartIndex);
+    };
+
+    // Wait for content to render before scrolling
+    const id = window.setTimeout(apply, 0);
+    return () => window.clearTimeout(id);
+  }, [currentExamPartIndex]);
+
+  const handleLeftScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const pos = scrollPositionsRef.current[currentExamPartIndex] || { left: 0, right: 0 };
+    pos.left = e.currentTarget.scrollTop;
+    scrollPositionsRef.current[currentExamPartIndex] = pos;
+  };
+
+  const handleRightScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const pos = scrollPositionsRef.current[currentExamPartIndex] || { left: 0, right: 0 };
+    pos.right = e.currentTarget.scrollTop;
+    scrollPositionsRef.current[currentExamPartIndex] = pos;
+  };
 
   // Calculate global question offset for continuous numbering
   const getGlobalQuestionOffset = useMemo(() => {
@@ -219,7 +281,7 @@ export default function ExamPage() {
     );
 
     if (gradableExams.length === 0) {
-      alert("No exams available for grading request.");
+      updateAppState({ appAlertInfo: { message: "Không có phần thi nào cần chấm điểm.", severity: "info" } });
       return;
     }
 
@@ -271,21 +333,15 @@ export default function ExamPage() {
 
     // Show result message and redirect
     if (successCount > 0 && failedCount === 0) {
-      alert(
-        `Successfully submitted ${successCount} grading request${successCount > 1 ? "s" : ""}!`,
-      );
+      updateAppState({ appAlertInfo: { message: `Đã gửi ${successCount} yêu cầu chấm điểm thành công!`, severity: "success" } });
       // Redirect to homepage after successful grading request
       router.push("/");
     } else if (successCount > 0 && failedCount > 0) {
-      alert(
-        `Partially successful: ${successCount} grading request${successCount > 1 ? "s" : ""} submitted, ${failedCount} failed.\nFailed exams: ${errors.join(", ")}`,
-      );
+      updateAppState({ appAlertInfo: { message: `Gửi yêu cầu chấm điểm: thành công ${successCount}, thất bại ${failedCount}.` , severity: "warning" } });
       // Redirect to homepage even with partial success
       router.push("/");
     } else {
-      alert(
-        `Failed to submit all grading requests. Please try again.\nFailed exams: ${errors.join(", ")}`,
-      );
+      updateAppState({ appAlertInfo: { message: "Gửi yêu cầu chấm điểm thất bại. Vui lòng thử lại.", severity: "error" } });
     }
   };
 
@@ -923,6 +979,8 @@ export default function ExamPage() {
       >
         {/* Left Panel - Title & Content */}
         <Box
+          ref={leftPanelRef}
+          onScroll={handleLeftScroll}
           sx={{
             width: { xs: "100%", md: "50%" },
             height: { xs: "40%", md: "100%" },
@@ -1017,6 +1075,8 @@ export default function ExamPage() {
 
         {/* Right Panel - Questions */}
         <Box
+          ref={rightPanelRef}
+          onScroll={handleRightScroll}
           sx={{
             width: { xs: "100%", md: "50%" },
             height: { xs: "60%", md: "100%" },
@@ -1192,9 +1252,22 @@ export default function ExamPage() {
                               {data.examType}
                             </Typography>
                             {isManualGraded(data.examType) && (
-                              <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                                Chưa được chấm điểm
-                              </Typography>
+                              <Stack direction="row" spacing={1} alignItems="center">
+                                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                                  Chưa được chấm điểm
+                                </Typography>
+                                {!!data.examId && (
+                                  <Button
+                                    size="small"
+                                    variant="contained"
+                                    onClick={() => requestGradingForExam(data.examId)}
+                                    disabled={requestingExamIds.includes(data.examId) || gradingRequestMutation.isPending}
+                                    sx={{ textTransform: "none" }}
+                                  >
+                                    {requestingExamIds.includes(data.examId) ? "Đang yêu cầu..." : "Yêu cầu chấm"}
+                                  </Button>
+                                )}
+                              </Stack>
                             )}
                           </Box>
 
@@ -1305,9 +1378,22 @@ export default function ExamPage() {
                             </Typography>
                           </Box>
                           {isManualGraded(data.examType) ? (
-                            <Typography variant="body2" sx={{ mt: .5 }} color="text.primary">
-                              Chưa được chấm điểm
-                            </Typography>
+                            <Stack direction="row" spacing={1} alignItems="center">
+                              <Typography variant="body2" sx={{ mt: .5 }} color="text.primary">
+                                Chưa được chấm điểm
+                              </Typography>
+                              {!!data.examId && (
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  onClick={() => requestGradingForExam(data.examId)}
+                                  disabled={requestingExamIds.includes(data.examId) || gradingRequestMutation.isPending}
+                                  sx={{ textTransform: "none" }}
+                                >
+                                  {requestingExamIds.includes(data.examId) ? "Đang yêu cầu..." : "Yêu cầu chấm"}
+                                </Button>
+                              )}
+                            </Stack>
                           ) : (
                             <Stack direction="row" spacing={2} alignItems="center">
                               <Typography variant="h5" sx={{ fontWeight: 700 }} color={percentage >= 70 ? "success.main" : percentage >= 50 ? "warning.main" : "error.main"}>
