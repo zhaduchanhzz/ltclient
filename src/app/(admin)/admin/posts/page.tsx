@@ -247,24 +247,37 @@ const PostsPage = () => {
       </Typography>
 
       <Stack spacing={3}>
-        {/* Search and Actions */}
-        <Card sx={{ p: 3 }}>
-          <Stack direction="row" spacing={2} alignItems="center">
-            <TextField
-              placeholder="Tìm kiếm bài viết..."
-              variant="outlined"
-              size="small"
-              sx={{ flex: 1 }}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
-            />
+        {/* Unified Header + Table Block */}
+        <Card sx={{ p: 2 }}>
+          {/* Header: Search + Add */}
+          <Stack
+            direction="row"
+            spacing={2}
+            alignItems="center"
+            justifyContent="space-between"
+            flexWrap="wrap"
+            useFlexGap
+          >
+            {/* Left: Search */}
+            <Stack direction="row" spacing={2} alignItems="center" sx={{ flex: 1, minWidth: 240 }}>
+              <TextField
+                placeholder="Tìm kiếm bài viết..."
+                variant="outlined"
+                size="small"
+                sx={{ minWidth: 240, flex: 1 }}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Stack>
+
+            {/* Right: Add */}
             <Button
               variant="contained"
               startIcon={<AddIcon />}
@@ -273,123 +286,123 @@ const PostsPage = () => {
               Thêm bài viết
             </Button>
           </Stack>
-        </Card>
 
-        {/* Posts Table */}
-        <Card>
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Tiêu đề</TableCell>
-                  <TableCell>Trạng thái</TableCell>
-                  <TableCell>Ngày tạo</TableCell>
-                  <TableCell align="center">Thao tác</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {posts.map((post) => (
-                  <TableRow key={post.id} hover>
-                    <TableCell>
-                      <Stack spacing={0.5}>
-                        <Typography variant="body2" fontWeight={500}>
-                          {post.title}
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          noWrap
-                        >
-                          {post.summary}
-                        </Typography>
-                      </Stack>
-                    </TableCell>
-                    <TableCell>
-                      {post.pinned && (
-                        <Chip
-                          label="Đã ghim"
-                          size="small"
-                          color="success"
-                          icon={<PushPinIcon />}
-                        />
-                      )}
-                    </TableCell>
-                    <TableCell>{formatDate(post.createdAt)}</TableCell>
-                    <TableCell align="center">
-                      <Stack
-                        direction="row"
-                        spacing={1}
-                        justifyContent="center"
-                      >
-                        <Tooltip title="Xem trước">
-                          <IconButton
-                            size="small"
-                            onClick={() => {
-                              setSelectedPost(post);
-                              setOpenPreviewDialog(true);
-                            }}
-                          >
-                            <VisibilityIcon />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip
-                          title={post.pinned ? "Bỏ ghim" : "Ghim bài viết"}
-                        >
-                          <IconButton
-                            size="small"
-                            onClick={() => handleTogglePin(post)}
-                            color={post.pinned ? "success" : "default"}
-                          >
-                            <PushPinIcon />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Chỉnh sửa">
-                          <IconButton
-                            size="small"
-                            onClick={() => handleOpenDialog(post)}
-                            color="primary"
-                          >
-                            <EditIcon />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Xóa">
-                          <IconButton
-                            size="small"
-                            onClick={() => {
-                              setSelectedPost(post);
-                              setOpenDeleteDialog(true);
-                            }}
-                            color="error"
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </Tooltip>
-                      </Stack>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {posts.length === 0 && (
+          {/* Table */}
+          <Box sx={{ mt: 2 }}>
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
                   <TableRow>
-                    <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Không tìm thấy bài viết nào
-                      </Typography>
-                    </TableCell>
+                    <TableCell>Tiêu đề</TableCell>
+                    <TableCell>Trạng thái</TableCell>
+                    <TableCell>Ngày tạo</TableCell>
+                    <TableCell align="center">Thao tác</TableCell>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
-            component="div"
-            count={totalCount}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            labelRowsPerPage="Số hàng mỗi trang:"
-          />
+                </TableHead>
+                <TableBody>
+                  {posts.map((post) => (
+                    <TableRow key={post.id} hover>
+                      <TableCell>
+                        <Stack spacing={0.5}>
+                          <Typography variant="body2" fontWeight={500}>
+                            {post.title}
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            noWrap
+                          >
+                            {post.summary}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        {post.pinned && (
+                          <Chip
+                            label="Đã ghim"
+                            size="small"
+                            color="success"
+                            icon={<PushPinIcon />}
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell>{formatDate(post.createdAt)}</TableCell>
+                      <TableCell align="center">
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          justifyContent="center"
+                        >
+                          <Tooltip title="Xem trước">
+                            <IconButton
+                              size="small"
+                              onClick={() => {
+                                setSelectedPost(post);
+                                setOpenPreviewDialog(true);
+                              }}
+                            >
+                              <VisibilityIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip
+                            title={post.pinned ? "Bỏ ghim" : "Ghim bài viết"}
+                          >
+                            <IconButton
+                              size="small"
+                              onClick={() => handleTogglePin(post)}
+                              color={post.pinned ? "success" : "default"}
+                            >
+                              <PushPinIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Chỉnh sửa">
+                            <IconButton
+                              size="small"
+                              onClick={() => handleOpenDialog(post)}
+                              color="primary"
+                            >
+                              <EditIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Xóa">
+                            <IconButton
+                              size="small"
+                              onClick={() => {
+                                setSelectedPost(post);
+                                setOpenDeleteDialog(true);
+                              }}
+                              color="error"
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {posts.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Không tìm thấy bài viết nào
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 25]}
+              component="div"
+              count={totalCount}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              labelRowsPerPage="Số hàng mỗi trang:"
+            />
+          </Box>
         </Card>
       </Stack>
 

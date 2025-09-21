@@ -434,47 +434,56 @@ const ExamsPage = () => {
 
   return (
     <Box>
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
+      <Typography
+        component="h1"
+        variant="h4"
+        sx={{ fontWeight: "bold", color: "text.primary" }}
       >
-        <Typography
-          component="h1"
-          variant="h4"
-          sx={{ fontWeight: "bold", color: "text.primary" }}
-        >
-          Quản lý đề thi
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => handleOpenDialog()}
-        >
-          Thêm đề thi
-        </Button>
-      </Stack>
+        Quản lý đề thi
+      </Typography>
 
-      <Card sx={{ mb: 3 }}>
-        <Box sx={{ p: 2 }}>
-          <TextField
-            fullWidth
-            variant="outlined"
-            placeholder="Tìm kiếm đề thi..."
-            value={searchQuery}
-            onChange={handleSearch}
-            InputProps={{
-              startAdornment: (
-                <SearchIcon sx={{ mr: 1, color: "text.secondary" }} />
-              ),
-            }}
-            sx={{ maxWidth: 500 }}
-          />
-        </Box>
+      <Card sx={{ p: 2, mb: 3 }}>
+        {/* Header: Search + Add */}
+        <Stack
+          direction="row"
+          spacing={2}
+          alignItems="center"
+          justifyContent="space-between"
+          flexWrap="wrap"
+          useFlexGap
+        >
+          {/* Left: Search */}
+          <Stack direction="row" spacing={2} alignItems="center" sx={{ flex: 1, minWidth: 240 }}>
+            <TextField
+              placeholder="Tìm kiếm đề thi..."
+              variant="outlined"
+              size="small"
+              sx={{ minWidth: 240, maxWidth: 500, flex: 1 }}
+              value={searchQuery}
+              onChange={handleSearch}
+              InputProps={{
+                startAdornment: (
+                  <SearchIcon sx={{ mr: 1, color: "text.secondary" }} />
+                ),
+              }}
+            />
+          </Stack>
 
-        <TableContainer component={Paper} sx={{ boxShadow: "none" }}>
-          <Table>
-            <TableHead>
+          {/* Right: Add */}
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => handleOpenDialog()}
+          >
+            Thêm đề thi
+          </Button>
+        </Stack>
+
+        {/* Table */}
+        <Box sx={{ mt: 2 }}>
+          <TableContainer component={Paper} sx={{ boxShadow: "none" }}>
+            <Table>
+              <TableHead>
               <TableRow>
                 <TableCell>Tiêu đề</TableCell>
                 <TableCell>Loại đề thi</TableCell>
@@ -551,6 +560,7 @@ const ExamsPage = () => {
             rowsPerPageOptions={[5, 10, 25]}
           />
         </TableContainer>
+        </Box>
       </Card>
 
       <Dialog

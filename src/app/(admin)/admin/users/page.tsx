@@ -316,15 +316,31 @@ const UsersPage = () => {
       </Typography>
 
       <Stack spacing={3}>
-        {/* Search and Actions */}
-        <Card sx={{ p: 3 }}>
-          <Stack spacing={2}>
-            <Stack direction="row" spacing={2} alignItems="center">
+        {/* Unified Header + Table Block */}
+        <Card sx={{ p: 2 }}>
+          {/* Header: Search and Actions */}
+          <Stack
+            direction="row"
+            spacing={2}
+            alignItems="center"
+            justifyContent="space-between"
+            flexWrap="wrap"
+            useFlexGap
+          >
+            {/* Left: Search + Filters */}
+            <Stack
+              direction="row"
+              spacing={2}
+              alignItems="center"
+              flexWrap="wrap"
+              useFlexGap
+              sx={{ flex: 1, minWidth: 240 }}
+            >
               <TextField
                 placeholder="Tìm kiếm người dùng..."
                 variant="outlined"
                 size="small"
-                sx={{ flex: 1 }}
+                sx={{ minWidth: 240, maxWidth: 350, flex: 1 }}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 InputProps={{
@@ -335,15 +351,7 @@ const UsersPage = () => {
                   ),
                 }}
               />
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => handleOpenDialog()}
-              >
-                Thêm người dùng
-              </Button>
-            </Stack>
-            <Stack direction="row" spacing={2}>
+
               <FormControl size="small" sx={{ minWidth: 150 }}>
                 <InputLabel>Vai trò</InputLabel>
                 <Select
@@ -371,125 +379,134 @@ const UsersPage = () => {
                 </Select>
               </FormControl>
             </Stack>
-          </Stack>
-        </Card>
 
-        {/* Users Table */}
-        <Card>
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Tên người dùng</TableCell>
-                  <TableCell>Thông tin</TableCell>
-                  <TableCell>Vai trò</TableCell>
-                  <TableCell>Trạng thái</TableCell>
-                  <TableCell>VIP</TableCell>
-                  <TableCell>Ngày tạo</TableCell>
-                  <TableCell align="center">Thao tác</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {users.map((user, index) => (
-                  <TableRow key={index} hover>
-                    <TableCell>
-                      <Typography variant="body2" fontWeight={500}>
-                        {user.username}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Stack spacing={0.5}>
-                        <Typography variant="body2">
-                          {user.name || "Chưa cập nhật"}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {user.email || "Chưa có email"}
-                        </Typography>
-                        {user.phone && (
-                          <Typography variant="caption" color="text.secondary">
-                            {user.phone}
-                          </Typography>
-                        )}
-                      </Stack>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={user.role || "USER"}
-                        color={getRoleChipColor(user.role) as any}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={
-                          user.isEnable !== false ? "Hoạt động" : "Đã khóa"
-                        }
-                        color={user.isEnable !== false ? "success" : "default"}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      {user.expirationVipDate ? (
-                        <Stack spacing={0.5}>
-                          <Chip label="VIP" color="warning" size="small" />
-                          <Typography variant="caption" color="text.secondary">
-                            {formatDate(user.expirationVipDate)}
-                          </Typography>
-                        </Stack>
-                      ) : (
-                        <Chip label="Free" color="default" size="small" />
-                      )}
-                    </TableCell>
-                    <TableCell>{formatDate(user.createdDate)}</TableCell>
-                    <TableCell align="center">
-                      <Stack
-                        direction="row"
-                        spacing={1}
-                        justifyContent="center"
-                      >
-                        <IconButton
-                          size="small"
-                          onClick={() => handleOpenDialog(user)}
-                          color="primary"
-                        >
-                          <EditIcon />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setOpenDeleteDialog(true);
-                          }}
-                          color="error"
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Stack>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {users.length === 0 && (
+            {/* Right: Add */}
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => handleOpenDialog()}
+            >
+              Thêm người dùng
+            </Button>
+          </Stack>
+
+          {/* Table */}
+          <Box sx={{ mt: 2 }}>
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
                   <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Không tìm thấy người dùng nào
-                      </Typography>
-                    </TableCell>
+                    <TableCell>Tên người dùng</TableCell>
+                    <TableCell>Thông tin</TableCell>
+                    <TableCell>Vai trò</TableCell>
+                    <TableCell>Trạng thái</TableCell>
+                    <TableCell>VIP</TableCell>
+                    <TableCell>Ngày tạo</TableCell>
+                    <TableCell align="center">Thao tác</TableCell>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
-            component="div"
-            count={totalCount}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            labelRowsPerPage="Số hàng mỗi trang:"
-          />
+                </TableHead>
+                <TableBody>
+                  {users.map((user, index) => (
+                    <TableRow key={index} hover>
+                      <TableCell>
+                        <Typography variant="body2" fontWeight={500}>
+                          {user.username}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Stack spacing={0.5}>
+                          <Typography variant="body2">
+                            {user.name || "Chưa cập nhật"}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {user.email || "Chưa có email"}
+                          </Typography>
+                          {user.phone && (
+                            <Typography variant="caption" color="text.secondary">
+                              {user.phone}
+                            </Typography>
+                          )}
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={user.role || "USER"}
+                          color={getRoleChipColor(user.role) as any}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={
+                            user.isEnable !== false ? "Hoạt động" : "Đã khóa"
+                          }
+                          color={user.isEnable !== false ? "success" : "default"}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        {user.expirationVipDate ? (
+                          <Stack spacing={0.5}>
+                            <Chip label="VIP" color="warning" size="small" />
+                            <Typography variant="caption" color="text.secondary">
+                              {formatDate(user.expirationVipDate)}
+                            </Typography>
+                          </Stack>
+                        ) : (
+                          <Chip label="Free" color="default" size="small" />
+                        )}
+                      </TableCell>
+                      <TableCell>{formatDate(user.createdDate)}</TableCell>
+                      <TableCell align="center">
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          justifyContent="center"
+                        >
+                          <IconButton
+                            size="small"
+                            onClick={() => handleOpenDialog(user)}
+                            color="primary"
+                          >
+                            <EditIcon />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setOpenDeleteDialog(true);
+                            }}
+                            color="error"
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {users.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Không tìm thấy người dùng nào
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 25]}
+              component="div"
+              count={totalCount}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              labelRowsPerPage="Số hàng mỗi trang:"
+            />
+          </Box>
         </Card>
       </Stack>
 

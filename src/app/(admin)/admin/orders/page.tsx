@@ -280,15 +280,24 @@ const OrdersPage = () => {
       </Typography>
 
       <Stack spacing={3}>
-        {/* Search and Actions */}
-        <Card sx={{ p: 3 }}>
-          <Stack spacing={2}>
-            <Stack direction="row" spacing={2} alignItems="center">
+        {/* Unified Header + Table Block */}
+        <Card sx={{ p: 2 }}>
+          {/* Header: Search + Filters + Add */}
+          <Stack
+            direction="row"
+            spacing={2}
+            alignItems="center"
+            justifyContent="space-between"
+            flexWrap="wrap"
+            useFlexGap
+          >
+            {/* Left: Search + Status */}
+            <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap sx={{ flex: 1, minWidth: 240 }}>
               <TextField
                 placeholder="Tìm kiếm đơn hàng..."
                 variant="outlined"
                 size="small"
-                sx={{ flex: 1 }}
+                sx={{ minWidth: 240, flex: 1 }}
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
@@ -302,15 +311,7 @@ const OrdersPage = () => {
                   ),
                 }}
               />
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => handleOpenDialog()}
-              >
-                Thêm đơn hàng
-              </Button>
-            </Stack>
-            <Stack direction="row" spacing={2}>
+
               <FormControl size="small" sx={{ minWidth: 150 }}>
                 <InputLabel>Trạng thái</InputLabel>
                 <Select
@@ -328,104 +329,113 @@ const OrdersPage = () => {
                 </Select>
               </FormControl>
             </Stack>
-          </Stack>
-        </Card>
 
-        {/* Orders Table */}
-        <Card>
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Mã đơn hàng</TableCell>
-                  <TableCell>Người dùng</TableCell>
-                  <TableCell>Gói VIP</TableCell>
-                  <TableCell>Giá</TableCell>
-                  <TableCell>Trạng thái</TableCell>
-                  <TableCell>Ngày tạo</TableCell>
-                  <TableCell align="center">Hành động</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {orders.map((order) => (
-                  <TableRow key={order.id} hover>
-                    <TableCell>
-                      <Typography variant="body2" fontWeight={500}>
-                        {order.id.slice(0, 8)}...
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">{order.userName}</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">
-                        {order.vipPackageName}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">
-                        {formatCurrency(order.price)}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={getStatusLabel(order.status)}
-                        color={getStatusColor(order.status) as any}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      {dayjs(order.createdAt).format("DD/MM/YYYY HH:mm")}
-                    </TableCell>
-                    <TableCell align="center">
-                      <Stack
-                        direction="row"
-                        spacing={1}
-                        justifyContent="center"
-                      >
-                        <IconButton
-                          size="small"
-                          onClick={() => handleOpenDialog(order)}
-                          color="primary"
-                        >
-                          <EditIcon />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          onClick={() => {
-                            setSelectedOrder(order);
-                            setOpenDeleteDialog(true);
-                          }}
-                          color="error"
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Stack>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {orders.length === 0 && (
+            {/* Right: Add */}
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => handleOpenDialog()}
+            >
+              Thêm đơn hàng
+            </Button>
+          </Stack>
+
+          {/* Table */}
+          <Box sx={{ mt: 2 }}>
+            <TableContainer component={Paper}>
+              <Table>
+                <TableHead>
                   <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Không tìm thấy đơn hàng nào
-                      </Typography>
-                    </TableCell>
+                    <TableCell>Mã đơn hàng</TableCell>
+                    <TableCell>Người dùng</TableCell>
+                    <TableCell>Gói VIP</TableCell>
+                    <TableCell>Giá</TableCell>
+                    <TableCell>Trạng thái</TableCell>
+                    <TableCell>Ngày tạo</TableCell>
+                    <TableCell align="center">Hành động</TableCell>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
-            component="div"
-            count={totalCount}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            labelRowsPerPage="Số hàng mỗi trang:"
-          />
+                </TableHead>
+                <TableBody>
+                  {orders.map((order) => (
+                    <TableRow key={order.id} hover>
+                      <TableCell>
+                        <Typography variant="body2" fontWeight={500}>
+                          {order.id.slice(0, 8)}...
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">{order.userName}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">
+                          {order.vipPackageName}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">
+                          {formatCurrency(order.price)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={getStatusLabel(order.status)}
+                          color={getStatusColor(order.status) as any}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        {dayjs(order.createdAt).format("DD/MM/YYYY HH:mm")}
+                      </TableCell>
+                      <TableCell align="center">
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          justifyContent="center"
+                        >
+                          <IconButton
+                            size="small"
+                            onClick={() => handleOpenDialog(order)}
+                            color="primary"
+                          >
+                            <EditIcon />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={() => {
+                              setSelectedOrder(order);
+                              setOpenDeleteDialog(true);
+                            }}
+                            color="error"
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {orders.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Không tìm thấy đơn hàng nào
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 25]}
+              component="div"
+              count={totalCount}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              labelRowsPerPage="Số hàng mỗi trang:"
+            />
+          </Box>
         </Card>
       </Stack>
 

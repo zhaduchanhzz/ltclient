@@ -143,10 +143,9 @@ const MarkingRequestsPage = () => {
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell>ID yêu cầu</TableCell>
-                      <TableCell>Term ID</TableCell>
-                      <TableCell>Exam ID</TableCell>
-                      <TableCell>User ID</TableCell>
+                      <TableCell>Mã lượt thi</TableCell>
+                      <TableCell>Mã bài thi</TableCell>
+                      <TableCell>Tên người thi</TableCell>
                       <TableCell>Trạng thái</TableCell>
                       <TableCell>Thời gian yêu cầu</TableCell>
                       <TableCell align="center">Thao tác</TableCell>
@@ -155,7 +154,6 @@ const MarkingRequestsPage = () => {
                   <TableBody>
                     {(searchQuery ? displayedItems : items).map((row) => (
                       <TableRow key={row.requestId} hover>
-                        <TableCell>{row.requestId}</TableCell>
                         <TableCell>{row.termId}</TableCell>
                         <TableCell>{row.examId}</TableCell>
                         <TableCell>{row.userId}</TableCell>
