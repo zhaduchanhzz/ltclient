@@ -193,9 +193,10 @@ export default function QuestionCard({
       case "LISTENING":
         return (
           <Box sx={{ mb: 3 }}>
-            <Typography variant="h6" sx={{ mb: 2, fontSize: "1rem" }}>
-              {currentQuestion.questionText}
-            </Typography>
+            <Box
+              sx={{ mb: 2, fontSize: "1rem", "& img": { maxWidth: "100%", height: "auto" } }}
+              dangerouslySetInnerHTML={{ __html: currentQuestion.questionText }}
+            />
             {/* {audioSrc && (
               <Box sx={{ mb: 2 }}>
                 <audio controls style={{ width: "100%" }}>
@@ -210,9 +211,10 @@ export default function QuestionCard({
       case "WRITING":
         return (
           <Box sx={{ mb: 3 }}>
-            <Typography variant="h6" sx={{ mb: 2, fontSize: "1rem" }}>
-              {currentQuestion.questionText}
-            </Typography>
+            <Box
+              sx={{ mb: 2, fontSize: "1rem", "& img": { maxWidth: "100%", height: "auto" } }}
+              dangerouslySetInnerHTML={{ __html: currentQuestion.questionText }}
+            />
             <TextField
               multiline
               rows={8}
@@ -241,9 +243,10 @@ export default function QuestionCard({
       case "SPEAKING":
         return (
           <Box sx={{ mb: 3 }}>
-            <Typography variant="h6" sx={{ mb: 2, fontSize: "1rem" }}>
-              {currentQuestion.questionText}
-            </Typography>
+            <Box
+              sx={{ mb: 2, fontSize: "1rem", "& img": { maxWidth: "100%", height: "auto" } }}
+              dangerouslySetInnerHTML={{ __html: currentQuestion.questionText }}
+            />
             <Paper elevation={2} sx={{ p: 3, textAlign: "center" }}>
               <Typography variant="body1" sx={{ mb: 3 }}>
                 Record your spoken response to the question above
@@ -295,9 +298,10 @@ export default function QuestionCard({
 
       default:
         return (
-          <Typography variant="h5" sx={{ mb: 3, fontSize: "1rem" }}>
-            {currentQuestion.questionText}
-          </Typography>
+          <Box
+            sx={{ mb: 3, fontSize: "1rem", "& img": { maxWidth: "100%", height: "auto" } }}
+            dangerouslySetInnerHTML={{ __html: currentQuestion.questionText }}
+          />
         );
     }
   };
@@ -351,10 +355,14 @@ export default function QuestionCard({
                   value={answer.id.toString()}
                   control={<Radio />}
                   label={
-                    <Typography>
+                    <Box component="span">
                       <strong>{String.fromCharCode(65 + index)}.</strong>{" "}
-                      {answer.answerText}
-                    </Typography>
+                      <Box
+                        component="span"
+                        sx={{ "& img": { maxWidth: "100%", height: "auto" } }}
+                        dangerouslySetInnerHTML={{ __html: answer.answerText }}
+                      />
+                    </Box>
                   }
                   sx={{ width: "100%", m: 0 }}
                 />
@@ -419,10 +427,14 @@ export default function QuestionCard({
                     />
                   }
                   label={
-                    <Typography>
+                    <Box component="span">
                       <strong>{String.fromCharCode(65 + index)}.</strong>{" "}
-                      {answer.answerText}
-                    </Typography>
+                      <Box
+                        component="span"
+                        sx={{ "& img": { maxWidth: "100%", height: "auto" } }}
+                        dangerouslySetInnerHTML={{ __html: answer.answerText }}
+                      />
+                    </Box>
                   }
                   sx={{ width: "100%", m: 0 }}
                 />

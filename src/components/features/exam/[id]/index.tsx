@@ -37,6 +37,8 @@ import { useMemo, useState } from "react";
 import ExamHeader from "./components/ExamHeader";
 import QuestionCard from "./components/QuestionCard";
 import { useExamLogic } from "./hooks/useExamLogic";
+import { API_PATH } from "@/consts/api-path";
+import { ApiServerURL } from "@/utils/config";
 
 const EXAM_TIME_LIMITS = {
   LISTENING: 47,
@@ -95,6 +97,7 @@ export default function ExamPage() {
     message: string;
     failedTypes?: string[];
     partial?: boolean;
+    details?: any[];
   }>({ open: false, success: false, message: "" });
 
   // Get all exams in a flat array
@@ -108,6 +111,9 @@ export default function ExamPage() {
     });
     return result;
   }, [examTypes, examsByType]);
+
+  // Helper to identify manual-graded exam types (no immediate score)
+  const isManualGraded = (type?: string) => type === "WRITING" || type === "SPEAKING";
 
   // Track current exam part index (instead of individual questions)
   const [currentExamPartIndex, setCurrentExamPartIndex] = useState(0);
@@ -810,12 +816,13 @@ export default function ExamPage() {
       const result = await submitAllExams();
 
       if (result.success) {
-        // Success - show success dialog
+        // Success - show success dialog with details
         setSubmissionDialog({
           open: true,
           success: true,
           message: result.message || "Exam submitted successfully!",
           failedTypes: [],
+          details: Array.isArray(result.details) ? result.details : result.details ? [result.details] : [],
         });
       } else {
         // Error - show error dialog with links
@@ -825,6 +832,7 @@ export default function ExamPage() {
           message: result.error || "Failed to submit exam",
           failedTypes: result.failedTypes || [],
           partial: result.partial,
+          details: Array.isArray(result.details) ? result.details : result.details ? [result.details] : [],
         });
       }
     } catch (error) {
@@ -943,10 +951,16 @@ export default function ExamPage() {
               borderRadius: 2,
             }}
           >
-            <Typography sx={{ fontSize: "1rem" }}>
-              {currentExamPart.title ||
-                `${currentExamPart.examType} - Part ${currentExamPartIndex + 1}`}
-            </Typography>
+            {currentExamPart.title ? (
+              <Box
+                sx={{ fontSize: "1rem", "& img": { maxWidth: "100%", height: "auto" } }}
+                dangerouslySetInnerHTML={{ __html: currentExamPart.title }}
+              />
+            ) : (
+              <Typography sx={{ fontSize: "1rem" }}>
+                {`${currentExamPart.examType} - Part ${currentExamPartIndex + 1}`}
+              </Typography>
+            )}
             <Typography variant="body2" sx={{ mt: 1, opacity: 0.9 }}>
               Questions {getGlobalQuestionOffset + 1} -{" "}
               {getGlobalQuestionOffset + currentExamPart.questions.length} •
@@ -954,21 +968,35 @@ export default function ExamPage() {
             </Typography>
           </Paper>
 
+          {/* Listening media (if available) */}
+          {currentExamPart.examType === "LISTENING" && currentExamPart.audioFile && (
+            <Paper elevation={1} sx={{ p: 3, mb: 3 }}>
+              <Typography sx={{ mb: 2, fontSize: "1rem" }}>
+                Listening Audio
+              </Typography>
+              <Stack spacing={2}>
+                <audio controls style={{ width: "100%" }}>
+                  <source src={ApiServerURL + API_PATH.DOWNLOAD_FILE + currentExamPart.audioFile} />
+                  Your browser does not support the audio element.
+                </audio>
+              </Stack>
+            </Paper>
+          )}
+
           {/* Part Description / Content */}
           {currentExamPart.description && (
             <Paper elevation={1} sx={{ p: 3 }}>
               <Typography sx={{ mb: 2, fontSize: "1rem" }}>
                 Instructions / Reading Passage
               </Typography>
-              <Typography
-                variant="body1"
+              <Box
                 sx={{
-                  whiteSpace: "pre-wrap",
                   lineHeight: 1.8,
+                  "& img": { maxWidth: "100%", height: "auto" },
+                  "& blockquote": { borderLeft: "4px solid", borderLeftColor: "divider", pl: 2, ml: 0 },
                 }}
-              >
-                {currentExamPart.description}
-              </Typography>
+                dangerouslySetInnerHTML={{ __html: currentExamPart.description }}
+              />
             </Paper>
           )}
 
@@ -1065,6 +1093,38 @@ export default function ExamPage() {
             ← Previous Part
           </Button>
 
+          <Box sx={{ display: "flex", gap: 1, overflowX: "auto" }}>
+            {allExamsFlat.map((exam, index) => {
+              const Icon =
+                ExamTypeIcons[exam.examType as keyof typeof ExamTypeIcons];
+              const isCurrentPart = index === currentExamPartIndex;
+              let questionsInPart = 0;
+              let answeredInPart = 0;
+
+              exam.questions.forEach((q: any) => {
+                questionsInPart++;
+
+                if (session.answers[q.id]?.length > 0) {
+                  answeredInPart++;
+                }
+              });
+
+              return (
+                <Button
+                  key={index}
+                  variant={isCurrentPart ? "contained" : "outlined"}
+                  color={isCurrentPart ? "primary" : "inherit"}
+                  onClick={() => navigateToPart(index)}
+                  startIcon={<Icon />}
+                  sx={{ whiteSpace: "nowrap" }}
+                  size="small"
+                >
+                  {`Part ${index + 1} (${answeredInPart}/${questionsInPart})`}
+                </Button>
+              );
+            })}
+          </Box>
+
           {currentExamPartIndex === allExamsFlat.length - 1 ? (
             <Button
               variant="contained"
@@ -1084,66 +1144,8 @@ export default function ExamPage() {
         </Box>
       </Paper>
 
-      {/* Part Navigator Sidebar */}
-      <Paper
-        elevation={3}
-        sx={{
-          position: "fixed",
-          right: 20,
-          top: "50%",
-          transform: "translateY(-50%)",
-          width: 200,
-          maxHeight: "60vh",
-          overflow: "auto",
-          p: 2,
-          display: { xs: "none", lg: "block" },
-          zIndex: 1000,
-        }}
-      >
-        <Typography variant="h6" sx={{ mb: 2 }}>
-          Parts
-        </Typography>
-        {allExamsFlat.map((exam, index) => {
-          const Icon =
-            ExamTypeIcons[exam.examType as keyof typeof ExamTypeIcons];
-          const isCurrentPart = index === currentExamPartIndex;
-          let questionsInPart = 0;
-          let answeredInPart = 0;
-
-          exam.questions.forEach((q: any) => {
-            questionsInPart++;
-
-            if (session.answers[q.id]?.length > 0) {
-              answeredInPart++;
-            }
-          });
-
-          return (
-            <Button
-              key={index}
-              fullWidth
-              variant={isCurrentPart ? "contained" : "outlined"}
-              color={isCurrentPart ? "primary" : "inherit"}
-              onClick={() => navigateToPart(index)}
-              sx={{
-                mb: 1,
-                justifyContent: "flex-start",
-                textAlign: "left",
-              }}
-              startIcon={<Icon />}
-            >
-              <Box sx={{ width: "100%" }}>
-                <Typography variant="caption" display="block">
-                  Part {index + 1}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {answeredInPart}/{questionsInPart}
-                </Typography>
-              </Box>
-            </Button>
-          );
-        })}
-      </Paper>
+      {/* Part Navigator Sidebar (converted to horizontal bar above bottom controls) */}
+      {/* Removed fixed right sidebar to use a horizontal navigator placed earlier in the layout. */}
 
       {/* Submission Result Dialog */}
       <Dialog 
@@ -1163,9 +1165,175 @@ export default function ExamPage() {
           </Box>
         </DialogTitle>
         <DialogContent>
-          <Typography variant="body1" sx={{ mb: 2 }}>
-            {submissionDialog.message}
-          </Typography>
+          {/* Render returned exam results for the student when available */}
+          {submissionDialog.success && submissionDialog.details && submissionDialog.details.length > 0 && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="h6" sx={{ mb: 1, fontWeight: "bold" }}>
+                Kết quả chi tiết
+              </Typography>
+              <Stack spacing={2}>
+                {submissionDialog.details.map((detail: any, idx: number) => {
+                  const data = detail?.data ?? detail; // support both response.data or direct data
+                  if (!data) return null;
+
+                  // Case A: Old shape (per-exam summary with userResponses)
+                  if (Array.isArray(data.userResponses)) {
+                    const Icon = ExamTypeIcons[data.examType as keyof typeof ExamTypeIcons] || Quiz;
+                    const color = ExamTypeColors[data.examType as keyof typeof ExamTypeColors] || "#1976d2";
+
+                    return (
+                      <Card key={idx} sx={{ borderLeft: `4px solid ${color}` }}>
+                        <CardContent>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                            <Avatar sx={{ bgcolor: color, width: 32, height: 32 }}>
+                              <Icon sx={{ fontSize: 18 }} />
+                            </Avatar>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                              {data.examType}
+                            </Typography>
+                            {isManualGraded(data.examType) && (
+                              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                                Chưa được chấm điểm
+                              </Typography>
+                            )}
+                          </Box>
+
+                          {data.userResponses.length > 0 ? (
+                            <Box sx={{ mt: 1 }}>
+                              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                                Câu trả lời của bạn:
+                              </Typography>
+                              <Stack spacing={1} sx={{ maxHeight: 260, overflowY: "auto" }}>
+                                {data.userResponses.map((ur: any, i: number) => (
+                                  <Paper key={i} variant="outlined" sx={{ p: 1.5 }}>
+                                    <Typography variant="body2" sx={{ fontWeight: 600, mb: .5 }}>
+                                      Q{ur.questionId}: {ur.questionText}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ mb: .5 }}>
+                                      Trả lời: {ur.content}
+                                    </Typography>
+                                    {!isManualGraded(data.examType) && typeof ur.score !== "undefined" && (
+                                      <Typography variant="caption" color={ur.score > 0 ? "success.main" : "error.main"}>
+                                        Điểm: {ur.score}
+                                      </Typography>
+                                    )}
+                                    {ur.submittedAt && (
+                                      <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
+                                        Nộp lúc: {new Date(ur.submittedAt).toLocaleString()}
+                                      </Typography>
+                                    )}
+                                  </Paper>
+                                ))}
+                              </Stack>
+                            </Box>
+                          ) : (
+                            <Typography variant="body2" sx={{ mt: 1 }} color="text.secondary">
+                              Chưa có dữ liệu câu trả lời.
+                            </Typography>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  }
+
+                  // Case B: New shape (term detail with exams -> questions -> answers)
+                  if (Array.isArray(data.exams)) {
+                    return (
+                      <Card key={idx} sx={{ borderLeft: "4px solid #1976d2" }}>
+                        <CardContent>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+                            Kỳ thi #{data.termId} • Người dùng #{data.userId} • {new Date(data.createdAt).toLocaleString()}
+                          </Typography>
+
+                          <Stack spacing={2} sx={{ maxHeight: 360, overflowY: "auto" }}>
+                            {data.exams.map((exam: any, eIdx: number) => {
+                              const Icon = ExamTypeIcons[exam.examType as keyof typeof ExamTypeIcons] || Quiz;
+                              const color = ExamTypeColors[exam.examType as keyof typeof ExamTypeColors] || "#1976d2";
+                              return (
+                                <Box key={eIdx}>
+                                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                                    <Avatar sx={{ bgcolor: color, width: 28, height: 28 }}>
+                                      <Icon sx={{ fontSize: 16 }} />
+                                    </Avatar>
+                                    <Typography sx={{ fontWeight: 700 }}>
+                                      {exam.examType} {exam.title ? `• ${exam.title}` : ""}
+                                    </Typography>
+                                  </Box>
+                                  <Stack spacing={1.5}>
+                                    {exam.questions.map((q: any, qIdx: number) => (
+                                      <Paper key={q.id ?? qIdx} variant="outlined" sx={{ p: 1.5 }}>
+                                        <Typography variant="body2" sx={{ fontWeight: 600, mb: .5 }}>
+                                          Q{qIdx + 1}: <span dangerouslySetInnerHTML={{ __html: q.questionText }} />
+                                        </Typography>
+                                        <Stack spacing={.5}>
+                                          {q.answers.map((ans: any) => (
+                                            <Typography key={ans.id} variant="body2" sx={{ color: ans.isCorrect ? "success.main" : "text.primary" }}>
+                                              {ans.isCorrect ? "✔ " : "• "}{ans.answerText}
+                                            </Typography>
+                                          ))}
+                                        </Stack>
+                                      </Paper>
+                                    ))}
+                                  </Stack>
+                                </Box>
+                              );
+                            })}
+                          </Stack>
+                        </CardContent>
+                      </Card>
+                    );
+                  }
+
+                  // Case C: Unified bulk submit summary items (no answers)
+                  if (
+                    typeof data.selectedTrue === "number" &&
+                    typeof data.totalQuestion === "number" &&
+                    typeof data.examType === "string"
+                  ) {
+                    const Icon = ExamTypeIcons[data.examType as keyof typeof ExamTypeIcons] || Quiz;
+                    const color = ExamTypeColors[data.examType as keyof typeof ExamTypeColors] || "#1976d2";
+                    const percentage = data.totalQuestion > 0 ? Math.round((data.selectedTrue / data.totalQuestion) * 100) : 0;
+                    return (
+                      <Card key={idx} sx={{ borderLeft: `4px solid ${color}` }}>
+                        <CardContent>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                            <Avatar sx={{ bgcolor: color, width: 32, height: 32 }}>
+                              <Icon sx={{ fontSize: 18 }} />
+                            </Avatar>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                              {data.examType} • Exam #{data.examId}
+                            </Typography>
+                          </Box>
+                          {isManualGraded(data.examType) ? (
+                            <Typography variant="body2" sx={{ mt: .5 }} color="text.primary">
+                              Chưa được chấm điểm
+                            </Typography>
+                          ) : (
+                            <Stack direction="row" spacing={2} alignItems="center">
+                              <Typography variant="h5" sx={{ fontWeight: 700 }} color={percentage >= 70 ? "success.main" : percentage >= 50 ? "warning.main" : "error.main"}>
+                                {data.selectedTrue}/{data.totalQuestion}
+                              </Typography>
+                              <Typography variant="body1" color="text.primary">
+                                ({percentage}%)
+                              </Typography>
+                              {typeof data.score === "number" && (
+                                <Typography variant="body2" sx={{ ml: 1 }} color="text.primary">
+                                  Điểm: {data.score}
+                                </Typography>
+                              )}
+                            </Stack>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  }
+
+                  // Fallback if shape is unknown
+                  return null;
+                })}
+              </Stack>
+            </Box>
+          )}
 
           {/* Show links for failed exam types */}
           {!submissionDialog.success && submissionDialog.failedTypes && submissionDialog.failedTypes.length > 0 && (

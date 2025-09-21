@@ -6,7 +6,6 @@ import BasicToolbar from "@/components/base/MaterialUI-Basic/Toolbar";
 import BasicTypography from "@/components/base/MaterialUI-Basic/Typography";
 import DarkNightChange from "@/components/common/DarkNightChange";
 import { APP_ROUTE } from "@/consts/app-route";
-import HomeIcon from "@mui/icons-material/Home";
 import MenuIcon from "@mui/icons-material/Menu";
 import { Divider, useTheme } from "@mui/material";
 import { usePathname, useRouter } from "next/navigation";
@@ -40,6 +39,7 @@ const Header = () => {
         sx={{
           backgroundColor: theme.palette.background.paper,
           color: theme.palette.text.primary,
+          borderRadius: 0,
         }}
       >
         <BasicToolbar
@@ -64,20 +64,17 @@ const Header = () => {
                 <Image
                   src={AppConfig.logoUrl}
                   alt="Logo"
-                  width={40}
+                  width={120}
                   height={40}
                   style={{ objectFit: "contain" }}
                 />
-              ) : (
-                <HomeIcon style={{ color: theme.palette.text.primary }} />
-              )}
-              <BasicTypography
+              ) : <BasicTypography
                 variant="h6"
                 component="span"
                 sx={{ color: theme.palette.text.primary }}
               >
                 LUYỆN THI VSTEP
-              </BasicTypography>
+              </BasicTypography>}
             </BasicStack>
             <BasicStack
               direction="row"

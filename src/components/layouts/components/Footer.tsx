@@ -8,7 +8,7 @@ type FooterProps = {};
 const Footer = (_: FooterProps) => {
   return (
     <Box sx={{ backgroundColor: "#000" }}>
-      <Container maxWidth="xl" sx={{ py: 12 }}>
+      <Container maxWidth="xl" sx={{ py: 6 }}>
         <Grid2 container spacing={2}>
           <Grid2 size={{ xs: 3 }}>
             {AppConfig.logoUrl ? (
@@ -169,9 +169,9 @@ const Footer = (_: FooterProps) => {
         </Grid2>
       </Container>
 
-      <Box sx={{ borderTop: "1px solid #545454", py: 6 }}>
+      <Box sx={{ borderTop: "1px solid #545454", py: 2 }}>
         <Typography variant="body1" sx={{ color: "#fff" }} align="center">
-          Copyright © 2024
+          Copyright © {new Date().getFullYear()}
         </Typography>
       </Box>
     </Box>

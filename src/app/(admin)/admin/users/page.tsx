@@ -307,7 +307,11 @@ const UsersPage = () => {
 
   return (
     <Box>
-      <Typography variant="h4" sx={{ mb: 3 }}>
+      <Typography
+        component="h1"
+        variant="h4"
+        sx={{ fontWeight: "bold", color: "text.primary" }}
+      >
         Quản lý người dùng
       </Typography>
 

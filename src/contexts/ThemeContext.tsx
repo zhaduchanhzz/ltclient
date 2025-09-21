@@ -55,7 +55,8 @@ const getInitialTheme = (): Mode => {
 };
 
 const initThemeContextState = {
-  mode: getInitialTheme(),
+  // Always start as light to match SSR output and avoid hydration mismatch.
+  mode: "light" as Mode,
 };
 
 const ThemeContext = createContext<ThemeContextType>(initThemeContextState);
@@ -102,10 +103,23 @@ export const ThemeContextProvider = ({
     }
   }, []);
 
-  // Persist theme changes to localStorage
+  // Persist theme changes to localStorage and sync DOM for CSS-only consumers
   useEffect(() => {
     if (mounted) {
       LocalStorage.set(THEME_STORAGE_KEY, themeState.mode);
+
+      // Sync a root class and color-scheme for non-MUI CSS and system UI colors
+      if (typeof document !== "undefined") {
+        const root = document.documentElement;
+
+        if (themeState.mode === "dark") {
+          root.classList.add("dark-mode");
+          root.style.colorScheme = "dark";
+        } else {
+          root.classList.remove("dark-mode");
+          root.style.colorScheme = "light";
+        }
+      }
     }
   }, [themeState.mode, mounted]);
 
