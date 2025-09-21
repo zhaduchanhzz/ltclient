@@ -27,6 +27,7 @@ const menuItems = [
   { text: "Quản lý đơn hàng", icon: <ShoppingCartIcon />, path: "/admin/orders" },
   { text: "Quản lý bài thi", icon: <SchoolIcon />, path: "/admin/exams" },
   { text: "Quản lý Blog", icon: <ArticleIcon />, path: "/admin/posts" },
+  { text: "Chấm thi", icon: <ArticleIcon />, path: "/admin/exams/marking" },
 ];
 
 export default function AdminSidebar({ open, drawerWidth }: AdminSidebarProps) {

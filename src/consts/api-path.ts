@@ -24,4 +24,5 @@ export const API_PATH = {
   UPLOAD_FILE: "/audio/upload",
   DOWNLOAD_FILE: "/audio/",
   HISTORY: "/history",
+  EXAMS_HISTORY: "/exams/history",
 };

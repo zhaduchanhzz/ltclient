@@ -29,9 +29,11 @@ import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
-// UI-only page: data fetching will be handled by the user.
-// We provide mock data and client-side filtering/pagination for the UI.
+// Switch from UI-only to real API: useGetTermHistoryQuery
 
+import { useGetHistoryQuery } from "@/services/apis/exam";
+
+// UI item type (mapped from API)
 type HistoryItem = {
   id: string;
   examName: string;
@@ -41,44 +43,6 @@ type HistoryItem = {
   score?: number; // optional if not graded yet
   status: "Passed" | "Failed" | "Pending";
 };
-
-const MOCK_DATA: HistoryItem[] = [
-  {
-    id: "1",
-    examName: "VSTEP Full Test 01",
-    type: "Full",
-    date: "2025-08-18",
-    durationMin: 180,
-    score: 78,
-    status: "Passed",
-  },
-  {
-    id: "2",
-    examName: "Listening Practice Set A",
-    type: "Listening",
-    date: "2025-09-01",
-    durationMin: 45,
-    score: 22,
-    status: "Failed",
-  },
-  {
-    id: "3",
-    examName: "Writing Task Review",
-    type: "Writing",
-    date: "2025-09-10",
-    durationMin: 60,
-    status: "Pending",
-  },
-  {
-    id: "4",
-    examName: "Reading Practice B2",
-    type: "Reading",
-    date: "2025-09-12",
-    durationMin: 50,
-    score: 28,
-    status: "Passed",
-  },
-];
 
 const statusColor = (status: HistoryItem["status"]) => {
   switch (status) {
@@ -104,9 +68,29 @@ const History: React.FC = () => {
   const [page, setPage] = useState(1);
   const pageSize = 5;
 
+  // Fetch history via API without passing termId
+  const { data: apiResp, isLoading, isError } = useGetHistoryQuery(true);
+  const apiItems = apiResp?.data ?? [];
+
+  // Map API data to UI data
+  const mapped: HistoryItem[] = useMemo(() => {
+    return apiItems.map((it: any) => {
+      const total = (it.listeningScore ?? 0) + (it.readingScore ?? 0) + (it.speakingScore ?? 0) + (it.writingScore ?? 0);
+      return {
+        id: String(it.id ?? ""),
+        examName: `Kỳ thi #${it.id ?? "?"}`,
+        type: "Full",
+        date: it.createdAt ?? "",
+        durationMin: 0,
+        score: total,
+        status: "Pending",
+      } as HistoryItem;
+    });
+  }, [apiItems]);
+
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
-    return MOCK_DATA.filter((it) => {
+    return mapped.filter((it) => {
       const matchTerm = !term ||
         it.examName.toLowerCase().includes(term) ||
         it.type.toLowerCase().includes(term);
@@ -116,7 +100,7 @@ const History: React.FC = () => {
       const inTo = !dateTo || it.date <= dateTo;
       return matchTerm && matchStatus && matchType && inFrom && inTo;
     });
-  }, [search, status, type, dateFrom, dateTo]);
+  }, [mapped, search, status, type, dateFrom, dateTo]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const pageItems = filtered.slice((page - 1) * pageSize, page * pageSize);
@@ -156,91 +140,101 @@ const History: React.FC = () => {
         </Stack>
 
         {/* Filters */}
-        <Paper elevation={0} sx={{ p: 2, mb: 2, bgcolor: "background.paper", borderRadius: 2 }}>
-          <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-            <TextField
-              fullWidth
-              label="Tìm kiếm bài thi"
-              placeholder="Nhập tên bài thi hoặc kỹ năng..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
-            />
+        {/*<Paper elevation={0} sx={{ p: 2, mb: 2, bgcolor: "background.paper", borderRadius: 2 }}>*/}
+        {/*  <Stack direction={{ xs: "column", md: "row" }} spacing={2}>*/}
+        {/*    <TextField*/}
+        {/*      fullWidth*/}
+        {/*      label="Tìm kiếm bài thi"*/}
+        {/*      placeholder="Nhập tên bài thi hoặc kỹ năng..."*/}
+        {/*      value={search}*/}
+        {/*      onChange={(e) => {*/}
+        {/*        setSearch(e.target.value);*/}
+        {/*        setPage(1);*/}
+        {/*      }}*/}
+        {/*      InputProps={{*/}
+        {/*        startAdornment: (*/}
+        {/*          <InputAdornment position="start">*/}
+        {/*            <SearchIcon />*/}
+        {/*          </InputAdornment>*/}
+        {/*        ),*/}
+        {/*      }}*/}
+        {/*    />*/}
 
-            <FormControl fullWidth>
-              <InputLabel id="status-label">Trạng thái</InputLabel>
-              <Select
-                labelId="status-label"
-                label="Trạng thái"
-                value={status}
-                onChange={(e) => {
-                  setStatus(e.target.value as any);
-                  setPage(1);
-                }}
-              >
-                <MenuItem value="">Tất cả</MenuItem>
-                <MenuItem value="Passed">Đạt</MenuItem>
-                <MenuItem value="Failed">Chưa đạt</MenuItem>
-                <MenuItem value="Pending">Đang chấm</MenuItem>
-              </Select>
-            </FormControl>
+        {/*    <FormControl fullWidth>*/}
+        {/*      <InputLabel id="status-label">Trạng thái</InputLabel>*/}
+        {/*      <Select*/}
+        {/*        labelId="status-label"*/}
+        {/*        label="Trạng thái"*/}
+        {/*        value={status}*/}
+        {/*        onChange={(e) => {*/}
+        {/*          setStatus(e.target.value as any);*/}
+        {/*          setPage(1);*/}
+        {/*        }}*/}
+        {/*      >*/}
+        {/*        <MenuItem value="">Tất cả</MenuItem>*/}
+        {/*        <MenuItem value="Passed">Đạt</MenuItem>*/}
+        {/*        <MenuItem value="Failed">Chưa đạt</MenuItem>*/}
+        {/*        <MenuItem value="Pending">Đang chấm</MenuItem>*/}
+        {/*      </Select>*/}
+        {/*    </FormControl>*/}
 
-            <FormControl fullWidth>
-              <InputLabel id="type-label">Kỹ năng</InputLabel>
-              <Select
-                labelId="type-label"
-                label="Kỹ năng"
-                value={type}
-                onChange={(e) => {
-                  setType(e.target.value as any);
-                  setPage(1);
-                }}
-              >
-                <MenuItem value="">Tất cả</MenuItem>
-                <MenuItem value="Full">Tổng hợp</MenuItem>
-                <MenuItem value="Listening">Nghe</MenuItem>
-                <MenuItem value="Reading">Đọc</MenuItem>
-                <MenuItem value="Writing">Viết</MenuItem>
-                <MenuItem value="Speaking">Nói</MenuItem>
-              </Select>
-            </FormControl>
+        {/*    <FormControl fullWidth>*/}
+        {/*      <InputLabel id="type-label">Kỹ năng</InputLabel>*/}
+        {/*      <Select*/}
+        {/*        labelId="type-label"*/}
+        {/*        label="Kỹ năng"*/}
+        {/*        value={type}*/}
+        {/*        onChange={(e) => {*/}
+        {/*          setType(e.target.value as any);*/}
+        {/*          setPage(1);*/}
+        {/*        }}*/}
+        {/*      >*/}
+        {/*        <MenuItem value="">Tất cả</MenuItem>*/}
+        {/*        <MenuItem value="Full">Tổng hợp</MenuItem>*/}
+        {/*        <MenuItem value="Listening">Nghe</MenuItem>*/}
+        {/*        <MenuItem value="Reading">Đọc</MenuItem>*/}
+        {/*        <MenuItem value="Writing">Viết</MenuItem>*/}
+        {/*        <MenuItem value="Speaking">Nói</MenuItem>*/}
+        {/*      </Select>*/}
+        {/*    </FormControl>*/}
 
-            <TextField
-              fullWidth
-              label="Từ ngày"
-              type="date"
-              value={dateFrom}
-              onChange={(e) => {
-                setDateFrom(e.target.value);
-                setPage(1);
-              }}
-              InputLabelProps={{ shrink: true }}
-            />
-            <TextField
-              fullWidth
-              label="Đến ngày"
-              type="date"
-              value={dateTo}
-              onChange={(e) => {
-                setDateTo(e.target.value);
-                setPage(1);
-              }}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Stack>
-        </Paper>
+        {/*    <TextField*/}
+        {/*      fullWidth*/}
+        {/*      label="Từ ngày"*/}
+        {/*      type="date"*/}
+        {/*      value={dateFrom}*/}
+        {/*      onChange={(e) => {*/}
+        {/*        setDateFrom(e.target.value);*/}
+        {/*        setPage(1);*/}
+        {/*      }}*/}
+        {/*      InputLabelProps={{ shrink: true }}*/}
+        {/*    />*/}
+        {/*    <TextField*/}
+        {/*      fullWidth*/}
+        {/*      label="Đến ngày"*/}
+        {/*      type="date"*/}
+        {/*      value={dateTo}*/}
+        {/*      onChange={(e) => {*/}
+        {/*        setDateTo(e.target.value);*/}
+        {/*        setPage(1);*/}
+        {/*      }}*/}
+        {/*      InputLabelProps={{ shrink: true }}*/}
+        {/*    />*/}
+        {/*  </Stack>*/}
+        {/*</Paper>*/}
 
         {/* Results */}
-        {pageItems.length === 0 ? (
+        {isLoading ? (
+          <Paper elevation={0} sx={{ p: 4, textAlign: "center", bgcolor: "background.paper", borderRadius: 2 }}>
+            <Typography variant="h6" sx={{ mb: 1 }}>Đang tải dữ liệu...</Typography>
+            <Typography variant="body2" color="text.secondary">Vui lòng chờ trong giây lát.</Typography>
+          </Paper>
+        ) : isError ? (
+          <Paper elevation={0} sx={{ p: 4, textAlign: "center", bgcolor: "background.paper", borderRadius: 2 }}>
+            <Typography variant="h6" sx={{ mb: 1 }}>Lỗi tải dữ liệu</Typography>
+            <Typography variant="body2" color="text.secondary">Không thể tải lịch sử ở thời điểm này. Vui lòng thử lại.</Typography>
+          </Paper>
+        ) : pageItems.length === 0 ? (
           <Paper elevation={0} sx={{ p: 4, textAlign: "center", bgcolor: "background.paper", borderRadius: 2 }}>
             <Typography variant="h6" sx={{ mb: 1 }}>Không có dữ liệu</Typography>
             <Typography variant="body2" color="text.secondary">

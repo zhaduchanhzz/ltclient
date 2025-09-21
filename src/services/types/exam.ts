@@ -101,6 +101,18 @@ export type UserHistoryResponse = {
   terms: UserHistory[];
 };
 
+// Term-specific history detail now matches API: array of summary items per term
+export type TermHistoryDetailItem = {
+  id: number;
+  listeningScore: number;
+  readingScore: number;
+  speakingScore: number;
+  writingScore: number;
+  createdAt: string; // e.g., "2025-09-21"
+};
+
+export type TermHistoryDetail = TermHistoryDetailItem[];
+
 export type TakeExamRequest = {
   termId: string;
   userId: string;
@@ -243,6 +255,24 @@ export type GradingResponseDto = {
   userId: number;
   status: string;
   requestedAt: string;
+};
+
+// Pending grading request list item and page payload for /grading-request/pending
+export type PendingGradingRequestItem = {
+  requestId: number;
+  termId: number;
+  examId: number;
+  userId: number;
+  status: string;
+  requestedAt: string;
+};
+
+export type PendingGradingPageData = {
+  content: PendingGradingRequestItem[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number; // current page index
 };
 
 export type PracticeExam = {

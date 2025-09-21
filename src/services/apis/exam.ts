@@ -20,6 +20,8 @@ import {
   UserWriting,
   BulkExamSubmitRequest,
   BulkExamSubmitResponseData,
+  PendingGradingPageData,
+  TermHistoryDetail,
 } from "../types/exam";
 
 export const useExamsQuery = (enabled = false) => {
@@ -186,6 +188,49 @@ export const useListExamsByTypeQuery = (enabled = false) => {
     queryFn: () => {
       return HttpClient.get<null, CommonResponse<ListExamByTypeResponse>>(
         API_PATH.EXAMS_LIST_BY_TYPE,
+      );
+    },
+    enabled,
+  });
+};
+
+// Fetch pending grading requests with pagination and optional keyword
+export const usePendingGradingRequestsQuery = (
+  params: { page?: number; size?: number; keyword?: string },
+  enabled = false,
+) => {
+  return useQuery({
+    queryKey: [API_PATH.GRADING_REQUEST, "pending", params],
+    queryFn: () => {
+      return HttpClient.get<null, CommonResponse<PendingGradingPageData>>(
+        API_PATH.GRADING_REQUEST + "/pending",
+        { params: { page: params.page ?? 0, size: params.size ?? 10, keyword: params.keyword || undefined } },
+      );
+    },
+    enabled,
+  });
+};
+
+// Fetch term history detail by termId from absolute URL
+export const useGetTermHistoryQuery = (termId: string | number, enabled = false) => {
+  return useQuery({
+    queryKey: [API_PATH.EXAMS_HISTORY, "history", termId],
+    queryFn: () => {
+      return HttpClient.get<null, CommonResponse<TermHistoryDetail>>(
+        API_PATH.EXAMS_HISTORY + `/${termId}`,
+      );
+    },
+    enabled,
+  });
+};
+
+// Fetch user history summary without passing termId
+export const useGetHistoryQuery = (enabled = false) => {
+  return useQuery({
+    queryKey: [API_PATH.EXAMS_HISTORY, "history", "all"],
+    queryFn: () => {
+      return HttpClient.get<null, CommonResponse<TermHistoryDetail>>(
+        API_PATH.EXAMS_HISTORY,
       );
     },
     enabled,
