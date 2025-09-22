@@ -212,6 +212,18 @@ export const usePendingGradingRequestsQuery = (
 };
 
 // Fetch term history detail by termId from absolute URL
+export const useMarkGradingRequestMutation = () => {
+  return useMutation({
+    mutationFn: (data: { id: number; scoreMark: number; comments: string }) => {
+      const { id, scoreMark, comments } = data;
+      return HttpClient.patch<
+        { scoreMark: number; comments: string },
+        CommonResponse<any>
+      >(API_PATH.GRADING_REQUEST + `/mark/${id}`, { scoreMark, comments });
+    },
+  });
+};
+
 export const useGetTermHistoryQuery = (termId: string | number, enabled = false) => {
   return useQuery({
     queryKey: [API_PATH.EXAMS_HISTORY, "history", termId],

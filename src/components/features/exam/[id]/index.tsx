@@ -101,10 +101,10 @@ export default function ExamPage() {
     try {
       setRequestingExamIds((prev) => [...new Set([...prev, examId])]);
       await gradingRequestMutation.mutateAsync({ termId: session.termId, examId });
-      updateAppState({ appAlertInfo: { message: `Đã gửi yêu cầu chấm điểm cho Exam #${examId}` , severity: "success" } });
+      updateAppState({ appAlertInfo: { message: `Đã gửi yêu cầu chấm điểm cho Exam #${examId}`, severity: "success" } });
     } catch (e) {
       console.error("Failed to request grading for exam", examId, e);
-      updateAppState({ appAlertInfo: { message: `Gửi yêu cầu chấm điểm thất bại cho Exam #${examId}. Vui lòng thử lại.` , severity: "error" } });
+      updateAppState({ appAlertInfo: { message: `Gửi yêu cầu chấm điểm thất bại cho Exam #${examId}. Vui lòng thử lại.`, severity: "error" } });
     } finally {
       setRequestingExamIds((prev) => prev.filter((id) => id !== examId));
     }
@@ -337,7 +337,7 @@ export default function ExamPage() {
       // Redirect to homepage after successful grading request
       router.push("/");
     } else if (successCount > 0 && failedCount > 0) {
-      updateAppState({ appAlertInfo: { message: `Gửi yêu cầu chấm điểm: thành công ${successCount}, thất bại ${failedCount}.` , severity: "warning" } });
+      updateAppState({ appAlertInfo: { message: `Gửi yêu cầu chấm điểm: thành công ${successCount}, thất bại ${failedCount}.`, severity: "warning" } });
       // Redirect to homepage even with partial success
       router.push("/");
     } else {

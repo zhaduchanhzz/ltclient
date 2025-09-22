@@ -5,6 +5,7 @@ const InitColorSchemeScript = () => {
   const scriptContent = "!function(){try{document.documentElement.classList.remove('dark-mode');document.documentElement.style.colorScheme='light'}catch(e){}}();";
 
   return (
+    // eslint-disable-next-line @next/next/no-before-interactive-script-outside-document
     <Script
       id="init-color-scheme"
       strategy="beforeInteractive"

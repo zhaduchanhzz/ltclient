@@ -7,7 +7,6 @@ import {
   Card,
   CircularProgress,
   InputAdornment,
-  Paper,
   Stack,
   Table,
   TableBody,
@@ -20,15 +19,14 @@ import {
   Typography,
   Chip,
   Button,
+  Paper,
 } from "@mui/material";
 import { Search as SearchIcon } from "@mui/icons-material";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 const formatDateTime = (iso?: string) => {
-  if (!iso) {
-    return "";
-  }
+  if (!iso) return "";
 
   try {
     const d = new Date(iso);
@@ -64,18 +62,13 @@ const MarkingRequestsPage = () => {
   const items: PendingGradingRequestItem[] = data?.data?.content || [];
   const totalElements = data?.data?.totalElements || 0;
 
-  const handleChangePage = (_: unknown, newPage: number) => {
-    setPage(newPage);
-  };
+  const handleChangePage = (_: unknown, newPage: number) => setPage(newPage);
 
-  const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
 
-  // In case backend doesn't support keyword, client-side filter as a fallback
   const displayedItems = useMemo(() => {
     if (!searchQuery) return items;
     const q = searchQuery.toLowerCase();
@@ -100,20 +93,21 @@ const MarkingRequestsPage = () => {
         Chấm thi
       </Typography>
 
-      <Stack spacing={3}>
-        {/* Search */}
-        <Card sx={{ p: 3 }}>
-          <Stack direction="row" spacing={2} alignItems="center">
+      <Stack spacing={2}>
+        {/* Card gom Search + Table */}
+        <Card>
+          <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "divider" }}>
             <TextField
               placeholder="Tìm kiếm yêu cầu chấm..."
               variant="outlined"
               size="small"
-              sx={{ flex: 1 }}
+              fullWidth
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
                 setPage(0);
               }}
+              sx={{ minWidth: 240, maxWidth: 350, flex: 1 }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -122,11 +116,8 @@ const MarkingRequestsPage = () => {
                 ),
               }}
             />
-          </Stack>
-        </Card>
+          </Box>
 
-        {/* Table */}
-        <Card>
           {isLoading ? (
             <Box display="flex" justifyContent="center" alignItems="center" height={300}>
               <CircularProgress />
@@ -158,7 +149,19 @@ const MarkingRequestsPage = () => {
                         <TableCell>{row.examId}</TableCell>
                         <TableCell>{row.userId}</TableCell>
                         <TableCell>
-                          <Chip label={row.status || "PENDING"} size="small" color={row.status?.toUpperCase() === "PENDING" ? "warning" : row.status?.toUpperCase() === "APPROVED" ? "success" : row.status?.toUpperCase() === "REJECTED" ? "error" : "default"} />
+                          <Chip
+                            label={row.status || "PENDING"}
+                            size="small"
+                            color={
+                              row.status?.toUpperCase() === "PENDING"
+                                ? "warning"
+                                : row.status?.toUpperCase() === "APPROVED"
+                                  ? "success"
+                                  : row.status?.toUpperCase() === "REJECTED"
+                                    ? "error"
+                                    : "default"
+                            }
+                          />
                         </TableCell>
                         <TableCell>{formatDateTime(row.requestedAt)}</TableCell>
                         <TableCell align="center">
@@ -168,7 +171,7 @@ const MarkingRequestsPage = () => {
                     ))}
                     {(items.length === 0 || (searchQuery && displayedItems.length === 0)) && (
                       <TableRow>
-                        <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
+                        <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
                           <Typography variant="body2" color="text.secondary">
                             {searchQuery ? "Không tìm thấy yêu cầu phù hợp" : "Không có yêu cầu chấm nào"}
                           </Typography>
@@ -178,6 +181,7 @@ const MarkingRequestsPage = () => {
                   </TableBody>
                 </Table>
               </TableContainer>
+
               <TablePagination
                 rowsPerPageOptions={[5, 10, 25]}
                 component="div"

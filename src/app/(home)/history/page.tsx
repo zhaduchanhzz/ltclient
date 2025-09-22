@@ -5,13 +5,7 @@ import {
   Box,
   Container,
   Typography,
-  TextField,
-  InputAdornment,
   IconButton,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Stack,
   Table,
   TableBody,
@@ -25,7 +19,6 @@ import {
   useMediaQuery,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 

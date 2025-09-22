@@ -91,7 +91,9 @@ const Header = () => {
                       component="span"
                       onClick={() => {
                         if (
-                          nav.href === APP_ROUTE.EXAM_ROOM &&
+                          (nav.href === APP_ROUTE.EXAM_ROOM ||
+                          nav.href === APP_ROUTE.PRACTICE_DASHBOARD ||
+                          nav.href === APP_ROUTE.HISTORY) &&
                           !CookieStorage.get(APP_LOCAL_STORAGE_KEY.ACCESS_TOKEN)
                         ) {
                           push(APP_ROUTE.LOGIN);

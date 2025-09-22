@@ -18,6 +18,9 @@ import {
   Typography,
 } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
+import { usePostFileMutation } from "@/services/apis/upload";
+import { ApiServerURL } from "@/utils/config";
+import { API_PATH } from "@/consts/api-path";
 
 interface QuestionCardProps {
   session: ExamTermSession;
@@ -31,7 +34,7 @@ interface QuestionCardProps {
     isChecked?: boolean,
   ) => void;
   onWritingAnswerChange?: (questionId: number, text: string) => void;
-  onSpeakingAnswerChange?: (questionId: number, audioBase64: string) => void;
+  onSpeakingAnswerChange?: (questionId: number, audioFilename: string) => void;
 }
 
 export default function QuestionCard({
@@ -45,8 +48,10 @@ export default function QuestionCard({
   // Audio recording states for SPEAKING
   const [isRecording, setIsRecording] = useState(false);
   const [audioURL, setAudioURL] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
+  const postFileMutation = usePostFileMutation();
 
   // Audio player states for LISTENING
   // const [audioSrc, setAudioSrc] = useState<string>("");
@@ -99,33 +104,36 @@ export default function QuestionCard({
       const existingAudio = session.answers[currentQuestion.id]?.[0];
 
       if (existingAudio) {
-        // Preserve existing audio for review
+        // If existing answer is a filename (new flow), use server URL; otherwise try base64 (backward compatibility)
         try {
-          // Convert base64 back to blob URL for playback
-          const byteCharacters = atob(existingAudio);
-          const byteNumbers = new Array(byteCharacters.length);
+          if (/\.mp3$/i.test(existingAudio)) {
+            const url = `${ApiServerURL}${API_PATH.DOWNLOAD_FILE}${existingAudio}`;
+            setAudioURL(url);
+          } else {
+            // Convert base64 back to blob URL for playback (legacy)
+            const byteCharacters = atob(existingAudio);
+            const byteNumbers = new Array(byteCharacters.length);
 
-          for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+
+            const byteArray = new Uint8Array(byteNumbers);
+
+            const audioBlob = new Blob([byteArray], { type: "audio/mp3" });
+
+            const url = URL.createObjectURL(audioBlob);
+            setAudioURL(url);
           }
-
-          const byteArray = new Uint8Array(byteNumbers);
-          const audioBlob = new Blob([byteArray], { type: "audio/mp3" });
-          const url = URL.createObjectURL(audioBlob);
-
-          setAudioURL(url);
         } catch (error) {
-          console.error(
-            "Error recreating audio URL from existing data:",
-            error,
-          );
+          console.error("Error setting audio URL from existing data:", error);
           setAudioURL(null);
         }
       } else {
         // Reset audio state for new question without existing audio
         setAudioURL((prevAudioURL) => {
-          // Clear previous audio URL and cleanup
-          if (prevAudioURL) {
+          // Clear previous audio URL and cleanup if it was an object URL
+          if (prevAudioURL && prevAudioURL.startsWith("blob:")) {
             URL.revokeObjectURL(prevAudioURL);
           }
 
@@ -148,22 +156,29 @@ export default function QuestionCard({
         audioChunks.current.push(event.data);
       };
 
-      mediaRecorder.current.onstop = () => {
-        const audioBlob = new Blob(audioChunks.current, { type: "audio/mp3" });
+      mediaRecorder.current.onstop = async () => {
+        const audioBlob = new Blob(audioChunks.current, { type: "audio/webm" });
         const url = URL.createObjectURL(audioBlob);
         setAudioURL(url);
 
-        // Convert to base64
-        const reader = new FileReader();
+        // Upload the recorded file to backend and store returned filename
+        try {
+          setIsUploading(true);
+          const filename = `speaking_${currentQuestion.id}_${Date.now()}.webm`;
+          const file = new File([audioBlob], filename, {
+            type: audioBlob.type,
+          });
+          const res: any = await postFileMutation.mutateAsync(file);
+          const savedFilename = res ?? "";
 
-        reader.onloadend = () => {
-          const base64 = reader.result as string;
-          const base64Audio = base64.split(",")[1]; // Remove data URL prefix
-
-          onSpeakingAnswerChange?.(currentQuestion.id, base64Audio);
-        };
-
-        reader.readAsDataURL(audioBlob);
+          if (savedFilename) {
+            onSpeakingAnswerChange?.(currentQuestion.id, savedFilename);
+          }
+        } catch (e) {
+          console.error("Failed to upload speaking file:", e);
+        } finally {
+          setIsUploading(false);
+        }
 
         audioChunks.current = [];
       };
@@ -265,8 +280,9 @@ export default function QuestionCard({
                   startIcon={isRecording ? <Stop /> : <Mic />}
                   size="large"
                   sx={{ minWidth: 120 }}
+                  disabled={isUploading}
                 >
-                  {isRecording ? "Stop" : "Record"}
+                  {isUploading ? "Uploading..." : isRecording ? "Stop" : "Record"}
                 </Button>
 
                 {audioURL && (

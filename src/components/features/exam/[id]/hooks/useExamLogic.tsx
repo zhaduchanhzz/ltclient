@@ -1066,24 +1066,6 @@ export function useExamLogic() {
       const details = res?.data?.results || [];
 
       if (success) {
-        // After unified success, send grading requests for WRITING/SPEAKING parts
-        try {
-          const gradableIds = allExams
-            .filter((e) => e.examType === "WRITING" || e.examType === "SPEAKING")
-            .map((e) => e.id);
-
-          if (gradableIds.length > 0) {
-            await Promise.allSettled(
-              gradableIds.map((id) =>
-                gradingRequestMutation.mutateAsync({ termId: session.termId, examId: id }),
-              ),
-            );
-            console.log("Grading requests submitted for unified submit:", gradableIds);
-          }
-        } catch (e) {
-          console.error("Failed to send grading request(s) after unified submit:", e);
-        }
-
         setSession((prev) => (prev ? { ...prev, isCompleted: true } : null));
         clearPersistedState();
         return {

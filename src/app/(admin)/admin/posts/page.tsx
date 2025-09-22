@@ -246,7 +246,7 @@ const PostsPage = () => {
         Quản lý bài viết
       </Typography>
 
-      <Stack spacing={3}>
+      <Stack spacing={2}>
         {/* Unified Header + Table Block */}
         <Card sx={{ p: 2 }}>
           {/* Header: Search + Add */}
