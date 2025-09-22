@@ -28,7 +28,7 @@ export const AppConfig = {
     : null,
 
   // Logo
-  logoUrl: process.env.NEXT_PUBLIC_LOGO_URL || "",
+  logoUrl: process.env.NEXT_PUBLIC_LOGO_URL || "/logo.png",
 
   // Feedback Images
   feedbackImages: (() => {

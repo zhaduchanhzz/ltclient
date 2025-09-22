@@ -16,11 +16,11 @@ const Footer = (_: FooterProps) => {
                 <Image
                   src={AppConfig.logoUrl}
                   alt="Logo"
-                  width={200}
-                  height={60}
+                  width={40}
+                  height={40}
                   style={{
-                    maxHeight: 60,
-                    maxWidth: 200,
+                    maxHeight: 40,
+                    maxWidth: 40,
                     objectFit: "contain",
                     filter: "brightness(0) invert(1)",
                   }}

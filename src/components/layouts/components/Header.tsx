@@ -64,7 +64,7 @@ const Header = () => {
                 <Image
                   src={AppConfig.logoUrl}
                   alt="Logo"
-                  width={120}
+                  width={40}
                   height={40}
                   style={{ objectFit: "contain" }}
                 />

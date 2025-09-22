@@ -62,7 +62,7 @@ export default function AdminSidebar({ open, drawerWidth }: AdminSidebarProps) {
           <Image
             src={AppConfig.logoUrl}
             alt="Logo"
-            width={120}
+            width={40}
             height={40}
             style={{ objectFit: "contain" }}
           />
