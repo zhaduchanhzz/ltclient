@@ -28,6 +28,7 @@ import { useGetHistoryQuery } from "@/services/apis/exam";
 
 // UI item type (mapped from API)
 type HistoryItem = {
+  termId: number;
   id: string;
   examName: string;
   type: "Listening" | "Reading" | "Writing" | "Speaking" | "Full";
@@ -251,8 +252,8 @@ const History: React.FC = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {pageItems.map((it) => (
-                      <TableRow key={it.id} hover>
+                    {pageItems.map((it, index) => (
+                      <TableRow key={index} hover>
                         <TableCell>{it.examName}</TableCell>
                         <TableCell>{it.type}</TableCell>
                         <TableCell>{new Date(it.date).toLocaleDateString()}</TableCell>

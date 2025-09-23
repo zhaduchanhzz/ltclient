@@ -173,9 +173,9 @@ export const useSubmitAllExamsMutation = () => {
 
 export const useGradingRequestMutation = () => {
   return useMutation({
-    mutationFn: (data: GradingRequestDto) => {
+    mutationFn: (data: GradingRequestDto[]) => {
       return HttpClient.post<
-        GradingRequestDto,
+        GradingRequestDto[],
         CommonResponse<GradingResponseDto>
       >(API_PATH.GRADING_REQUEST, data);
     },

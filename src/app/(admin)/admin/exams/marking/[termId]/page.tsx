@@ -3,7 +3,7 @@
 import React from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Box, Button, Card, CircularProgress, Stack, Typography, Chip, Divider, TextField } from "@mui/material";
-import { useGetTermHistoryQuery, useMarkGradingRequestMutation } from "@/services/apis/exam";
+import { useGetTermHistoryQuery, useMarkGradingRequestMutation, useGradingRequestMutation } from "@/services/apis/exam";
 import { API_PATH } from "@/consts/api-path";
 import { ApiServerURL } from "@/utils/config";
 
@@ -15,6 +15,7 @@ export default function MarkingTermDetailPage() {
 
   const { data, isLoading, error, refetch } = useGetTermHistoryQuery(termId, !!termId);
   const { mutateAsync: markAsync, isPending: isMarking } = useMarkGradingRequestMutation();
+  const { mutateAsync: requestMarkAsync, isPending: isRequestingMark } = useGradingRequestMutation();
   const items = data?.data || [];
 
   const totalScore = Array.isArray(items)
@@ -63,6 +64,31 @@ export default function MarkingTermDetailPage() {
                     <Typography variant="body2" color="text.secondary">
                       Điểm: {ex.score} | Đúng: {ex.selectedTrue}/{ex.totalQuestion}
                     </Typography>
+                    {/* Actions: request grading if no requestId, otherwise allow marking */}
+                    {(ex.exams?.examType === "WRITING" || ex.exams?.examType === "SPEAKING") && (
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        {!((ex.requestIdWrite || ex.requestIdSpeak)) && (
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            disabled={isRequestingMark}
+                            onClick={async () => {
+                              try {
+                                const examIdNum = Number(ex.exams?.id);
+                                const termIdNum = Number(termId);
+                                if (!Number.isFinite(examIdNum) || !Number.isFinite(termIdNum)) return;
+                                await requestMarkAsync([{ termId: termIdNum, examId: examIdNum }]);
+                                await refetch();
+                              } catch {
+                                // noop
+                              }
+                            }}
+                          >
+                            Yêu cầu chấm
+                          </Button>
+                        )}
+                      </Stack>
+                    )}
                     {/* Only show submitted content for WRITING/SPEAKING */}
                     {(ex.exams?.examType === "WRITING" || ex.exams?.examType === "SPEAKING") && ex.content && (
                       <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: "#fafafa", border: "1px solid", borderColor: "divider" }}>
@@ -166,13 +192,13 @@ export default function MarkingTermDetailPage() {
                         <Button
                           variant="contained"
                           size="small"
-                          disabled={isMarking || form[ex.id]?.done}
+                          disabled={isMarking || form[ex.id]?.done || !((ex.requestIdWrite || ex.requestIdSpeak))}
                           onClick={async () => {
                             const scoreNum = Number(form[ex.id]?.scoreMark);
                             if (Number.isNaN(scoreNum)) return;
 
                             try {
-                              await markAsync({ id: ex.id, scoreMark: scoreNum, comments: form[ex.id]?.comments || "" });
+                              await markAsync({ id: ex.requestIdWrite ? ex.requestIdWrite : ex.requestIdSpeak, scoreMark: scoreNum, comments: form[ex.id]?.comments || "" });
                               setForm((prev) => ({ ...prev, [ex.id]: { ...(prev[ex.id] || { scoreMark: "", comments: "" }), done: true } }));
                               await refetch();
                             } catch {

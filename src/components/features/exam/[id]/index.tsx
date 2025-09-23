@@ -100,7 +100,7 @@ export default function ExamPage() {
 
     try {
       setRequestingExamIds((prev) => [...new Set([...prev, examId])]);
-      await gradingRequestMutation.mutateAsync({ termId: session.termId, examId });
+      await gradingRequestMutation.mutateAsync([{ termId: session.termId, examId }]);
       updateAppState({ appAlertInfo: { message: `Đã gửi yêu cầu chấm điểm cho Exam #${examId}`, severity: "success" } });
     } catch (e) {
       console.error("Failed to request grading for exam", examId, e);
@@ -285,65 +285,20 @@ export default function ExamPage() {
       return;
     }
 
-    // Initialize progress
-    setGradingProgress({
-      isGrading: true,
-      current: 0,
-      total: gradableExams.length,
-    });
-
-    let successCount = 0;
-    let failedCount = 0;
-    const errors: string[] = [];
-
-    // Submit grading request for each WRITING and SPEAKING exam
-    for (let i = 0; i < gradableExams.length; i++) {
-      const exam = gradableExams[i];
-
-      // Update progress
-      setGradingProgress({
-        isGrading: true,
-        current: i + 1,
-        total: gradableExams.length,
-        currentExamType: exam.examType,
-      });
-
-      try {
-        await gradingRequestMutation.mutateAsync({
-          termId: session.termId,
-          examId: exam.id,
-        });
-        successCount++;
-      } catch (error) {
-        failedCount++;
-        errors.push(`${exam.examType} exam (ID: ${exam.id})`);
-        console.error(
-          `Failed to submit grading request for ${exam.examType}:`,
-          error,
-        );
-      }
-    }
-
-    // Reset progress
-    setGradingProgress({
-      isGrading: false,
-      current: 0,
-      total: 0,
-    });
-
-    // Show result message and redirect
-    if (successCount > 0 && failedCount === 0) {
-      updateAppState({ appAlertInfo: { message: `Đã gửi ${successCount} yêu cầu chấm điểm thành công!`, severity: "success" } });
-      // Redirect to homepage after successful grading request
+    try {
+      // Bulk submit in one request
+      const payload = gradableExams.map((exam) => ({ termId: session.termId, examId: exam.id }));
+      await gradingRequestMutation.mutateAsync(payload);
+      updateAppState({ appAlertInfo: { message: `Đã gửi ${payload.length} yêu cầu chấm điểm thành công!`, severity: "success" } });
       router.push("/");
-    } else if (successCount > 0 && failedCount > 0) {
-      updateAppState({ appAlertInfo: { message: `Gửi yêu cầu chấm điểm: thành công ${successCount}, thất bại ${failedCount}.`, severity: "warning" } });
-      // Redirect to homepage even with partial success
-      router.push("/");
-    } else {
+    } catch (error) {
       updateAppState({ appAlertInfo: { message: "Gửi yêu cầu chấm điểm thất bại. Vui lòng thử lại.", severity: "error" } });
+    } finally {
+      setGradingProgress({ isGrading: false, current: 0, total: 0 });
     }
   };
+
+  const [isRequestingBulk, setIsRequestingBulk] = useState(false);
 
   if (isLoading) {
     return (
@@ -1256,17 +1211,6 @@ export default function ExamPage() {
                                 <Typography variant="body2" sx={{ color: "text.secondary" }}>
                                   Chưa được chấm điểm
                                 </Typography>
-                                {!!data.examId && (
-                                  <Button
-                                    size="small"
-                                    variant="contained"
-                                    onClick={() => requestGradingForExam(data.examId)}
-                                    disabled={requestingExamIds.includes(data.examId) || gradingRequestMutation.isPending}
-                                    sx={{ textTransform: "none" }}
-                                  >
-                                    {requestingExamIds.includes(data.examId) ? "Đang yêu cầu..." : "Yêu cầu chấm"}
-                                  </Button>
-                                )}
                               </Stack>
                             )}
                           </Box>
@@ -1382,17 +1326,6 @@ export default function ExamPage() {
                               <Typography variant="body2" sx={{ mt: .5 }} color="text.primary">
                                 Chưa được chấm điểm
                               </Typography>
-                              {!!data.examId && (
-                                <Button
-                                  size="small"
-                                  variant="contained"
-                                  onClick={() => requestGradingForExam(data.examId)}
-                                  disabled={requestingExamIds.includes(data.examId) || gradingRequestMutation.isPending}
-                                  sx={{ textTransform: "none" }}
-                                >
-                                  {requestingExamIds.includes(data.examId) ? "Đang yêu cầu..." : "Yêu cầu chấm"}
-                                </Button>
-                              )}
                             </Stack>
                           ) : (
                             <Stack direction="row" spacing={2} alignItems="center">
@@ -1471,6 +1404,33 @@ export default function ExamPage() {
           )}
         </DialogContent>
         <DialogActions>
+          {submissionDialog.success && (
+            <Button
+              variant="outlined"
+              onClick={async () => {
+                if (!session?.termId || !allExams) return;
+                const gradableExams = allExams.filter((exam) => exam.examType === "WRITING" || exam.examType === "SPEAKING");
+                if (gradableExams.length === 0) {
+                  updateAppState({ appAlertInfo: { message: "Không có phần thi nào cần chấm điểm.", severity: "info" } });
+                  return;
+                }
+                try {
+                  setIsRequestingBulk(true);
+                  const payload = gradableExams.map((exam) => ({ termId: session.termId, examId: exam.id }));
+                  await gradingRequestMutation.mutateAsync(payload);
+                  updateAppState({ appAlertInfo: { message: `Đã gửi ${payload.length} yêu cầu chấm điểm!`, severity: "success" } });
+                } catch (e) {
+                  updateAppState({ appAlertInfo: { message: "Gửi yêu cầu chấm điểm thất bại.", severity: "error" } });
+                } finally {
+                  setIsRequestingBulk(false);
+                }
+              }}
+              disabled={isRequestingBulk || gradingRequestMutation.isPending}
+              sx={{ mr: 1 }}
+            >
+              {isRequestingBulk ? "Đang yêu cầu..." : "Yêu cầu chấm"}
+            </Button>
+          )}
           <Button 
             onClick={() => {
               setSubmissionDialog({ ...submissionDialog, open: false });

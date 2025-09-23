@@ -130,7 +130,7 @@ export function generateArticleStructuredData({
       url: siteConfig.url,
       logo: {
         "@type": "ImageObject",
-        url: `${siteConfig.url}/logo.png`,
+        url: `${siteConfig.url}/logo.svg`,
         width: 600,
         height: 60,
       },
@@ -152,7 +152,7 @@ export function generateOrganizationStructuredData() {
     name: siteConfig.name,
     url: siteConfig.url,
     description: siteConfig.description,
-    logo: `${siteConfig.url}/logo.png`,
+    logo: `${siteConfig.url}/logo.svg`,
     sameAs: [
       // Add social media URLs when available
       // "https://www.facebook.com/vstepluyenthi",
