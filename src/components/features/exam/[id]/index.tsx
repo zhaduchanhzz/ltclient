@@ -91,24 +91,7 @@ export default function ExamPage() {
     currentExamType?: string;
   }>({ isGrading: false, current: 0, total: 0 });
 
-  // Track per-exam grading requests (loading state)
-  const [requestingExamIds, setRequestingExamIds] = useState<number[]>([]);
-
-  const requestGradingForExam = async (examId: number) => {
-
-    if (!session?.termId || !examId) return;
-
-    try {
-      setRequestingExamIds((prev) => [...new Set([...prev, examId])]);
-      await gradingRequestMutation.mutateAsync([{ termId: session.termId, examId }]);
-      updateAppState({ appAlertInfo: { message: `Đã gửi yêu cầu chấm điểm cho Exam #${examId}`, severity: "success" } });
-    } catch (e) {
-      console.error("Failed to request grading for exam", examId, e);
-      updateAppState({ appAlertInfo: { message: `Gửi yêu cầu chấm điểm thất bại cho Exam #${examId}. Vui lòng thử lại.`, severity: "error" } });
-    } finally {
-      setRequestingExamIds((prev) => prev.filter((id) => id !== examId));
-    }
-  };
+  // Removed per-exam grading request helper and state (unused)
 
   // State for submission
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -171,15 +154,15 @@ export default function ExamPage() {
     return () => window.clearTimeout(id);
   }, [currentExamPartIndex]);
 
-  const handleLeftScroll = (e: React.UIEvent<HTMLDivElement>) => {
+  const handleLeftScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const pos = scrollPositionsRef.current[currentExamPartIndex] || { left: 0, right: 0 };
-    pos.left = e.currentTarget.scrollTop;
+    pos.left = event.currentTarget.scrollTop;
     scrollPositionsRef.current[currentExamPartIndex] = pos;
   };
 
-  const handleRightScroll = (e: React.UIEvent<HTMLDivElement>) => {
+  const handleRightScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const pos = scrollPositionsRef.current[currentExamPartIndex] || { left: 0, right: 0 };
-    pos.right = e.currentTarget.scrollTop;
+    pos.right = event.currentTarget.scrollTop;
     scrollPositionsRef.current[currentExamPartIndex] = pos;
   };
 
@@ -291,7 +274,7 @@ export default function ExamPage() {
       await gradingRequestMutation.mutateAsync(payload);
       updateAppState({ appAlertInfo: { message: `Đã gửi ${payload.length} yêu cầu chấm điểm thành công!`, severity: "success" } });
       router.push("/");
-    } catch (error) {
+    } catch {
       updateAppState({ appAlertInfo: { message: "Gửi yêu cầu chấm điểm thất bại. Vui lòng thử lại.", severity: "error" } });
     } finally {
       setGradingProgress({ isGrading: false, current: 0, total: 0 });
@@ -846,8 +829,8 @@ export default function ExamPage() {
           details: Array.isArray(result.details) ? result.details : result.details ? [result.details] : [],
         });
       }
-    } catch (error) {
-      console.error("Submission error:", error);
+    } catch (submitError) {
+      console.error("Submission error:", submitError);
       setSubmissionDialog({
         open: true,
         success: false,
@@ -1410,16 +1393,18 @@ export default function ExamPage() {
               onClick={async () => {
                 if (!session?.termId || !allExams) return;
                 const gradableExams = allExams.filter((exam) => exam.examType === "WRITING" || exam.examType === "SPEAKING");
+
                 if (gradableExams.length === 0) {
                   updateAppState({ appAlertInfo: { message: "Không có phần thi nào cần chấm điểm.", severity: "info" } });
                   return;
                 }
+                
                 try {
                   setIsRequestingBulk(true);
                   const payload = gradableExams.map((exam) => ({ termId: session.termId, examId: exam.id }));
                   await gradingRequestMutation.mutateAsync(payload);
                   updateAppState({ appAlertInfo: { message: `Đã gửi ${payload.length} yêu cầu chấm điểm!`, severity: "success" } });
-                } catch (e) {
+                } catch {
                   updateAppState({ appAlertInfo: { message: "Gửi yêu cầu chấm điểm thất bại.", severity: "error" } });
                 } finally {
                   setIsRequestingBulk(false);

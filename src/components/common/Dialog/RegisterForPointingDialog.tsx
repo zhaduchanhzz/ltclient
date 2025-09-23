@@ -25,10 +25,9 @@ const RegisterForPointingDialog = (props: RegisterForPointingDialogProps) => {
     }
 
     try {
-      await gradingRequestMutation.mutateAsync({
-        termId,
-        examId,
-      });
+      await gradingRequestMutation.mutateAsync([
+        { termId, examId },
+      ]);
       setNotification({
         message: "Đăng ký chấm thi thành công",
         severity: "success",

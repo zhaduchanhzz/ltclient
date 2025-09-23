@@ -765,22 +765,6 @@ export function useExamLogic() {
       setSession((prev) => (prev ? { ...prev, isCompleted: true } : null));
 
       // Send grading request for all SPEAKING parts automatically
-      try {
-        const speakingExams = (examsByType["SPEAKING"] || []).map((e) => e.id);
-
-        if (speakingExams.length > 0) {
-          await Promise.allSettled(
-            speakingExams.map((id) =>
-              gradingRequestMutation.mutateAsync({ termId: session.termId, examId: id }),
-            ),
-          );
-          console.log("Grading requests submitted for speaking exams:", speakingExams);
-        }
-      } catch (e) {
-        console.error("Failed to send grading request(s) for speaking:", e);
-      }
-
-      // Clear persisted state after successful submission
       clearPersistedState();
     } catch (error) {
       console.error("Failed to submit final speaking response:", error);
@@ -947,7 +931,7 @@ export function useExamLogic() {
         if (examIdsForGrading.length > 0) {
           await Promise.allSettled(
             examIdsForGrading.map((id) =>
-              gradingRequestMutation.mutateAsync({ termId: session.termId, examId: id }),
+              gradingRequestMutation.mutateAsync([{ termId: session.termId, examId: id }]),
             ),
           );
           console.log("Grading requests submitted for writing exams:", examIdsForGrading);
