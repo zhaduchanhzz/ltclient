@@ -263,6 +263,7 @@ export type PendingGradingRequestItem = {
   termId: number;
   examId: number;
   userId: number;
+  userName: string;
   status: string;
   requestedAt: string;
 };

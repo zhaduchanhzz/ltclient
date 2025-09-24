@@ -20,7 +20,7 @@ import {
   UserWriting,
   BulkExamSubmitRequest,
   BulkExamSubmitResponseData,
-  PendingGradingPageData,
+  PendingGradingRequestItem,
   TermHistoryDetail,
 } from "../types/exam";
 
@@ -194,17 +194,17 @@ export const useListExamsByTypeQuery = (enabled = false) => {
   });
 };
 
-// Fetch pending grading requests with pagination and optional keyword
+// Fetch grading requests via new search API with status and optional keyword
 export const usePendingGradingRequestsQuery = (
-  params: { page?: number; size?: number; keyword?: string },
+  params: { status?: string; keyword?: string },
   enabled = false,
 ) => {
   return useQuery({
-    queryKey: [API_PATH.GRADING_REQUEST, "pending", params],
+    queryKey: [API_PATH.GRADING_REQUEST, "search", params],
     queryFn: () => {
-      return HttpClient.get<null, CommonResponse<PendingGradingPageData>>(
-        API_PATH.GRADING_REQUEST + "/pending",
-        { params: { page: params.page ?? 0, size: params.size ?? 10, keyword: params.keyword || undefined } },
+      return HttpClient.get<null, CommonResponse<PendingGradingRequestItem[]>>(
+        API_PATH.GRADING_REQUEST + "/search",
+        { params: { status: params.status || undefined, keyword: params.keyword || undefined } },
       );
     },
     enabled,

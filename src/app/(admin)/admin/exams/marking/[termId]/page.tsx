@@ -165,14 +165,32 @@ export default function MarkingTermDetailPage() {
                           label="Điểm chấm"
                           type="number"
                           size="small"
-                          inputProps={{ min: 0 }}
+                          inputProps={{ min: 0, max: 10 }}
                           value={form[ex.id]?.scoreMark ?? ""}
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            let value = e.target.value;
+
+                            if (value === "") {
+                              setForm((prev) => ({
+                                ...prev,
+                                [ex.id]: { ...prev[ex.id], scoreMark: "" },
+                              }));
+                              return;
+                            }
+
+                            let num = Number(value);
+
+                            if (num < 0) num = 0;
+                            if (num > 10) num = 10;
+
                             setForm((prev) => ({
                               ...prev,
-                              [ex.id]: { ...prev[ex.id], scoreMark: e.target.value },
-                            }))
-                          }
+                              [ex.id]: {
+                                ...(prev[ex.id] ?? {}),
+                                scoreMark: String(num), // ép về string
+                              },
+                            }));
+                          }}
                           sx={{ width: 140 }}
                         />
                         <TextField

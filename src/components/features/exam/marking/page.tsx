@@ -20,10 +20,18 @@ import {
   Chip,
   Button,
   Paper,
+  MenuItem,
 } from "@mui/material";
 import { Search as SearchIcon } from "@mui/icons-material";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+
+const statuses = [
+  { label: "Tất cả", value: "" },
+  { label: "Đang chờ", value: "PENDING" },
+  { label: "Đã chấp nhận", value: "ACCEPTED" },
+  { label: "Đã chấm", value: "GRADED" },
+];
 
 const formatDateTime = (iso?: string) => {
   if (!iso) return "";
@@ -53,22 +61,15 @@ const MarkingRequestsPage = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
+  const [status, setStatus] = useState("");
 
   const { data, isLoading, error } = usePendingGradingRequestsQuery(
-    { page, size: rowsPerPage, keyword: searchQuery || undefined },
+    { status: status || undefined, keyword: searchQuery || undefined },
     true,
   );
 
-  const items: PendingGradingRequestItem[] = data?.data?.content || [];
-  const totalElements = data?.data?.totalElements || 0;
-
-  const handleChangePage = (_: unknown, newPage: number) => setPage(newPage);
-
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
+  const items: PendingGradingRequestItem[] = data?.data || [];
+  // Filtering (client-side)
   const displayedItems = useMemo(() => {
     if (!searchQuery) return items;
     const q = searchQuery.toLowerCase();
@@ -78,6 +79,7 @@ const MarkingRequestsPage = () => {
         it.termId?.toString(),
         it.examId?.toString(),
         it.userId?.toString(),
+        it.userName?.toString(),
         it.status?.toString(),
         formatDateTime(it.requestedAt),
       ]
@@ -86,6 +88,20 @@ const MarkingRequestsPage = () => {
         .includes(q),
     );
   }, [items, searchQuery]);
+
+  const filtered = searchQuery ? displayedItems : items;
+  const totalElements = filtered.length;
+  const paginatedItems = useMemo(() => {
+    const start = page * rowsPerPage;
+    return filtered.slice(start, start + rowsPerPage);
+  }, [filtered, page, rowsPerPage]);
+
+  const handleChangePage = (_: unknown, newPage: number) => setPage(newPage);
+
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
 
   return (
     <Box>
@@ -96,7 +112,7 @@ const MarkingRequestsPage = () => {
       <Stack spacing={2}>
         {/* Card gom Search + Table */}
         <Card>
-          <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "divider" }}>
+          <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "divider", gap: 2, display: "flex", alignItems: "center" }}>
             <TextField
               placeholder="Tìm kiếm yêu cầu chấm..."
               variant="outlined"
@@ -116,6 +132,23 @@ const MarkingRequestsPage = () => {
                 ),
               }}
             />
+            <TextField
+              select
+              label="Trạng thái"
+              size="small"
+              value={status}
+              onChange={(e) => {
+                setStatus(e.target.value);
+                setPage(0);
+              }}
+              sx={{ minWidth: 160 }}
+            >
+              {statuses.map((s) => (
+                <MenuItem key={s.value} value={s.value}>
+                  {s.label}
+                </MenuItem>
+              ))}
+            </TextField>
           </Box>
 
           {isLoading ? (
@@ -143,11 +176,11 @@ const MarkingRequestsPage = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {(searchQuery ? displayedItems : items).map((row) => (
+                    {paginatedItems.map((row) => (
                       <TableRow key={row.requestId} hover>
                         <TableCell>{row.termId}</TableCell>
                         <TableCell>{row.examId}</TableCell>
-                        <TableCell>{row.userId}</TableCell>
+                        <TableCell>{row.userName ?? row.userId}</TableCell>
                         <TableCell>
                           <Chip
                             label={row.status || "PENDING"}
@@ -169,7 +202,7 @@ const MarkingRequestsPage = () => {
                         </TableCell>
                       </TableRow>
                     ))}
-                    {(items.length === 0 || (searchQuery && displayedItems.length === 0)) && (
+                    {filtered.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
                           <Typography variant="body2" color="text.secondary">
