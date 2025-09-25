@@ -103,6 +103,9 @@ export type UserHistoryResponse = {
 
 // Term-specific history detail now matches API: array of summary items per term
 export type TermHistoryDetailItem = {
+  requestMarkSpeak: any;
+  exams: any;
+  requestMarkWrite: any;
   id: number;
   listeningScore: number;
   readingScore: number;
@@ -245,13 +248,14 @@ export type ExamTermSession = {
 
 export type GradingRequestDto = {
   termId: number;
-  examId: number;
+  examType: string;
 };
 
 export type GradingResponseDto = {
   requestId: number;
   termId: number;
   examId: number;
+  examType: string;
   userId: number;
   status: string;
   requestedAt: string;
@@ -262,6 +266,7 @@ export type PendingGradingRequestItem = {
   requestId: number;
   termId: number;
   examId: number;
+  examType: string;
   userId: number;
   userName: string;
   status: string;

@@ -3,7 +3,7 @@
 import React from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Box, Button, Card, CircularProgress, Stack, Typography, Chip, Divider, TextField } from "@mui/material";
-import { useGetTermHistoryQuery, useMarkGradingRequestMutation, useGradingRequestMutation } from "@/services/apis/exam";
+import { useGetTermHistoryQuery, useMarkGradingRequestMutation } from "@/services/apis/exam";
 import { API_PATH } from "@/consts/api-path";
 import { ApiServerURL } from "@/utils/config";
 
@@ -14,8 +14,7 @@ export default function MarkingTermDetailPage() {
   const termId = params?.termId as string;
 
   const { data, isLoading, error, refetch } = useGetTermHistoryQuery(termId, !!termId);
-  const { mutateAsync: markAsync, isPending: isMarking } = useMarkGradingRequestMutation();
-  const { mutateAsync: requestMarkAsync, isPending: isRequestingMark } = useGradingRequestMutation();
+  const { mutateAsync: markAsync } = useMarkGradingRequestMutation();
   const items = data?.data || [];
 
   const totalScore = Array.isArray(items)
@@ -52,190 +51,208 @@ export default function MarkingTermDetailPage() {
 
             <Typography variant="h6">Danh sách bài thi</Typography>
             <Stack spacing={1}>
-              {items.map((ex: any, idx: number) => (
-                <Card key={idx} sx={{ p: 2 }}>
-                  <Stack spacing={1}>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Chip label={ex.exams?.examType || "UNKNOWN"} size="small" color="warning" />
-                      <Typography fontWeight={600}>
-                        Exam ID: {ex.exams?.id} {ex.exams?.title ? `- ${ex.exams?.title}` : ""}
-                      </Typography>
-                    </Stack>
-                    <Typography variant="body2" color="text.secondary">
-                      Điểm: {ex.score} | Đúng: {ex.selectedTrue}/{ex.totalQuestion}
-                    </Typography>
-                    {/* Actions: request grading if no requestId, otherwise allow marking */}
-                              {(ex.exams?.examType === "WRITING" || ex.exams?.examType === "SPEAKING") &&
-                                !(ex.requestMarkWrite || ex.requestMarkSpeak) && (
-                                  <Stack direction="row" spacing={1} alignItems="center">
-                                    <Button
-                                      variant="outlined"
-                                      size="small"
-                                      disabled={isRequestingMark}
-                                      onClick={async () => {
-                                        try {
-                                          const examIdNum = Number(ex.exams?.id);
-                                          const termIdNum = Number(termId);
-                                          if (!Number.isFinite(examIdNum) || !Number.isFinite(termIdNum)) return;
-                                          await requestMarkAsync([{ termId: termIdNum, examId: examIdNum }]);
-                                          await refetch();
-                                        } catch {
-                                          // noop
-                                        }
-                                      }}
-                                    >
-                                      Yêu cầu chấm
-                                    </Button>
-                                  </Stack>
-                                )}
-                    {/* Only show submitted content for WRITING/SPEAKING */}
-                    {(ex.exams?.examType === "WRITING" || ex.exams?.examType === "SPEAKING") && ex.content && (
-                      <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: "#fafafa", border: "1px solid", borderColor: "divider" }}>
-                        {(() => {
-                          /* eslint-disable padding-line-between-statements */
-                          const type = ex.exams?.examType as string;
-                          let raw = String(ex.content ?? "");
-                          let text = raw;
-                          // Try to extract meaningful text if the content is a JSON map
-                          try {
-                            const parsed = JSON.parse(raw);
-                            if (parsed && typeof parsed === "object") {
-                              const values = Object.values(parsed as Record<string, unknown>);
-                              if (values.length === 1) {
-                                text = String(values[0] ?? "");
-                              } else {
-                                text = JSON.stringify(parsed, null, 2);
-                              }
-                            }
-                          } catch {
-                            // keep raw as text
-                          }
+              {items.map((ex: any, idx: number) => {
+                const isWriting = ex.exams?.examType === "WRITING";
+                const isSpeaking = ex.exams?.examType === "SPEAKING";
+                const gradingRequest = isWriting ? ex.requestMarkWrite : isSpeaking ? ex.requestMarkSpeak : null;
+                const canMark = gradingRequest && gradingRequest.status === "PENDING";
 
-                          if (type === "WRITING") {
-                            return (
+                return (
+                  <Card key={idx} sx={{ p: 2 }}>
+                    <Stack spacing={1}>
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <Chip label={ex.exams?.examType || "UNKNOWN"} size="small" color="warning" />
+                        <Typography fontWeight={600}>
+                          Exam ID: {ex.exams?.id} {ex.exams?.title ? `- ${ex.exams?.title}` : ""}
+                        </Typography>
+                      </Stack>
+                      <Typography variant="body2" color="text.secondary">
+                        {/* Show score from gradingRequest if exists, else ex.score */}
+                        Điểm: {gradingRequest ? gradingRequest.score : ex.score} | Đúng: {ex.selectedTrue}/{ex.totalQuestion}
+                      </Typography>
+                      {/* Only show submitted content for WRITING/SPEAKING */}
+                      {(ex.exams?.examType === "WRITING" || ex.exams?.examType === "SPEAKING") && ex.content && (
+                        <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: "#fafafa", border: "1px solid", borderColor: "divider" }}>
+                          {(() => {
+                            /* eslint-disable padding-line-between-statements */
+                            const type = ex.exams?.examType as string;
+                            let raw = String(ex.content ?? "");
+                            let text = raw;
+                            // Try to extract meaningful text if the content is a JSON map
+                            try {
+                              const parsed = JSON.parse(raw);
+                              if (parsed && typeof parsed === "object") {
+                                const values = Object.values(parsed as Record<string, unknown>);
+                                if (values.length === 1) {
+                                  text = String(values[0] ?? "");
+                                } else {
+                                  text = JSON.stringify(parsed, null, 2);
+                                }
+                              }
+                            } catch {
+                              // keep raw as text
+                            }
+
+                            if (type === "WRITING") {
+                              return (
+                                <>
+                                  <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
+                                    Bài viết đã nộp
+                                  </Typography>
+                                  <TextField
+                                    value={text}
+                                    multiline
+                                    fullWidth
+                                    minRows={6}
+                                    InputProps={{ readOnly: true }}
+                                    sx={{ bgcolor: "background.paper" }}
+                                  />
+                                </>
+                              );
+                            }
+
+                            // SPEAKING: try to render audio
+                            const looksLikeUrl = /^https?:\/\//i.test(text) || text.startsWith("data:audio");
+                            let audioSrc = "";
+                            if (looksLikeUrl) {
+                              audioSrc = text;
+                            } else if (text) {
+                              // Assume it's a stored filename; build a download URL
+                              audioSrc = text.startsWith("/") ? text : `${ApiServerURL + API_PATH.DOWNLOAD_FILE}${text}`;
+                            }
+
+                            const ui = (
                               <>
                                 <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
-                                  Bài viết đã nộp
+                                  Bài nói đã nộp
                                 </Typography>
-                                <TextField
-                                  value={text}
-                                  multiline
-                                  fullWidth
-                                  minRows={6}
-                                  InputProps={{ readOnly: true }}
-                                  sx={{ bgcolor: "background.paper" }}
-                                />
+                                {audioSrc ? (
+                                  <>
+                                    <audio controls src={audioSrc} style={{ width: "100%" }} />
+                                  </>
+                                ) : (
+                                  <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>{text}</Typography>
+                                )}
                               </>
                             );
-                          }
+                            /* eslint-enable padding-line-between-statements */
+                            return ui;
+                          })()}
+                        </Box>
+                      )}
+                      {(isWriting || isSpeaking) && gradingRequest && !canMark && (
+                        <>
+                          <Typography color="text.secondary" variant="body2">
+                            Bài đã chấm hoặc không thể chấm điểm.
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Điểm đã chấm: {gradingRequest.score}
+                          </Typography>
+                          {gradingRequest.comments && (
+                            <Typography variant="body2" color="text.secondary">
+                              Nhận xét: {gradingRequest.comments}
+                            </Typography>
+                          )}
+                        </>
+                      )}
+                      {(isWriting || isSpeaking) && canMark && (
+                        <Stack spacing={1} direction={{ xs: "column", sm: "row" }} alignItems={{ sm: "flex-end" }}>
+                          <TextField
+                            label="Điểm chấm"
+                            type="number"
+                            size="small"
+                            inputProps={{ min: 0, max: 10 }}
+                            value={form[ex.id]?.scoreMark ?? ""}
+                            onChange={(e) => {
+                              let value = e.target.value;
 
-                          // SPEAKING: try to render audio
-                          const looksLikeUrl = /^https?:\/\//i.test(text) || text.startsWith("data:audio");
-                          let audioSrc = "";
-                          if (looksLikeUrl) {
-                            audioSrc = text;
-                          } else if (text) {
-                            // Assume it's a stored filename; build a download URL
-                            audioSrc = text.startsWith("/") ? text : `${ApiServerURL + API_PATH.DOWNLOAD_FILE}${text}`;
-                          }
+                              if (value === "") {
+                                setForm((prev) => ({
+                                  ...prev,
+                                  [ex.id]: { ...prev[ex.id], scoreMark: "" },
+                                }));
+                                return;
+                              }
 
-                          const ui = (
-                            <>
-                              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
-                                Bài nói đã nộp
-                              </Typography>
-                              {audioSrc ? (
-                                <>
-                                  <audio controls src={audioSrc} style={{ width: "100%" }} />
-                                </>
-                              ) : (
-                                <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>{text}</Typography>
-                              )}
-                            </>
-                          );
-                          /* eslint-enable padding-line-between-statements */
-                          return ui;
-                        })()}
-                      </Box>
-                    )}
-                    {(ex.exams?.examType === "WRITING" || ex.exams?.examType === "SPEAKING") && (
-                      <Stack spacing={1} direction={{ xs: "column", sm: "row" }} alignItems={{ sm: "flex-end" }}>
-                        <TextField
-                          label="Điểm chấm"
-                          type="number"
-                          size="small"
-                          inputProps={{ min: 0, max: 10 }}
-                          value={form[ex.id]?.scoreMark ?? ""}
-                          onChange={(e) => {
-                            let value = e.target.value;
-
-                            if (value === "") {
+                              let num = Number(value);
+                              if (num < 0) num = 0;
+                              if (num > 10) num = 10;
                               setForm((prev) => ({
                                 ...prev,
-                                [ex.id]: { ...prev[ex.id], scoreMark: "" },
+                                [ex.id]: {
+                                  ...(prev[ex.id] ?? {}),
+                                  scoreMark: String(num),
+                                },
                               }));
-                              return;
+                            }}
+                            sx={{ width: 140 }}
+                          />
+                          <TextField
+                            label="Nhận xét"
+                            size="small"
+                            multiline
+                            minRows={1}
+                            value={form[ex.id]?.comments ?? ""}
+                            onChange={(e) =>
+                              setForm((prev) => ({
+                                ...prev,
+                                [ex.id]: { ...prev[ex.id], comments: e.target.value },
+                              }))
                             }
-
-                            let num = Number(value);
-                            if (num < 0) num = 0;
-                            if (num > 10) num = 10;
-                            setForm((prev) => ({
-                              ...prev,
-                              [ex.id]: {
-                                ...(prev[ex.id] ?? {}),
-                                scoreMark: String(num),
-                              },
-                            }));
-                          }}
-                          sx={{ width: 140 }}
-                          disabled={!!(ex.requestMarkWrite || ex.requestMarkSpeak)}
-                        />
-                        <TextField
-                          label="Nhận xét"
-                          size="small"
-                          multiline
-                          minRows={1}
-                          value={form[ex.id]?.comments ?? ""}
-                          onChange={(e) =>
-                            setForm((prev) => ({
-                              ...prev,
-                              [ex.id]: { ...prev[ex.id], comments: e.target.value },
-                            }))
-
-
-
-
-
-                          }
-                          sx={{ flex: 1 }}
-                          disabled={!!(ex.requestMarkWrite || ex.requestMarkSpeak)}
-                        />
-                        <Button
-                          variant="contained"
-                          size="small"
-                          disabled={isMarking || form[ex.id]?.done || !((ex.requestIdWrite || ex.requestIdSpeak)) || !!(ex.requestMarkWrite || ex.requestMarkSpeak)}
-                          onClick={async () => {
-                            const scoreNum = Number(form[ex.id]?.scoreMark);
-                            if (Number.isNaN(scoreNum)) return;
-
-                            try {
-                              await markAsync({ id: ex.requestIdWrite ? ex.requestIdWrite : ex.requestIdSpeak, scoreMark: scoreNum, comments: form[ex.id]?.comments || "" });
-                              setForm((prev) => ({ ...prev, [ex.id]: { ...(prev[ex.id] || { scoreMark: "", comments: "" }), done: true } }));
-                              await refetch();
-                            } catch {
-                              // noop - error UI can be added later
-                            }
-                          }}
-                        >
-                          {form[ex.id]?.done ? "Đã chấm" : "Chấm điểm"}
-                        </Button>
-                      </Stack>
-                    )}
-                  </Stack>
-                </Card>
-              ))}
+                            sx={{ flex: 1 }}
+                          />
+                        </Stack>
+                      )}
+                    </Stack>
+                  </Card>
+                );
+              })}
             </Stack>
+            {/* Add single submit button for all pending grading requests */}
+            <Box sx={{ mt: 2, textAlign: "right" }}>
+              <Button
+                variant="contained"
+                size="large"
+                disabled={items.filter((ex: any) => {
+                  const isWriting = ex.exams?.examType === "WRITING";
+                  const isSpeaking = ex.exams?.examType === "SPEAKING";
+                  const gradingRequest = isWriting ? ex.requestMarkWrite : isSpeaking ? ex.requestMarkSpeak : null;
+                  return gradingRequest && gradingRequest.status === "PENDING";
+                }).length === 0}
+                onClick={async () => {
+                  // Gather all pending grading requests
+                  const pending = items
+                    .map((ex: any) => {
+                      const isWriting = ex.exams?.examType === "WRITING";
+                      const isSpeaking = ex.exams?.examType === "SPEAKING";
+                      const gradingRequest = isWriting ? ex.requestMarkWrite : isSpeaking ? ex.requestMarkSpeak : null;
+
+                      if (gradingRequest && gradingRequest.status === "PENDING") {
+                        return {
+                          scoreMark: Number(form[ex.id]?.scoreMark),
+                          comments: form[ex.id]?.comments || "",
+                          requestId: gradingRequest.requestId,
+                        };
+                      }
+
+                      return undefined;
+                    })
+                    .filter((obj): obj is { scoreMark: number; comments: string; requestId: number } => !!obj);
+
+                  if (pending.length === 0) return;
+
+                  try {
+                    await markAsync(pending);
+                    setForm({});
+                    await refetch();
+                  } catch {
+                    // noop
+                  }
+                }}
+              >
+                Chấm điểm tất cả
+              </Button>
+            </Box>
           </Stack>
         )}
       </Card>

@@ -214,12 +214,11 @@ export const usePendingGradingRequestsQuery = (
 // Fetch term history detail by termId from absolute URL
 export const useMarkGradingRequestMutation = () => {
   return useMutation({
-    mutationFn: (data: { id: number; scoreMark: number; comments: string }) => {
-      const { id, scoreMark, comments } = data;
+    mutationFn: (body: { scoreMark: number; comments: string; requestId: number }[]) => {
       return HttpClient.patch<
-        { scoreMark: number; comments: string },
+        { scoreMark: number; comments: string; requestId: number }[],
         CommonResponse<any>
-      >(API_PATH.GRADING_REQUEST + `/mark/${id}`, { scoreMark, comments });
+      >(API_PATH.GRADING_REQUEST + "/mark", body);
     },
   });
 };

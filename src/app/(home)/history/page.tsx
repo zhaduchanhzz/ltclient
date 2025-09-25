@@ -142,9 +142,9 @@ const History: React.FC = () => {
   // Gửi yêu cầu chấm điểm
   const gradingRequestMutation = require("@/services/apis/exam").useGradingRequestMutation();
 
-  const handleGradingRequest = async (termId: number, examId: number) => {
+  const handleGradingRequest = async (termId: number, examType: string) => {
     try {
-      await gradingRequestMutation.mutateAsync([{ termId, examId }]);
+      await gradingRequestMutation.mutateAsync([{ termId, examType }]);
       setNotification({ message: "Gửi yêu cầu chấm thành công", severity: "success" });
       refetch();
     } catch {
@@ -371,7 +371,7 @@ const History: React.FC = () => {
                             }
                           />
                         </TableCell>
-                        <TableCell align="right">
+                        <TableCell align="right" sx={{ display: "flex", gap: 1, flexDirection: "column" }}>
                           {/* {it.status === "ACCEPTED  "} */}
                           <Button
                             variant="text"
@@ -380,14 +380,24 @@ const History: React.FC = () => {
                           >
                             Xem chi tiết
                           </Button>
-                          {!(it.speakingRequestId || it.writingRequestId) && (
+                          {!(it.speakingRequestId) && (
                             <BasicButton
                               size="small"
                               onClick={() =>
-                                handleGradingRequest(it.termId, Number(it.id))
+                                handleGradingRequest(it.termId, "SPEAKING")
                               }
                             >
-                              Gửi yêu cầu chấm
+                              Y/c chấm bài nói
+                            </BasicButton>
+                          )}
+                          {!(it.writingRequestId) && (
+                            <BasicButton
+                              size="small"
+                              onClick={() =>
+                                handleGradingRequest(it.termId, "WRITING")
+                              }
+                            >
+                              Y/c chấm bài viết
                             </BasicButton>
                           )}
                         </TableCell>

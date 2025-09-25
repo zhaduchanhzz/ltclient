@@ -270,7 +270,7 @@ export default function ExamPage() {
 
     try {
       // Bulk submit in one request
-      const payload = gradableExams.map((exam) => ({ termId: session.termId, examId: exam.id }));
+      const payload = gradableExams.map((exam) => ({ termId: session.termId, examType: exam.examType }));
       await gradingRequestMutation.mutateAsync(payload);
       updateAppState({ appAlertInfo: { message: `Đã gửi ${payload.length} yêu cầu chấm điểm thành công!`, severity: "success" } });
       router.push("/");
@@ -1401,7 +1401,7 @@ export default function ExamPage() {
                 
                 try {
                   setIsRequestingBulk(true);
-                  const payload = gradableExams.map((exam) => ({ termId: session.termId, examId: exam.id }));
+                  const payload = gradableExams.map((exam) => ({ termId: session.termId, examType: exam.examType }));
                   await gradingRequestMutation.mutateAsync(payload);
                   updateAppState({ appAlertInfo: { message: `Đã gửi ${payload.length} yêu cầu chấm điểm!`, severity: "success" } });
                 } catch {

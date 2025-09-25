@@ -93,15 +93,12 @@ const ExamHistoryDetailDialog: React.FC<ExamHistoryDetailDialogProps> = ({ open,
                   transition: "background 0.2s",
                   zIndex: 1,
                   boxShadow: theme.palette.mode === "dark" ? "0 2px 8px rgba(0,0,0,0.2)" : "0 2px 8px rgba(0,0,0,0.08)",
-                  "&:hover": {
-                    bgcolor: theme.palette.mode === "dark" ? theme.palette.grey[700] : theme.palette.grey[100],
-                  },
                 },
                 ".Mui-selected": {
-                  bgcolor: theme.palette.primary.main,
-                  color: theme.palette.primary.contrastText,
+                  bgcolor: "#cda274",
+                  color: "#fff",
                   fontWeight: 700,
-                  border: `2px solid ${theme.palette.primary.main}`,
+                  border: "2px solid #cda274",
                   borderBottom: "none",
                   zIndex: 2,
                   boxShadow: theme.palette.mode === "dark" ? "0 4px 12px rgba(0,0,0,0.3)" : "0 4px 12px rgba(0,0,0,0.12)",
@@ -115,43 +112,52 @@ const ExamHistoryDetailDialog: React.FC<ExamHistoryDetailDialogProps> = ({ open,
           </Box>
         )}
         {detail && detail.length > 0 && (
-          <Stack spacing={2} sx={{ mb: 2 }}>
-            <Typography variant="h6">Bài thi: {detail[tabIdx].exams.title}</Typography>
-            <Typography>Loại: {detail[tabIdx].exams.examType}</Typography>
-            <Box>
-              <Typography fontWeight={700}>Mô tả:</Typography>
-              <Box sx={{ p: 1, bgcolor: theme.palette.background.paper, borderRadius: 1 }}>
+          <Stack spacing={3} sx={{ mb: 2 }}>
+            {/* Thông tin bài thi và điểm */}
+            <Box component={Stack} spacing={2} sx={{ p: 2, bgcolor: getBgColor("#f7f9fc", theme.palette.background.default), borderRadius: 2, boxShadow: 1 }}>
+              <Typography variant="h6" fontWeight={700} color="primary.main">{detail[tabIdx].exams.title}</Typography>
+              <Typography variant="body1">Loại: <b>{detail[tabIdx].exams.examType}</b></Typography>
+              <Typography variant="body1">Điểm: <b style={{ color: theme.palette.success.main }}>{detail[tabIdx].score}</b></Typography>
+              <Typography variant="body1">Đúng: <b>{detail[tabIdx].selectedTrue}/{detail[tabIdx].totalQuestion}</b></Typography>
+            </Box>
+            {/* Trạng thái chấm Nói/Viết */}
+            {(detail[tabIdx].requestMarkSpeak || detail[tabIdx].requestMarkWrite) && (
+              <Box component={Stack} spacing={2} sx={{ p: 2, bgcolor: getBgColor("#e3f2fd", theme.palette.background.paper), borderRadius: 2, boxShadow: 1 }}>
+                {detail[tabIdx].requestMarkSpeak && (
+                  <Stack spacing={1}>
+                    <Typography fontWeight={700} color="info.main">Chấm Nói</Typography>
+                    <Typography>Trạng thái: <b>{detail[tabIdx].requestMarkSpeak.status}</b></Typography>
+                    <Typography>Điểm: <b style={{ color: theme.palette.success.main }}>{detail[tabIdx].requestMarkSpeak.score}</b></Typography>
+                    <Typography>Nhận xét: <span style={{ color: theme.palette.text.secondary }}>{detail[tabIdx].requestMarkSpeak.comments}</span></Typography>
+                    <Typography>Thời gian chấm: {detail[tabIdx].requestMarkSpeak.gradedAt}</Typography>
+                  </Stack>
+                )}
+                {detail[tabIdx].requestMarkWrite && (
+                  <Stack spacing={1}>
+                    <Typography fontWeight={700} color="info.main">Chấm Viết</Typography>
+                    <Typography>Trạng thái: <b>{detail[tabIdx].requestMarkWrite.status}</b></Typography>
+                    <Typography>Điểm: <b style={{ color: theme.palette.success.main }}>{detail[tabIdx].requestMarkWrite.score}</b></Typography>
+                    <Typography>Nhận xét: <span style={{ color: theme.palette.text.secondary }}>{detail[tabIdx].requestMarkWrite.comments}</span></Typography>
+                    <Typography>Thời gian chấm: {detail[tabIdx].requestMarkWrite.gradedAt}</Typography>
+                  </Stack>
+                )}
+              </Box>
+            )}
+            {/* Mô tả bài thi */}
+            <Box sx={{ p: 2, bgcolor: theme.palette.background.paper, borderRadius: 2, boxShadow: 1 }}>
+              <Typography fontWeight={700} sx={{ mb: 1 }}>Mô tả:</Typography>
+              <Box sx={{ p: 1, bgcolor: getBgColor("#fff", theme.palette.background.paper), borderRadius: 1 }}>
                 <span dangerouslySetInnerHTML={{ __html: detail[tabIdx].exams.description || "" }} />
               </Box>
             </Box>
-            <Typography>Điểm: {detail[tabIdx].score}</Typography>
-            <Typography>Đúng: {detail[tabIdx].selectedTrue}/{detail[tabIdx].totalQuestion}</Typography>
-            {detail[tabIdx].requestMarkSpeak && (
-              <Stack>
-                <Typography fontWeight={700}>Chấm Nói:</Typography>
-                <Typography>Trạng thái: {detail[tabIdx].requestMarkSpeak.status}</Typography>
-                <Typography>Điểm: {detail[tabIdx].requestMarkSpeak.score}</Typography>
-                <Typography>Nhận xét: {detail[tabIdx].requestMarkSpeak.comments}</Typography>
-                <Typography>Thời gian chấm: {detail[tabIdx].requestMarkSpeak.gradedAt}</Typography>
-              </Stack>
-            )}
-            {detail[tabIdx].requestMarkWrite && (
-              <Stack>
-                <Typography fontWeight={700}>Chấm Viết:</Typography>
-                <Typography>Trạng thái: {detail[tabIdx].requestMarkWrite.status}</Typography>
-                <Typography>Điểm: {detail[tabIdx].requestMarkWrite.score}</Typography>
-                <Typography>Nhận xét: {detail[tabIdx].requestMarkWrite.comments}</Typography>
-                <Typography>Thời gian chấm: {detail[tabIdx].requestMarkWrite.gradedAt}</Typography>
-              </Stack>
-            )}
+            {/* Nội dung bài viết nếu là WRITING */}
             {detail[tabIdx].exams.examType === "WRITING" && (
-              <Box>
-                <Typography fontWeight={700}>Nội dung bài viết:</Typography>
+              <Box sx={{ p: 2, bgcolor: getBgColor("#fce4ec", theme.palette.background.paper), borderRadius: 2, boxShadow: 1 }}>
+                <Typography fontWeight={700} sx={{ mb: 1 }}>Nội dung bài viết:</Typography>
                 <Box sx={{ p: 1, bgcolor: theme.palette.background.paper, borderRadius: 1 }}>
                   {(() => {
                     try {
                       const obj = JSON.parse(detail[tabIdx].content || "{}" );
-                      // Nếu có nhiều key, nối lại bằng dấu xuống dòng
                       return Object.values(obj).join("\n");
                     } catch {
                       return detail[tabIdx].content;
@@ -160,10 +166,10 @@ const ExamHistoryDetailDialog: React.FC<ExamHistoryDetailDialogProps> = ({ open,
                 </Box>
               </Box>
             )}
-            <Stack>
-              <Typography fontWeight={700}>Danh sách câu hỏi:</Typography>
+            {/* Danh sách câu hỏi */}
+            <Box sx={{ p: 2, bgcolor: getBgColor("#f7f9fc", theme.palette.background.default), borderRadius: 2, boxShadow: 1 }}>
+              <Typography fontWeight={700} sx={{ mb: 2 }}>Danh sách câu hỏi:</Typography>
               {detail[tabIdx].exams.questions.map((q) => {
-                // Parse đáp án đã chọn từ content (JSON)
                 let selectedAnswerId: number | null = null;
 
                 try {
@@ -171,13 +177,9 @@ const ExamHistoryDetailDialog: React.FC<ExamHistoryDetailDialogProps> = ({ open,
                   selectedAnswerId = parsed[q.id];
                 } catch {}
 
-
-                // Tìm đáp án đã chọn
                 const selectedAnswer = q.answers.find((a) => a.id === selectedAnswerId);
-
-
                 return (
-                  <Box key={q.id} sx={{ mb: 2, p: 2, bgcolor: getBgColor("#f7f9fc", theme.palette.background.default), borderRadius: 2 }}>
+                  <Box key={q.id} sx={{ mb: 2, p: 2, bgcolor: getBgColor("#fff", theme.palette.background.paper), borderRadius: 2, boxShadow: 0 }}>
                     <Box sx={{ mb: 1 }}>
                       <span dangerouslySetInnerHTML={{ __html: q.questionText }} />
                     </Box>
@@ -188,7 +190,6 @@ const ExamHistoryDetailDialog: React.FC<ExamHistoryDetailDialogProps> = ({ open,
                     )}
                     <Stack direction="row" flexWrap="wrap" gap={1}>
                       {q.answers.map((a) => {
-                        // Xác định trạng thái đáp án
                         const isSelected = selectedAnswerId === a.id;
                         const isCorrect = a.isCorrect;
                         let bgcolor = getBgColor("grey.100", theme.palette.background.paper);
@@ -248,7 +249,7 @@ const ExamHistoryDetailDialog: React.FC<ExamHistoryDetailDialogProps> = ({ open,
                   </Box>
                 );
               })}
-            </Stack>
+            </Box>
           </Stack>
         )}
       </DialogContent>

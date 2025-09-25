@@ -10,23 +10,24 @@ type RegisterForPointingDialogProps = {
   onClose: () => void;
   termId?: number | null;
   examId?: number | null;
+  examType?: string;
 };
 
 const RegisterForPointingDialog = (props: RegisterForPointingDialogProps) => {
-  const { open, onConfirm, onClose, termId, examId } = props;
+  const { open, onConfirm, onClose, termId, examType } = props;
   const setNotification = useNotification();
   const gradingRequestMutation = useGradingRequestMutation();
 
   const handleConfirm = async () => {
     // If termId and examId are not provided, just call the original onConfirm
-    if (!termId || !examId) {
+    if (!termId || !examType) {
       onConfirm();
       return;
     }
 
     try {
       await gradingRequestMutation.mutateAsync([
-        { termId, examId },
+        { termId, examType },
       ]);
       setNotification({
         message: "Đăng ký chấm thi thành công",

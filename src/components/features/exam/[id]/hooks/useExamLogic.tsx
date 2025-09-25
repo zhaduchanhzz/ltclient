@@ -930,8 +930,8 @@ export function useExamLogic() {
 
         if (examIdsForGrading.length > 0) {
           await Promise.allSettled(
-            examIdsForGrading.map((id) =>
-              gradingRequestMutation.mutateAsync([{ termId: session.termId, examId: id }]),
+            examIdsForGrading.map(() =>
+              gradingRequestMutation.mutateAsync([{ termId: session.termId, examType: session.currentExamType }]),
             ),
           );
           console.log("Grading requests submitted for writing exams:", examIdsForGrading);

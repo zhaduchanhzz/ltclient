@@ -176,8 +176,8 @@ const MarkingRequestsPage = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {paginatedItems.map((row) => (
-                      <TableRow key={row.requestId} hover>
+                    {paginatedItems.map((row, index) => (
+                      <TableRow key={index} hover>
                         <TableCell>{row.termId}</TableCell>
                         <TableCell>{row.examId}</TableCell>
                         <TableCell>{row.userName ?? row.userId}</TableCell>
