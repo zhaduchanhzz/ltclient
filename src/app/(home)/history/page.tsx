@@ -17,6 +17,7 @@ import {
   Chip,
   Pagination,
   useMediaQuery,
+  Button,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import ClearIcon from "@mui/icons-material/Clear";
@@ -24,10 +25,18 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 // Switch from UI-only to real API: useGetTermHistoryQuery
 
-import { useGetHistoryQuery } from "@/services/apis/exam";
+import BasicButton from "@/components/base/MaterialUI-Basic/Button";
+import ExamHistoryDetailDialog from "@/components/common/Dialog/ExamHistoryDetailDialog";
+import { useExamHistoryDetailQuery } from "@/services/apis/exam-history-detail";
 
 // UI item type (mapped from API)
 type HistoryItem = {
+  readingScore: number | null;
+  writingScore: number | null;
+  speakingScore: number | null;
+  listeningScore: number | null;
+  speakingRequestId: number | null;
+  writingRequestId: number | null;
   termId: number;
   id: string;
   examName: string;
@@ -35,21 +44,33 @@ type HistoryItem = {
   date: string; // ISO date
   durationMin: number;
   score?: number; // optional if not graded yet
-  status: "Passed" | "Failed" | "Pending";
+  status: "" | "PENDING" | "ACCEPTED" | "GRADED";
 };
 
-const statusColor = (status: HistoryItem["status"]) => {
-  switch (status) {
-    case "Passed":
-      return "success" as const;
-    case "Failed":
-      return "error" as const;
-    default:
-      return "warning" as const;
-  }
-};
 
 const History: React.FC = () => {
+  // State cho popup chi tiết
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [selectedTermId, setSelectedTermId] = useState<number | null>(null);
+
+  // Query chi tiết bài thi
+  const { data: detailResp, refetch: refetchDetail } =
+    useExamHistoryDetailQuery(
+      selectedTermId ?? 0,
+      detailOpen && !!selectedTermId,
+    );
+
+  const handleOpenDetail = (termId: number) => {
+    setSelectedTermId(termId);
+    setDetailOpen(true);
+    refetchDetail();
+  };
+
+  const handleCloseDetail = () => {
+    setDetailOpen(false);
+    setSelectedTermId(null);
+  };
+
   const theme = useTheme();
   const isMdUp = useMediaQuery(theme.breakpoints.up("md"));
 
@@ -62,8 +83,12 @@ const History: React.FC = () => {
   const [page, setPage] = useState(1);
   const pageSize = 5;
 
+  // Notification
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const setNotification = require("@/contexts/NotificationContext").default();
+
   // Fetch history via API without passing termId
-  const { data: apiResp, isLoading, isError } = useGetHistoryQuery(true);
+  const { data: apiResp, isLoading, isError, refetch } = require("@/services/apis/exam").useGetHistoryQuery(true);
   const apiItems = apiResp?.data ?? [];
 
   // Map API data to UI data
@@ -71,13 +96,14 @@ const History: React.FC = () => {
     return apiItems.map((it: any) => {
       const total = (it.listeningScore ?? 0) + (it.readingScore ?? 0) + (it.speakingScore ?? 0) + (it.writingScore ?? 0);
       return {
-        id: String(it.id ?? ""),
-        examName: `Kỳ thi #${it.id ?? "?"}`,
+        id: String(it.termId ?? ""),
+        examName: `Kỳ thi #${it.termId ?? "?"}`,
         type: "Full",
         date: it.createdAt ?? "",
         durationMin: 0,
         score: total,
-        status: "Pending",
+        status: (it.speakingRequestId || it.writingRequestId) ? "PENDING" : "Chưa gửi yêu cầu",
+        ...it,
       } as HistoryItem;
     });
   }, [apiItems]);
@@ -100,12 +126,30 @@ const History: React.FC = () => {
   const pageItems = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   const resetFilters = () => {
-    setSearch("");
-    setStatus("");
-    setType("");
-    setDateFrom("");
-    setDateTo("");
-    setPage(1);
+  setSearch("");
+  setStatus("");
+  setType("");
+  setDateFrom("");
+  setDateTo("");
+  setPage(1);
+
+  };
+
+
+
+
+
+  // Gửi yêu cầu chấm điểm
+  const gradingRequestMutation = require("@/services/apis/exam").useGradingRequestMutation();
+
+  const handleGradingRequest = async (termId: number, examId: number) => {
+    try {
+      await gradingRequestMutation.mutateAsync([{ termId, examId }]);
+      setNotification({ message: "Gửi yêu cầu chấm thành công", severity: "success" });
+      refetch();
+    } catch {
+      setNotification({ message: "Gửi yêu cầu chấm thất bại", severity: "error" });
+    }
   };
 
   return (
@@ -113,22 +157,32 @@ const History: React.FC = () => {
       sx={{
         width: "100%",
         minHeight: "100vh",
-        bgcolor: theme.palette.mode === "dark" ? "background.default" : "#f7f9fc",
+        bgcolor:
+          theme.palette.mode === "dark" ? "background.default" : "#f7f9fc",
         py: { xs: 2, md: 4 },
       }}
     >
       <Container maxWidth="lg">
         {/* Header */}
-        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          sx={{ mb: 2 }}
+        >
           <Box>
             <Typography variant="h5" fontWeight={700} sx={{ mb: 0.5 }}>
               Lịch sử bài thi
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Xem lại các bài thi bạn đã thực hiện. Bạn có thể tìm kiếm, lọc theo trạng thái và thời gian.
+            <Typography variant="body2" color="text.primary">
+              Xem lại các bài thi bạn đã thực hiện.
             </Typography>
           </Box>
-          <IconButton aria-label="reset filters" onClick={resetFilters} size="small">
+          <IconButton
+            aria-label="reset filters"
+            onClick={resetFilters}
+            size="small"
+          >
             <ClearIcon />
           </IconButton>
         </Stack>
@@ -219,18 +273,52 @@ const History: React.FC = () => {
 
         {/* Results */}
         {isLoading ? (
-          <Paper elevation={0} sx={{ p: 4, textAlign: "center", bgcolor: "background.paper", borderRadius: 2 }}>
-            <Typography variant="h6" sx={{ mb: 1 }}>Đang tải dữ liệu...</Typography>
-            <Typography variant="body2" color="text.secondary">Vui lòng chờ trong giây lát.</Typography>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 4,
+              textAlign: "center",
+              bgcolor: "background.paper",
+              borderRadius: 2,
+            }}
+          >
+            <Typography variant="h6" sx={{ mb: 1 }}>
+              Đang tải dữ liệu...
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Vui lòng chờ trong giây lát.
+            </Typography>
           </Paper>
         ) : isError ? (
-          <Paper elevation={0} sx={{ p: 4, textAlign: "center", bgcolor: "background.paper", borderRadius: 2 }}>
-            <Typography variant="h6" sx={{ mb: 1 }}>Lỗi tải dữ liệu</Typography>
-            <Typography variant="body2" color="text.secondary">Không thể tải lịch sử ở thời điểm này. Vui lòng thử lại.</Typography>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 4,
+              textAlign: "center",
+              bgcolor: "background.paper",
+              borderRadius: 2,
+            }}
+          >
+            <Typography variant="h6" sx={{ mb: 1 }}>
+              Lỗi tải dữ liệu
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Không thể tải lịch sử ở thời điểm này. Vui lòng thử lại.
+            </Typography>
           </Paper>
         ) : pageItems.length === 0 ? (
-          <Paper elevation={0} sx={{ p: 4, textAlign: "center", bgcolor: "background.paper", borderRadius: 2 }}>
-            <Typography variant="h6" sx={{ mb: 1 }}>Không có dữ liệu</Typography>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 4,
+              textAlign: "center",
+              bgcolor: "background.paper",
+              borderRadius: 2,
+            }}
+          >
+            <Typography variant="h6" sx={{ mb: 1 }}>
+              Không có dữ liệu
+            </Typography>
             <Typography variant="body2" color="text.secondary">
               Hãy điều chỉnh bộ lọc hoặc thử tìm kiếm với từ khóa khác.
             </Typography>
@@ -238,14 +326,18 @@ const History: React.FC = () => {
         ) : (
           <>
             {isMdUp ? (
-              <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2 }}>
+              <TableContainer
+                component={Paper}
+                elevation={0}
+                sx={{ borderRadius: 2 }}
+              >
                 <Table size="small">
                   <TableHead>
                     <TableRow>
                       <TableCell>Tên bài thi</TableCell>
                       <TableCell>Kỹ năng</TableCell>
                       <TableCell>Ngày thi</TableCell>
-                      <TableCell>Thời lượng</TableCell>
+                      {/* <TableCell>Thời lượng</TableCell> */}
                       <TableCell>Điểm</TableCell>
                       <TableCell>Trạng thái</TableCell>
                       <TableCell align="right">Thao tác</TableCell>
@@ -256,16 +348,48 @@ const History: React.FC = () => {
                       <TableRow key={index} hover>
                         <TableCell>{it.examName}</TableCell>
                         <TableCell>{it.type}</TableCell>
-                        <TableCell>{new Date(it.date).toLocaleDateString()}</TableCell>
-                        <TableCell>{it.durationMin} phút</TableCell>
-                        <TableCell>{typeof it.score === "number" ? it.score : "—"}</TableCell>
                         <TableCell>
-                          <Chip size="small" label={it.status === "Passed" ? "Đạt" : it.status === "Failed" ? "Chưa đạt" : "Đang chấm"} color={statusColor(it.status)} variant="filled" />
+                          {new Date(it.date).toLocaleDateString()}
+                        </TableCell>
+                        {/* <TableCell>{it.durationMin} phút</TableCell> */}
+                        <TableCell>
+                          <div>Điểm nghe: {it.listeningScore}</div>
+                          <div>Điểm nói: {it.speakingScore}</div>
+                          <div>Điểm đọc: {it.readingScore}</div>
+                          <div>Điểm viết: {it.writingScore}</div>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={it.status}
+                            size="small"
+                            color={
+                              it.status?.toUpperCase() === "PENDING"
+                                ? "warning"
+                                : it.status?.toUpperCase() === "APPROVED"
+                                  ? "error"
+                                  : "default"
+                            }
+                          />
                         </TableCell>
                         <TableCell align="right">
-                          <IconButton color="primary" aria-label="Xem chi tiết">
-                            <ArrowForwardIcon />
-                          </IconButton>
+                          {/* {it.status === "ACCEPTED  "} */}
+                          <Button
+                            variant="text"
+                            size="small"
+                            onClick={() => handleOpenDetail(it.termId)}
+                          >
+                            Xem chi tiết
+                          </Button>
+                          {!(it.speakingRequestId || it.writingRequestId) && (
+                            <BasicButton
+                              size="small"
+                              onClick={() =>
+                                handleGradingRequest(it.termId, Number(it.id))
+                              }
+                            >
+                              Gửi yêu cầu chấm
+                            </BasicButton>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -275,8 +399,17 @@ const History: React.FC = () => {
             ) : (
               <Stack spacing={2}>
                 {pageItems.map((it) => (
-                  <Paper key={it.id} elevation={0} sx={{ p: 2, borderRadius: 2 }}>
-                    <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+                  <Paper
+                    key={it.id}
+                    elevation={0}
+                    sx={{ p: 2, borderRadius: 2 }}
+                  >
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      justifyContent="space-between"
+                      sx={{ mb: 1 }}
+                    >
                       <Typography fontWeight={700}>{it.examName}</Typography>
                       <Chip size="small" label={it.type} />
                     </Stack>
@@ -288,12 +421,16 @@ const History: React.FC = () => {
                         Thời lượng: {it.durationMin} phút
                       </Typography>
                     </Stack>
-                    <Stack direction="row" alignItems="center" justifyContent="space-between">
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      justifyContent="space-between"
+                    >
                       <Typography variant="body2">
                         Điểm: {typeof it.score === "number" ? it.score : "—"}
                       </Typography>
                       <Stack direction="row" spacing={1} alignItems="center">
-                        <Chip size="small" label={it.status === "Passed" ? "Đạt" : it.status === "Failed" ? "Chưa đạt" : "Đang chấm"} color={statusColor(it.status)} />
+                        {/* <Chip size="small" label={it.status === "Passed" ? "Đạt" : it.status === "Failed" ? "Chưa đạt" : "Đang chấm"} color={statusColor(it.status)} /> */}
                         <IconButton color="primary" aria-label="Xem chi tiết">
                           <ArrowForwardIcon />
                         </IconButton>
@@ -317,6 +454,12 @@ const History: React.FC = () => {
             </Stack>
           </>
         )}
+        {/* Popup chi tiết bài thi */}
+        <ExamHistoryDetailDialog
+          open={detailOpen}
+          onClose={handleCloseDetail}
+          detail={detailResp?.data}
+        />
       </Container>
     </Box>
   );
