@@ -65,30 +65,29 @@ export default function MarkingTermDetailPage() {
                       Điểm: {ex.score} | Đúng: {ex.selectedTrue}/{ex.totalQuestion}
                     </Typography>
                     {/* Actions: request grading if no requestId, otherwise allow marking */}
-                    {(ex.exams?.examType === "WRITING" || ex.exams?.examType === "SPEAKING") && (
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        {!((ex.requestIdWrite || ex.requestIdSpeak)) && (
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            disabled={isRequestingMark}
-                            onClick={async () => {
-                              try {
-                                const examIdNum = Number(ex.exams?.id);
-                                const termIdNum = Number(termId);
-                                if (!Number.isFinite(examIdNum) || !Number.isFinite(termIdNum)) return;
-                                await requestMarkAsync([{ termId: termIdNum, examId: examIdNum }]);
-                                await refetch();
-                              } catch {
-                                // noop
-                              }
-                            }}
-                          >
-                            Yêu cầu chấm
-                          </Button>
-                        )}
-                      </Stack>
-                    )}
+                              {(ex.exams?.examType === "WRITING" || ex.exams?.examType === "SPEAKING") &&
+                                !(ex.requestMarkWrite || ex.requestMarkSpeak) && (
+                                  <Stack direction="row" spacing={1} alignItems="center">
+                                    <Button
+                                      variant="outlined"
+                                      size="small"
+                                      disabled={isRequestingMark}
+                                      onClick={async () => {
+                                        try {
+                                          const examIdNum = Number(ex.exams?.id);
+                                          const termIdNum = Number(termId);
+                                          if (!Number.isFinite(examIdNum) || !Number.isFinite(termIdNum)) return;
+                                          await requestMarkAsync([{ termId: termIdNum, examId: examIdNum }]);
+                                          await refetch();
+                                        } catch {
+                                          // noop
+                                        }
+                                      }}
+                                    >
+                                      Yêu cầu chấm
+                                    </Button>
+                                  </Stack>
+                                )}
                     {/* Only show submitted content for WRITING/SPEAKING */}
                     {(ex.exams?.examType === "WRITING" || ex.exams?.examType === "SPEAKING") && ex.content && (
                       <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: "#fafafa", border: "1px solid", borderColor: "divider" }}>
@@ -179,19 +178,18 @@ export default function MarkingTermDetailPage() {
                             }
 
                             let num = Number(value);
-
                             if (num < 0) num = 0;
                             if (num > 10) num = 10;
-
                             setForm((prev) => ({
                               ...prev,
                               [ex.id]: {
                                 ...(prev[ex.id] ?? {}),
-                                scoreMark: String(num), // ép về string
+                                scoreMark: String(num),
                               },
                             }));
                           }}
                           sx={{ width: 140 }}
+                          disabled={!!(ex.requestMarkWrite || ex.requestMarkSpeak)}
                         />
                         <TextField
                           label="Nhận xét"
@@ -204,13 +202,19 @@ export default function MarkingTermDetailPage() {
                               ...prev,
                               [ex.id]: { ...prev[ex.id], comments: e.target.value },
                             }))
+
+
+
+
+
                           }
                           sx={{ flex: 1 }}
+                          disabled={!!(ex.requestMarkWrite || ex.requestMarkSpeak)}
                         />
                         <Button
                           variant="contained"
                           size="small"
-                          disabled={isMarking || form[ex.id]?.done || !((ex.requestIdWrite || ex.requestIdSpeak))}
+                          disabled={isMarking || form[ex.id]?.done || !((ex.requestIdWrite || ex.requestIdSpeak)) || !!(ex.requestMarkWrite || ex.requestMarkSpeak)}
                           onClick={async () => {
                             const scoreNum = Number(form[ex.id]?.scoreMark);
                             if (Number.isNaN(scoreNum)) return;

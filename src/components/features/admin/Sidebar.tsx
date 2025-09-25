@@ -11,6 +11,7 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import PeopleIcon from "@mui/icons-material/People";
 import SchoolIcon from "@mui/icons-material/School";
 import ArticleIcon from "@mui/icons-material/Article";
+import ChecklistIcon from "@mui/icons-material/Checklist";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
@@ -27,7 +28,7 @@ const menuItems = [
   { text: "Quản lý đơn hàng", icon: <ShoppingCartIcon />, path: "/admin/orders" },
   { text: "Quản lý bài thi", icon: <SchoolIcon />, path: "/admin/exams" },
   { text: "Quản lý Blog", icon: <ArticleIcon />, path: "/admin/posts" },
-  { text: "Chấm thi", icon: <ArticleIcon />, path: "/admin/exams/marking" },
+  { text: "Chấm thi", icon: <ChecklistIcon />, path: "/admin/exams/marking" },
 ];
 
 export default function AdminSidebar({ open, drawerWidth }: AdminSidebarProps) {
