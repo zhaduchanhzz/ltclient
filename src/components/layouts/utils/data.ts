@@ -2,6 +2,7 @@ import { APP_ROUTE } from "@/consts/app-route";
 
 export const navLinks: { href: string; name: string }[] = [
   { name: "Thi thử", href: APP_ROUTE.EXAM_ROOM },
+  { name: "Thi thật", href: APP_ROUTE.EXAM_ROOM_REAL },
   { name: "Luyện đề", href: APP_ROUTE.PRACTICE_DASHBOARD },
   { name: "Gói cước", href: APP_ROUTE.SUBSCRIPTION },
   { name: "Lịch thi", href: APP_ROUTE.EXAM_SCHEDULE },

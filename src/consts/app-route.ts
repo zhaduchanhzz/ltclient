@@ -24,6 +24,7 @@ export const APP_ROUTE = {
   EXAM_READING: "/exam/reading",
   EXAM_REVIEW: "/exam/review",
   EXAM_ROOM: "/exam/room",
+  EXAM_ROOM_REAL: "/exam/real",
   EXAM_SCORE: "/exam/score",
   EXAM_SPEAKING: "/exam/speaking",
   EXAM_WRITING: "/exam/writing",

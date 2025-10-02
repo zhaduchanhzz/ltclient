@@ -11,6 +11,7 @@ import {
   TakeExamRequest,
 } from "@/services/types/exam";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { EXAM_TIME_LIMITS } from "@/config/app-config";
 
 type ExamSectionStatus =
   | "locked"
@@ -19,12 +20,6 @@ type ExamSectionStatus =
   | "completed"
   | "expired";
 
-const EXAM_TIME_LIMITS = {
-  LISTENING: 47,
-  READING: 60,
-  WRITING: 60,
-  SPEAKING: 12,
-};
 
 // Persistence key for localStorage
 const EXAM_STATE_KEY = "exam_session_state";

@@ -42,13 +42,7 @@ import { API_PATH } from "@/consts/api-path";
 import { ApiServerURL } from "@/utils/config";
 import { useAppContextHandle } from "@/contexts/AppContext";
 import { useTakeExamMutation } from "@/services/apis/exam";
-
-const EXAM_TIME_LIMITS = {
-  LISTENING: 47,
-  READING: 60,
-  WRITING: 60,
-  SPEAKING: 12,
-};
+import { EXAM_TIME_LIMITS } from "@/config/app-config";
 
 const ExamTypeIcons = {
   LISTENING: Headphones,

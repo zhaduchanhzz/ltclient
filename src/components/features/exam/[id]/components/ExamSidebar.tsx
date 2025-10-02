@@ -14,6 +14,7 @@ import {
   useMediaQuery,
 } from "@mui/material";
 import { ExamTermSession, SimulationExam } from "@/services/types/exam";
+import { EXAM_TIME_LIMITS } from "@/config/app-config";
 
 type ExamSectionStatus =
   | "locked"
@@ -21,13 +22,6 @@ type ExamSectionStatus =
   | "in_progress"
   | "completed"
   | "expired";
-
-const EXAM_TIME_LIMITS = {
-  LISTENING: 47,
-  READING: 60,
-  WRITING: 60,
-  SPEAKING: 12,
-};
 
 const ExamTypeIcons = {
   LISTENING: Headphones,
