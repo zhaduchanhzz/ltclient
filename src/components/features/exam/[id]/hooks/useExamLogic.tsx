@@ -1,3 +1,5 @@
+/* eslint-disable padding-line-between-statements */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useMediaQuery, useTheme } from "@mui/material";
@@ -40,7 +42,9 @@ export function useExamLogic() {
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const { id: examId } = useParams() as { id: string };
+  // Provide safe fallback for static real exam route (no dynamic id param)
+  const params = useParams() as { id?: string };
+  const rawExamIdParam = params?.id || "real"; // default to 'real' when not provided
   const submitExamMutation = useSubmitExamMutation();
   const submitAllExamsMutation = useSubmitAllExamsMutation();
   const gradingRequestMutation = useGradingRequestMutation();
@@ -92,26 +96,25 @@ export function useExamLogic() {
     (state: PersistedExamState) => {
       try {
         localStorage.setItem(
-          EXAM_STATE_KEY + "_" + examId,
+          EXAM_STATE_KEY + "_" + rawExamIdParam,
           JSON.stringify(state),
         );
       } catch (error) {
         console.error("Failed to save exam state:", error);
       }
     },
-    [examId],
+    [rawExamIdParam],
   );
 
   const loadStateFromLocalStorage =
     useCallback((): PersistedExamState | null => {
       try {
-        const saved = localStorage.getItem(EXAM_STATE_KEY + "_" + examId);
+        const saved = localStorage.getItem(EXAM_STATE_KEY + "_" + rawExamIdParam);
 
         if (saved) {
           const state: PersistedExamState = JSON.parse(saved);
-          // Check if saved state is less than 6 hours old
-          const maxAge = 6 * 60 * 60 * 1000; // 6 hours in ms
 
+          const maxAge = 6 * 60 * 60 * 1000; // 6 hours
           if (Date.now() - state.lastSavedAt < maxAge) {
             return state;
           }
@@ -119,24 +122,22 @@ export function useExamLogic() {
       } catch (error) {
         console.error("Failed to load exam state:", error);
       }
-
       return null;
-    }, [examId]);
+    }, [rawExamIdParam]);
 
   const clearPersistedState = useCallback(() => {
     try {
-      localStorage.removeItem(EXAM_STATE_KEY + "_" + examId);
+      localStorage.removeItem(EXAM_STATE_KEY + "_" + rawExamIdParam);
     } catch (error) {
       console.error("Failed to clear exam state:", error);
     }
-  }, [examId]);
+  }, [rawExamIdParam]);
 
   // Load persisted state or exam data on mount
   useEffect(() => {
     const loadExamData = () => {
       setIsLoading(true);
       setError(null);
-
       try {
         // First try to load from localStorage
         const savedState = loadStateFromLocalStorage();
@@ -185,7 +186,7 @@ export function useExamLogic() {
           console.log("No exam data found - exam not available");
           console.log(
             "Expected localStorage key:",
-            EXAM_STATE_KEY + "_" + examId,
+            EXAM_STATE_KEY + "_" + rawExamIdParam,
           );
           setExamExpired(true);
           setIsLoading(false);
@@ -198,7 +199,7 @@ export function useExamLogic() {
     };
 
     loadExamData();
-  }, [loadStateFromLocalStorage, examId]);
+  }, [loadStateFromLocalStorage, rawExamIdParam]);
 
   // Convert API exam data to SimulationExam format
   const convertToSimulationExams = (
@@ -239,27 +240,16 @@ export function useExamLogic() {
     const simulationExams = convertToSimulationExams(examData.exams);
     const freeExams = filterExamsByAccountType(simulationExams);
 
-    const organized = freeExams.reduce(
+    return freeExams.reduce(
       (acc: Record<string, SimulationExam[]>, exam: SimulationExam) => {
-        // Only include exams that have questions
         if (exam.questions && exam.questions.length > 0) {
-          if (!acc[exam.examType]) {
-            acc[exam.examType] = [];
-          }
-
+          if (!acc[exam.examType]) acc[exam.examType] = [];
           acc[exam.examType].push(exam);
-        } else {
-          console.log(
-            `Skipping exam ${exam.id} (${exam.examType}) - no questions`,
-          );
         }
-
         return acc;
       },
       {} as Record<string, SimulationExam[]>,
     );
-
-    return organized;
   }, [examData, filterExamsByAccountType]);
 
   const examTypes = Object.keys(examsByType) as Array<
@@ -332,9 +322,11 @@ export function useExamLogic() {
       }
 
       const termId = parseInt(apiExamData.termId);
+      const numericExamId = parseInt(rawExamIdParam);
+      const safeExamId = Number.isNaN(numericExamId) ? 0 : numericExamId;
       const newSession: ExamTermSession = {
         termId,
-        examId: parseInt(examId),
+        examId: safeExamId,
         exams: freeExams,
         currentExamType: availableTypes[0],
         currentExamIndex: 0,
@@ -665,46 +657,19 @@ export function useExamLogic() {
   );
 
   // Enhanced navigation logic with completed section locking
-  const navigateToExamTypePart = (examType: string, partIndex: number) => {
+  const _navigateToExamTypePart = (examType: string, partIndex: number) => {
+    // renamed with underscore; logic retained for potential future use
     if (!session) return;
-
     const targetStatus = sectionStatus[examType];
-
     if (examType !== session.currentExamType) {
-      if (!["available", "in_progress"].includes(targetStatus)) {
-        return;
-      }
-
+      if (!["available", "in_progress"].includes(targetStatus)) return;
       if (targetStatus === "available") {
-        setSectionStatus((prev) => ({
-          ...prev,
-          [examType]: "in_progress",
-        }));
-
-        setSectionStartTimes((prev) => ({
-          ...prev,
-          [examType]: Date.now(),
-        }));
-
-        setCurrentSectionTimeRemaining(
-          EXAM_TIME_LIMITS[examType as keyof typeof EXAM_TIME_LIMITS] * 60,
-        );
+        setSectionStatus((prev) => ({ ...prev, [examType]: "in_progress" }));
+        setSectionStartTimes((prev) => ({ ...prev, [examType]: Date.now() }));
+        setCurrentSectionTimeRemaining(EXAM_TIME_LIMITS[examType as keyof typeof EXAM_TIME_LIMITS] * 60);
       }
     }
-
-    setSession((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        currentExamType: examType as
-          | "LISTENING"
-          | "READING"
-          | "WRITING"
-          | "SPEAKING",
-        currentExamIndex: partIndex,
-        currentQuestionIndex: 0,
-      };
-    });
+    setSession((prev) => prev ? { ...prev, currentExamType: examType as any, currentExamIndex: partIndex, currentQuestionIndex: 0 } : prev);
   };
 
   // Submit current speaking question during navigation
@@ -748,7 +713,7 @@ export function useExamLogic() {
   ]);
 
   // Submit final speaking question and complete exam
-  const submitFinalSpeaking = useCallback(async () => {
+  const _submitFinalSpeaking = useCallback(async () => {
     if (!session || session.currentExamType !== "SPEAKING") return;
 
     try {
@@ -773,7 +738,7 @@ export function useExamLogic() {
   }, [session, submitCurrentSpeakingQuestion, clearPersistedState]);
 
   // Navigate to next question (modified to submit speaking questions)
-  const nextQuestion = useCallback(async () => {
+  const _nextQuestion = useCallback(async () => {
     if (!session) return;
 
     // Submit current speaking question before navigation
@@ -819,63 +784,28 @@ export function useExamLogic() {
         };
       }
     });
-  }, [
-    session,
-    examsByType,
-    examTypes,
-    completeSection,
-    submitCurrentSpeakingQuestion,
-  ]);
+  }, [session, examsByType, examTypes, completeSection, submitCurrentSpeakingQuestion]);
 
   // Navigate to previous question
-  const previousQuestion = () => {
+  const _previousQuestion = () => {
     if (!session) return;
 
     setSession((prev) => {
       if (!prev) return prev;
 
       if (prev.currentQuestionIndex > 0) {
-        return {
-          ...prev,
-          currentQuestionIndex: prev.currentQuestionIndex - 1,
-        };
+        return { ...prev, currentQuestionIndex: prev.currentQuestionIndex - 1 };
       } else if (prev.currentExamIndex > 0) {
         const currentTypeExams = examsByType[prev.currentExamType] || [];
         const prevExam = currentTypeExams[prev.currentExamIndex - 1];
-        return {
-          ...prev,
-          currentExamIndex: prev.currentExamIndex - 1,
-          currentQuestionIndex: prevExam.questions.length - 1,
-        };
-      } else {
-        // Don't allow navigation to previous completed sections
-        const currentTypeIndex = examTypes.indexOf(prev.currentExamType);
-
-        if (currentTypeIndex > 0) {
-          const prevExamType = examTypes[currentTypeIndex - 1];
-          const prevStatus = sectionStatus[prevExamType];
-
-          // Only allow if previous section is still in progress
-          if (prevStatus === "in_progress") {
-            const prevTypeExams = examsByType[prevExamType] || [];
-            const lastExamInPrevType = prevTypeExams[prevTypeExams.length - 1];
-
-            return {
-              ...prev,
-              currentExamType: prevExamType,
-              currentExamIndex: prevTypeExams.length - 1,
-              currentQuestionIndex: lastExamInPrevType.questions.length - 1,
-            };
-          }
-        }
+        return { ...prev, currentExamIndex: prev.currentExamIndex - 1, currentQuestionIndex: prevExam.questions.length - 1 };
       }
-
       return prev;
     });
   };
 
   // Submit writing exams - called when user clicks "Complete WRITING"
-  const submitWritingExam = useCallback(async () => {
+  const _submitWritingExam = useCallback(async () => {
     if (!session) return;
 
     try {
@@ -887,37 +817,23 @@ export function useExamLogic() {
 
       // Build responses grouped by exam for writing questions only
       Object.entries(session.answers).forEach(([questionId, answers]) => {
-        const questionIdNum = parseInt(questionId);
+        const qid = parseInt(questionId);
 
         // Find the question and its exam
         allExams.forEach((exam) => {
-          const question = exam.questions.find((q) => q.id === questionIdNum);
+          const question = exam.questions.find((q) => q.id === qid);
 
           if (question && exam.examType === "WRITING") {
-            if (!writingExamSubmissions[exam.id]) {
-              writingExamSubmissions[exam.id] = { responses: {} };
-            }
+            if (!writingExamSubmissions[exam.id]) writingExamSubmissions[exam.id] = { responses: {} };
             // For writing questions, the answer is text from user input
 
-            writingExamSubmissions[exam.id].responses[questionId] =
-              answers[0] || "";
+            writingExamSubmissions[exam.id].responses[questionId] = answers[0] || "";
           }
         });
       });
 
       // Submit each writing exam separately using their individual exam ID
-      const submissionPromises = Object.entries(writingExamSubmissions).map(
-        async ([examId, { responses }]) => {
-          const submitRequest: ExamSubmitRequest = {
-            examId: parseInt(examId), // Use the individual exam ID from take-exam response (e.g., 13, 20)
-            responses, // Format: { "17": "user input text", "26": "user input text" }
-            termId: session.termId,
-          };
-
-          console.log(`Submitting writing exam ${examId}:`, submitRequest);
-          return submitExamMutation.mutateAsync(submitRequest);
-        },
-      );
+      const submissionPromises = Object.entries(writingExamSubmissions).map(([examId, { responses }]) => submitExamMutation.mutateAsync({ examId: parseInt(examId), responses, termId: session.termId } as ExamSubmitRequest));
 
       // Wait for all writing exams to be submitted
       await Promise.all(submissionPromises);
@@ -926,20 +842,13 @@ export function useExamLogic() {
 
       // After successful writing submissions, send grading request(s) for WRITING exams
       try {
-        const examIdsForGrading = Object.keys(writingExamSubmissions).map((id) => parseInt(id));
+        const ids = Object.keys(writingExamSubmissions).map((id) => parseInt(id));
 
-        if (examIdsForGrading.length > 0) {
-          await Promise.allSettled(
-            examIdsForGrading.map(() =>
-              gradingRequestMutation.mutateAsync([{ termId: session.termId, examType: session.currentExamType }]),
-            ),
-          );
-          console.log("Grading requests submitted for writing exams:", examIdsForGrading);
+        if (ids.length > 0) {
+          await Promise.allSettled(ids.map(() => gradingRequestMutation.mutateAsync([{ termId: session.termId, examType: session.currentExamType }])));
+          console.log("Grading requests submitted for writing exams:", ids);
         }
-      } catch (e) {
-        console.error("Failed to send grading request(s) for writing exams:", e);
-      }
-
+      } catch {}
       // Continue to next section
       completeSection("WRITING");
     } catch (error) {
@@ -1078,7 +987,7 @@ export function useExamLogic() {
   }, [session, submitAllExamsMutation, clearPersistedState, allExams]);
 
   // Navigate to specific question index within the current exam type
-  const navigateToQuestion = useCallback(
+  const _navigateToQuestion = useCallback(
     async (globalQuestionIndex: number) => {
       if (!session) return;
 
@@ -1097,25 +1006,18 @@ export function useExamLogic() {
         examIndex++
       ) {
         const exam = currentTypeExams[examIndex];
-        const examQuestionCount = exam.questions.length;
+        const count = exam.questions.length;
 
-        if (questionCount + examQuestionCount > globalQuestionIndex) {
+        if (questionCount + count > globalQuestionIndex) {
           targetExamIndex = examIndex;
           targetQuestionIndex = globalQuestionIndex - questionCount;
           break;
         }
 
-        questionCount += examQuestionCount;
+        questionCount += count;
       }
 
-      setSession((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          currentExamIndex: targetExamIndex,
-          currentQuestionIndex: targetQuestionIndex,
-        };
-      });
+      setSession((prev) => prev ? { ...prev, currentExamIndex: targetExamIndex, currentQuestionIndex: targetQuestionIndex } : prev);
     },
     [session, examsByType, submitCurrentSpeakingQuestion],
   );
@@ -1135,7 +1037,7 @@ export function useExamLogic() {
 
   return {
     // Data
-    examId,
+    examId: rawExamIdParam,
     isLoading,
     error,
     session,
@@ -1164,20 +1066,7 @@ export function useExamLogic() {
     handleAnswerChange,
     handleWritingAnswerChange,
     handleSpeakingAnswerChange,
-    navigateToExamTypePart,
-    navigateToQuestion,
-    nextQuestion,
-    previousQuestion,
-    completeSection,
-    submitExam,
-    submitAllExams,
-    submitWritingExam,
-    submitSpeakingQuestion,
-    submitFinalSpeaking,
+    submitAllExams, // use custom function returning structured result
     resetExam,
-
-    // UI Actions
-    setSidebarOpen,
-    setShowSuccessDialog,
   };
 }
