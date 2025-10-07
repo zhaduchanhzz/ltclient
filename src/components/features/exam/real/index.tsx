@@ -28,11 +28,13 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   Grid2,
   Paper,
   Slide,
   Stack,
   Typography,
+  Chip,
 } from "@mui/material";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useExamLogic } from "../[id]/hooks/useExamLogic";
@@ -367,6 +369,8 @@ export default function RealExamPage() {
     return <Container><Alert severity="error">Failed to load current question.</Alert></Container>;
   }
 
+  const isReading = currentExamPart?.examType === "READING";
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
       <ExamHeader session={session} currentSectionTimeRemaining={currentSectionTimeRemaining} answeredCount={totalAnswered} totalCount={totalQuestions} />
@@ -379,33 +383,84 @@ export default function RealExamPage() {
         </Box>
       </Paper>
 
-      <Box sx={{ flexGrow:1, display:"flex", flexDirection:{ xs:"column", md:"row" }, overflow:"hidden", height:"calc(100vh - 120px)" }}>
-        <Box ref={leftPanelRef} onScroll={handleLeftScroll} sx={{ width:{ xs:"100%", md:"50%"}, height:{ xs:"40%", md:"100%"}, overflow:"auto", borderRight:{ md:"1px solid"}, borderBottom:{ xs:"1px solid", md:"none"}, borderColor:"divider", p:3 }}>
-          <Paper elevation={2} sx={{ p:3, mb:3, bgcolor: ExamTypeColors[currentExamPart.examType as keyof typeof ExamTypeColors] || "#607d8b", color:"white", position:"sticky", top:0, zIndex:10, borderRadius:2 }}>
-            {currentExamPart.title ? <Box sx={{ fontSize:"1rem", "& img":{ maxWidth:"100%" } }} dangerouslySetInnerHTML={{ __html: currentExamPart.title }} /> : <Typography>{`${currentExamPart.examType} - Part ${currentExamPartIndex+1}`}</Typography>}
-            <Typography variant="body2" sx={{ mt:1, opacity:.9 }}>Questions {getGlobalQuestionOffset + 1} - {getGlobalQuestionOffset + currentExamPart.questions.length} • {partAnswered}/{partTotal} answered</Typography>
-          </Paper>
-
-          {currentExamPart.examType === "LISTENING" && currentExamPart.audioFile && (
-            <Paper elevation={1} sx={{ p:3, mb:3 }}>
-              <Typography sx={{ mb:2 }}>Listening Audio</Typography>
-              <audio controls style={{ width:"100%" }}>
-                <source src={ApiServerURL + API_PATH.DOWNLOAD_FILE + currentExamPart.audioFile} />
-                Your browser does not support the audio element.
-              </audio>
+      {isReading ? (
+        <Box sx={{ flexGrow:1, display:"flex", flexDirection:{ xs:"column", md:"row" }, overflow:"hidden", height:"calc(100vh - 120px)" }}>
+          <Box ref={leftPanelRef} onScroll={handleLeftScroll} sx={{ width:{ xs:"100%", md:"50%"}, height:{ xs:"40%", md:"100%"}, overflow:"auto", borderRight:{ md:"1px solid"}, borderBottom:{ xs:"1px solid", md:"none"}, borderColor:"divider", p:3 }}>
+            <Paper elevation={2} sx={{ p:3, mb:3, bgcolor: ExamTypeColors[currentExamPart.examType as keyof typeof ExamTypeColors] || "#607d8b", color:"white", position:"sticky", top:0, zIndex:10, borderRadius:2 }}>
+              {currentExamPart.title ? <Box sx={{ fontSize:"1rem", "& img":{ maxWidth:"100%" } }} dangerouslySetInnerHTML={{ __html: currentExamPart.title }} /> : <Typography>{`${currentExamPart.examType} - Part ${currentExamPartIndex+1}`}</Typography>}
+              <Typography variant="body2" sx={{ mt:1, opacity:.9 }}>Questions {getGlobalQuestionOffset + 1} - {getGlobalQuestionOffset + currentExamPart.questions.length} • {partAnswered}/{partTotal} answered</Typography>
             </Paper>
-          )}
 
-          {currentExamPart.description && (
-            <Paper elevation={1} sx={{ p:3 }}>
-              <Typography sx={{ mb:2 }}>Instructions / Passage</Typography>
-              <Box sx={{ lineHeight:1.8, "& img":{ maxWidth:"100%" } }} dangerouslySetInnerHTML={{ __html: currentExamPart.description }} />
-            </Paper>
-          )}
+            {currentExamPart.examType === "LISTENING" && currentExamPart.audioFile && (
+              <Paper elevation={1} sx={{ p:3, mb:3 }}>
+                <Typography sx={{ mb:2 }}>Listening Audio</Typography>
+                <audio controls style={{ width:"100%" }}>
+                  <source src={ApiServerURL + API_PATH.DOWNLOAD_FILE + currentExamPart.audioFile} />
+                  Your browser does not support the audio element.
+                </audio>
+              </Paper>
+            )}
+
+            {currentExamPart.description && (
+              <Paper elevation={1} sx={{ p:3 }}>
+                <Typography sx={{ mb:2 }}>Instructions / Passage</Typography>
+                <Box sx={{ lineHeight:1.8, "& img":{ maxWidth:"100%" } }} dangerouslySetInnerHTML={{ __html: currentExamPart.description }} />
+              </Paper>
+            )}
+          </Box>
+
+          <Box ref={rightPanelRef} onScroll={handleRightScroll} sx={{ width:{ xs:"100%", md:"50%"}, height:{ xs:"60%", md:"100%"}, overflow:"auto", p:0 }}>
+            <Box sx={{ p:3 }}>
+              {currentExamPart.questions.map((question: any, index: number) => {
+                const globalQuestionNumber = getGlobalQuestionOffset + index + 1;
+                return (
+                  <Paper key={question.id} elevation={1} sx={{ p:3, mb:3 }}>
+                    <Typography sx={{ mb:2, color:"primary.main" }}>Question {globalQuestionNumber}</Typography>
+                    <QuestionCard
+                      session={session}
+                      currentExam={currentExamPart}
+                      currentQuestion={question}
+                      questionNumber={globalQuestionNumber}
+                      examType={currentExamPart.examType}
+                      onAnswerChange={handleAnswerChange}
+                      onWritingAnswerChange={handleWritingAnswerChange}
+                      onSpeakingAnswerChange={handleSpeakingAnswerChange}
+                    />
+                  </Paper>
+                );
+              })}
+            </Box>
+          </Box>
         </Box>
+      ) : (
+        <Box ref={rightPanelRef} onScroll={handleRightScroll} sx={{ flexGrow:1, overflow:"auto", height:"calc(100vh - 120px)", bgcolor:"background.default" }}>
+          <Box sx={{ p:3, maxWidth: 1200, mx: "auto" }}>
+            <Paper elevation={2} sx={{ p:3, mb:3, bgcolor: ExamTypeColors[currentExamPart.examType as keyof typeof ExamTypeColors] || "#607d8b", color:"white", position:"sticky", top:0, zIndex:10, borderRadius:2 }}>
+              {currentExamPart.title ? (
+                <Box sx={{ fontSize:"1rem", "& img":{ maxWidth:"100%" } }} dangerouslySetInnerHTML={{ __html: currentExamPart.title }} />
+              ) : (
+                <Typography>{`${currentExamPart.examType} - Part ${currentExamPartIndex+1}`}</Typography>
+              )}
+              <Typography variant="body2" sx={{ mt:1, opacity:.9 }}>Questions {getGlobalQuestionOffset + 1} - {getGlobalQuestionOffset + currentExamPart.questions.length} • {partAnswered}/{partTotal} answered</Typography>
+            </Paper>
 
-        <Box ref={rightPanelRef} onScroll={handleRightScroll} sx={{ width:{ xs:"100%", md:"50%"}, height:{ xs:"60%", md:"100%"}, overflow:"auto", p:0 }}>
-          <Box sx={{ p:3 }}>
+            {currentExamPart.examType === "LISTENING" && currentExamPart.audioFile && (
+              <Paper elevation={1} sx={{ p:3, mb:3 }}>
+                <Typography sx={{ mb:2 }}>Listening Audio</Typography>
+                <audio controls style={{ width:"100%" }}>
+                  <source src={ApiServerURL + API_PATH.DOWNLOAD_FILE + currentExamPart.audioFile} />
+                  Your browser does not support the audio element.
+                </audio>
+              </Paper>
+            )}
+
+            {currentExamPart.description && (
+              <Paper elevation={1} sx={{ p:3, mb:3 }}>
+                <Typography sx={{ mb:2 }}>Instructions</Typography>
+                <Box sx={{ lineHeight:1.8, "& img":{ maxWidth:"100%" } }} dangerouslySetInnerHTML={{ __html: currentExamPart.description }} />
+              </Paper>
+            )}
+
             {currentExamPart.questions.map((question: any, index: number) => {
               const globalQuestionNumber = getGlobalQuestionOffset + index + 1;
               return (
@@ -426,7 +481,7 @@ export default function RealExamPage() {
             })}
           </Box>
         </Box>
-      </Box>
+      )}
 
       <Paper elevation={2} sx={{ p:3, borderTop:"1px solid", borderColor:"divider" }}>
         <Box sx={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
@@ -466,41 +521,62 @@ export default function RealExamPage() {
         <DialogTitle>
           <Box sx={{ display:"flex", alignItems:"center", gap:1 }}>
             {submissionDialog.success ? <CheckCircle color="success" /> : <AccessTime color="error" />}
-            {submissionDialog.success ? "Submission Successful" : "Submission Failed"}
+            {submissionDialog.success ? "Đã hoàn thành bài thi" : "Submission Failed"}
           </Box>
         </DialogTitle>
         <DialogContent>
-          {submissionDialog.success && submissionDialog.details && submissionDialog.details.length > 0 && (
-            <Box sx={{ mt:2 }}>
-              <Typography variant="h6" sx={{ mb:1, fontWeight:"bold" }}>Kết quả chi tiết</Typography>
-              <Stack spacing={2}>
-                {submissionDialog.details.map((detail: any, idx: number) => {
-                  const data = detail?.data ?? detail;
-                  if (!data) return null;
-                  const Icon = ExamTypeIcons[data.examType as keyof typeof ExamTypeIcons] || Quiz;
-                  const color = ExamTypeColors[data.examType as keyof typeof ExamTypeColors] || "#1976d2";
+          {submissionDialog.success ? (
+            <Stack spacing={2}>
+              <Paper variant="outlined" sx={{ p:2, borderRadius:2 }}>
+                <Stack direction={{ xs:"column", sm:"row" }} spacing={2} alignItems={{ xs:"start", sm:"center" }} justifyContent="space-between">
+                  <Box>
+                    <Typography variant="subtitle2" color="text.secondary">Tiến độ tổng</Typography>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <Typography variant="h6" fontWeight={700}>{totalAnswered}/{totalQuestions}</Typography>
+                      <Chip size="small" label={`${totalQuestions ? Math.round((totalAnswered/totalQuestions)*100) : 0}%`} color={totalQuestions ? (Math.round((totalAnswered/totalQuestions)*100) >= 70 ? "success" : "warning") : "default"} />
+                    </Stack>
+                  </Box>
+                </Stack>
+              </Paper>
+
+              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Kết quả theo kỹ năng</Typography>
+              <Grid2 container spacing={2}>
+                {examTypes.map((examType) => {
+                  const parts = examsByType[examType] || [];
+                  let total = 0; let answered = 0;
+                  parts.forEach((exam: any) => {
+                    exam.questions.forEach((q: any) => {
+                      total++;
+                      if (session.answers[q.id]?.length) answered++;
+                    });
+                  });
+                  const Icon = ExamTypeIcons[examType as keyof typeof ExamTypeIcons] || Quiz;
+                  const color = ExamTypeColors[examType as keyof typeof ExamTypeColors] || "#1976d2";
+                  const isAuto = examType === "LISTENING" || examType === "READING";
+                  const percent = total ? Math.round((answered/total)*100) : 0;
+
                   return (
-                    <Card key={idx} sx={{ borderLeft:`4px solid ${color}` }}>
-                      <CardContent>
-                        <Box sx={{ display:"flex", alignItems:"center", gap:1, mb:1 }}>
-                          <Avatar sx={{ bgcolor: color, width:32, height:32 }}><Icon sx={{ fontSize:18 }} /></Avatar>
-                          <Typography variant="subtitle1" fontWeight={700}>{data.examType}</Typography>
-                        </Box>
-                        {Array.isArray(data.userResponses) && data.userResponses.length>0 ? (
-                          <Stack spacing={1}>
-                            <Typography variant="body2">Số câu đã trả lời: {data.userResponses.filter((r: any)=>r.userAnswer).length}/{data.userResponses.length}</Typography>
-                          </Stack>
-                        ) : (
-                          <Typography variant="body2" color="text.secondary">Không có dữ liệu chi tiết</Typography>
-                        )}
-                      </CardContent>
-                    </Card>
+                    <Grid2 key={examType} size={{ xs:12, sm:6 }}>
+                      <Paper variant="outlined" sx={{ p:2, borderRadius:2, borderLeft: `4px solid ${color}` }}>
+                        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                          <Avatar sx={{ bgcolor: color, width: 36, height: 36 }}><Icon sx={{ fontSize: 20 }} /></Avatar>
+                          <Typography variant="subtitle1" fontWeight={700}>{examType}</Typography>
+                          <Chip size="small" variant="outlined" color={isAuto ? "success" : "default"} label={isAuto ? "Chấm tự động" : "Chấm thủ công"} sx={{ ml: "auto" }} />
+                        </Stack>
+                        <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+                          <Typography variant="h5" fontWeight={800} color={isAuto ? (percent >= 70 ? "success.main" : percent >= 50 ? "warning.main" : "error.main") : "text.primary"}>
+                            {answered}/{total}
+                          </Typography>
+                          {isAuto && <Chip size="small" color={percent >= 70 ? "success" : percent >= 50 ? "warning" : "error"} label={`${percent}% đúng`} />}
+                          {!isAuto && <Typography variant="body2" color="text.secondary">Đang chờ chấm điểm chi tiết</Typography>}
+                        </Stack>
+                      </Paper>
+                    </Grid2>
                   );
                 })}
-              </Stack>
-            </Box>
-          )}
-          {!submissionDialog.success && (
+              </Grid2>
+            </Stack>
+          ) : (
             <Alert severity="error" sx={{ mt:2 }}>{submissionDialog.message}</Alert>
           )}
         </DialogContent>
