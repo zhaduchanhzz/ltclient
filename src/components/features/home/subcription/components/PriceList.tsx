@@ -58,7 +58,7 @@ const VipSubscription = ({
 }: {
   VIP_SUBSCRIPTIONS: Subscription[];
 }) => {
-  const { handlePurchase } = usePayment();
+  const { handlePurchase, handlePurchaseSepay } = usePayment();
   const theme = useTheme();
 
   return (
@@ -188,6 +188,14 @@ const VipSubscription = ({
                 >
                   {pkg.button}
                 </Button>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  sx={{ mt: 1.5, borderRadius: 2, fontWeight: 700 }}
+                  onClick={() => handlePurchaseSepay(pkg.id)}
+                >
+                  Thanh toán Sepay (QR)
+                </Button>
               </Box>
             </Box>
           </Card>
@@ -202,7 +210,7 @@ const MarkSubscription = ({
 }: {
   MARK_SUBSCRIPTIONS: Subscription[];
 }) => {
-  const { handlePurchase } = usePayment();
+  const { handlePurchase, handlePurchaseSepay } = usePayment();
   const theme = useTheme();
   return (
     <Box sx={{ mt: 6 }}>
@@ -333,6 +341,14 @@ const MarkSubscription = ({
                 >
                   {pkg.button}
                 </Button>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  sx={{ mt: 1.5, borderRadius: 2, fontWeight: 700 }}
+                  onClick={() => handlePurchaseSepay(pkg.id)}
+                >
+                  Thanh toán Sepay (QR)
+                </Button>
               </Box>
             </Box>
           </Card>
@@ -347,7 +363,7 @@ const ComboSubscription = ({
 }: {
   COMBO_SUBSCRIPTIONS: Subscription[];
 }) => {
-  const { handlePurchase } = usePayment();
+  const { handlePurchase, handlePurchaseSepay } = usePayment();
   const theme = useTheme();
   return (
     <Box sx={{ mt: 8 }}>
@@ -489,6 +505,14 @@ const ComboSubscription = ({
                   onClick={() => handlePurchase(pkg.id)}
                 >
                   {pkg.button}
+                </Button>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  sx={{ mt: 1.5, borderRadius: 2, fontWeight: 700 }}
+                  onClick={() => handlePurchaseSepay(pkg.id)}
+                >
+                  Thanh toán Sepay (QR)
                 </Button>
               </Box>
             </Box>

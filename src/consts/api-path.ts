@@ -14,6 +14,7 @@ export const API_PATH = {
   TAKE_EXAM: "/take-exam",
   GRADING_REQUEST: "/grading-request",
   PAYMENT: "/payment",
+  PAYMENT_SEPAY_CREATE_QR: "/payment/sepay/create-sepay-qr",
   SETTINGS: "/settings",
   ADMIN_USERS: "/admin/users",
   ADMIN_CREATE_USER: "/admin/create/user",

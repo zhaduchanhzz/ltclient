@@ -9,3 +9,9 @@ export type Payment = {
   responseTime: number;
   resultCode: number;
 };
+
+export type SepayCreateQrResponse = {
+  qrImageUrl: string;
+  accountNumber: string;
+  bankName: string;
+};

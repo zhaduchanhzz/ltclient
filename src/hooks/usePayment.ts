@@ -3,7 +3,7 @@ import { createPaymentMomo } from "@/services/apis/payment";
 import { useRouter } from "next/navigation";
 
 export const usePayment = () => {
-  const { isAuthenticated } = useAuthContext();
+  const { isAuthenticated, userInfo } = useAuthContext();
   const router = useRouter();
 
   const handlePurchase = async (vipPackageId: number) => {
@@ -18,5 +18,21 @@ export const usePayment = () => {
     }
   };
 
-  return { handlePurchase };
+  const handlePurchaseSepay = (vipPackageId: number) => {
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+
+    if (!userInfo?.id) {
+      console.error("Missing user id");
+      return;
+    }
+
+    // Open Sepay page in a new tab/window
+    const url = `/payment/sepay/${vipPackageId}`;
+    window.open(url, "_blank");
+  };
+
+  return { handlePurchase, handlePurchaseSepay };
 };
