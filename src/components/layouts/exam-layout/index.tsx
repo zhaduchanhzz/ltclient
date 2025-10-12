@@ -15,7 +15,7 @@ const ExamLayout = ({ children }: ExamLayoutProps) => {
     <ExamContextProvider>
       <BasicStack direction="column">
         <ExamLayoutHeader />
-        <BasicBox sx={{ p: 2, height: "100%", mx: "auto" }}>
+        <BasicBox sx={{ p: 1, height: "100%", mx: "auto" }}>
           {children}
         </BasicBox>
         <ExamLayoutFooter />

@@ -44,13 +44,13 @@ export default function PracticeReviewQuestionCard({
   };
 
   return (
-    <Card sx={{ mb: 2 }}>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
+    <Card sx={{ mb: 1 }}>
+      <CardContent sx={{ p: { xs: 1, md: 2 } }}>
+        <Typography variant="h6" sx={{ mb: 1 }}>
           Question {index + 1}
         </Typography>
 
-        <Typography variant="body1" paragraph sx={{ whiteSpace: "pre-wrap" }}>
+        <Typography variant="body1" sx={{ whiteSpace: "pre-wrap", mb: 1 }}>
           {question.questionText}
         </Typography>
 
@@ -61,7 +61,7 @@ export default function PracticeReviewQuestionCard({
               <Typography
                 variant="subtitle2"
                 color="text.secondary"
-                gutterBottom
+                sx={{ mb: 0.5 }}
               >
                 Your Answer:
               </Typography>
@@ -76,6 +76,7 @@ export default function PracticeReviewQuestionCard({
                         value={answer.id.toString()}
                         control={<Radio disabled checked={isUserAnswer} />}
                         label={answer.answerText}
+                        sx={{ my: 0.25 }}
                       />
                     );
                   })}
@@ -104,11 +105,9 @@ export default function PracticeReviewQuestionCard({
               rows={10}
               variant="outlined"
               value={userAnswer || "No answer provided"}
-              InputProps={{
-                readOnly: true,
-              }}
+              slotProps={{ input: { readOnly: true } }}
               sx={{
-                mt: 1,
+                mt: 0.5,
                 backgroundColor: "background.paper",
                 "& .MuiInputBase-input": {
                   color: userAnswer ? "text.primary" : "text.secondary",
@@ -120,7 +119,7 @@ export default function PracticeReviewQuestionCard({
 
         {/* Speaking Review */}
         {examType === "SPEAKING" && (
-          <Box sx={{ mt: 2 }}>
+          <Box sx={{ mt: 1 }}>
             <Typography variant="subtitle2" color="text.secondary" gutterBottom>
               Your Recording:
             </Typography>

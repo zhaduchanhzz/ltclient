@@ -637,7 +637,7 @@ export default function ExamPage() {
             </Paper>
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ p: 3, gap: 1 }}>
+        <DialogActions sx={{ p: 1.5, gap: 1 }}>
           <Button onClick={() => router.push("/exam/room")} variant="outlined" fullWidth>
             Về phòng thi
           </Button>
@@ -793,43 +793,43 @@ export default function ExamPage() {
         totalCount={totalQuestions}
       />
 
-      {/* Part Navigation Bar */}
-      <Paper
-        elevation={2}
-        sx={{
-          px: 3,
-          py: 0.5,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          bgcolor: "background.paper",
-          borderBottom: "1px solid",
-          borderColor: "divider",
-        }}
-      >
-        <Typography variant="subtitle2" fontWeight="bold">
-          Part {currentExamPartIndex + 1} / {allExamsFlat.length}
-        </Typography>
+      {/*/!* Part Navigation Bar *!/*/}
+      {/*<Paper*/}
+      {/*  elevation={2}*/}
+      {/*  sx={{*/}
+      {/*    px: 3,*/}
+      {/*    py: 0.5,*/}
+      {/*    display: "flex",*/}
+      {/*    alignItems: "center",*/}
+      {/*    justifyContent: "space-between",*/}
+      {/*    bgcolor: "background.paper",*/}
+      {/*    borderBottom: "1px solid",*/}
+      {/*    borderColor: "divider",*/}
+      {/*  }}*/}
+      {/*>*/}
+      {/*  <Typography variant="subtitle2" fontWeight="bold">*/}
+      {/*    Part {currentExamPartIndex + 1} / {allExamsFlat.length}*/}
+      {/*  </Typography>*/}
 
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={navigateToPreviousPart}
-            disabled={currentExamPartIndex === 0}
-          >
-            Previous Part
-          </Button>
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={navigateToNextPart}
-            disabled={currentExamPartIndex === allExamsFlat.length - 1}
-          >
-            Next Part
-          </Button>
-        </Box>
-      </Paper>
+      {/*  <Box sx={{ display: "flex", gap: 1 }}>*/}
+      {/*    <Button*/}
+      {/*      variant="outlined"*/}
+      {/*      size="small"*/}
+      {/*      onClick={navigateToPreviousPart}*/}
+      {/*      disabled={currentExamPartIndex === 0}*/}
+      {/*    >*/}
+      {/*      Previous Part*/}
+      {/*    </Button>*/}
+      {/*    <Button*/}
+      {/*      variant="outlined"*/}
+      {/*      size="small"*/}
+      {/*      onClick={navigateToNextPart}*/}
+      {/*      disabled={currentExamPartIndex === allExamsFlat.length - 1}*/}
+      {/*    >*/}
+      {/*      Next Part*/}
+      {/*    </Button>*/}
+      {/*  </Box>*/}
+      {/*</Paper>*/}
 
       {/* Layout */}
       {isReading ? (
@@ -854,7 +854,7 @@ export default function ExamPage() {
               borderRight: { md: "1px solid" },
               borderBottom: { xs: "1px solid", md: "none" },
               borderColor: "divider",
-              p: 3,
+              p: 1.5,
             }}
           >
             {/* Part Header - Sticky */}
@@ -909,7 +909,7 @@ export default function ExamPage() {
 
             {/* Part Description / Content */}
             {currentExamPart.description && (
-              <Paper elevation={1} sx={{ p: 3 }}>
+              <Paper elevation={1} sx={{ p: 1.5 }}>
                 <Typography variant="caption" sx={{ mb: 2, display: "block" }}>
                   Instructions / Passage
                 </Typography>
@@ -932,11 +932,11 @@ export default function ExamPage() {
               p: 0,
             }}
           >
-            <Box sx={{ p: 3 }}>
+            <Box sx={{ p: 1.5 }}>
               {currentExamPart.questions.map((question: any, index: number) => {
                 const globalQuestionNumber = getGlobalQuestionOffset + index + 1;
                 return (
-                  <Paper key={`question-${question.id}`} elevation={1} sx={{ p: 3, mb: 3 }}>
+                  <Paper key={`question-${question.id}`} elevation={1} sx={{ p: 1.5, mb: 3 }}>
                     <Typography variant="caption" sx={{ mb: 2, color: "primary.main", display: "block" }}>
                       Question {globalQuestionNumber}
                     </Typography>
@@ -968,11 +968,11 @@ export default function ExamPage() {
             bgcolor: "background.default",
           }}
         >
-          <Box sx={{ p: 3, maxWidth: 1200, mx: "auto" }}>
+          <Box sx={{ p: 1.5, maxWidth: 1200, mx: "auto" }}>
             <Paper
               elevation={2}
               sx={{
-                p: 3,
+                p: 1.5,
                 mb: 3,
                 bgcolor:
                   ExamTypeColors[
@@ -996,7 +996,7 @@ export default function ExamPage() {
             </Paper>
 
             {currentExamPart.examType === "LISTENING" && currentExamPart.audioFile && (
-              <Paper elevation={1} sx={{ p: 3, mb: 3 }}>
+              <Paper elevation={1} sx={{ p: 1.5, mb: 3 }}>
                 <Typography variant="caption" sx={{ mb: 2, display: "block" }}>Listening Audio</Typography>
                 {(() => {
                   const raw = currentExamPart.audioFile as string;
@@ -1016,7 +1016,7 @@ export default function ExamPage() {
             )}
 
             {currentExamPart.description && (
-              <Paper elevation={1} sx={{ p: 3, mb: 3 }}>
+              <Paper elevation={1} sx={{ p: 1.5, mb: 3 }}>
                 <Typography variant="caption" sx={{ mb: 2, display: "block" }}>Instructions</Typography>
                 <Box sx={{ lineHeight: 1.8, "& img": { maxWidth: "100%" } }} dangerouslySetInnerHTML={{ __html: currentExamPart.description }} />
               </Paper>
@@ -1025,7 +1025,7 @@ export default function ExamPage() {
             {currentExamPart.questions.map((question: any, index: number) => {
               const globalQuestionNumber = getGlobalQuestionOffset + index + 1;
               return (
-                <Paper key={`question-${question.id}`} elevation={1} sx={{ p: 3, mb: 3, bgcolor: "background.paper" }}>
+                <Paper key={`question-${question.id}`} elevation={1} sx={{ p: 1.5, mb: 3, bgcolor: "background.paper" }}>
                   <Typography variant="caption" sx={{ mb: 2, color: "primary.main", display: "block" }}>
                     Question {globalQuestionNumber}
                   </Typography>
@@ -1098,10 +1098,10 @@ export default function ExamPage() {
       {/* Removed fixed right sidebar to use a horizontal navigator placed earlier in the layout. */}
 
       {/* Submission Result Dialog */}
-      <Dialog 
-        open={submissionDialog.open} 
+      <Dialog
+        open={submissionDialog.open}
         onClose={() => setSubmissionDialog({ ...submissionDialog, open: false })}
-        maxWidth="sm" 
+        maxWidth="sm"
         fullWidth
       >
         <DialogTitle>
@@ -1326,7 +1326,7 @@ export default function ExamPage() {
                     </Typography>
                   </Box>
                 )}
-                {(submissionDialog.failedTypes.includes("LISTENING") || 
+                {(submissionDialog.failedTypes.includes("LISTENING") ||
                   submissionDialog.failedTypes.includes("READING")) && (
                   <Box sx={{ mt: 1 }}>
                     <Typography variant="caption" color="text.secondary">
@@ -1350,7 +1350,7 @@ export default function ExamPage() {
                   updateAppState({ appAlertInfo: { message: "Không có phần thi nào cần chấm điểm.", severity: "info" } });
                   return;
                 }
-                
+
                 try {
                   setIsRequestingBulk(true);
                   const payload = gradableExams.map((exam) => ({ termId: session.termId, examType: exam.examType }));
@@ -1368,10 +1368,10 @@ export default function ExamPage() {
               {isRequestingBulk ? "Đang yêu cầu..." : "Yêu cầu chấm"}
             </Button>
           )}
-          <Button 
+          <Button
             onClick={() => {
               setSubmissionDialog({ ...submissionDialog, open: false });
-              
+
               if (submissionDialog.success) {
                 // Navigate to home or exam room after successful submission
                 router.push("/");

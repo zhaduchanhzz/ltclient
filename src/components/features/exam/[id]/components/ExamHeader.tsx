@@ -42,10 +42,17 @@ export default function ExamHeader({
       sx={{
         background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
         color: "white",
-        height: 64,
+        height: 40,
       }}
     >
-      <Toolbar>
+      <Toolbar
+        disableGutters
+        sx={{
+          minHeight: "40px !important",
+          height: 40,
+          px: 2,
+        }}
+      >
         <Stack
           direction="row"
           alignItems="center"

@@ -447,37 +447,37 @@ export default function RealExamPage() {
     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
       <ExamHeader session={session} currentSectionTimeRemaining={currentSectionTimeRemaining} answeredCount={totalAnswered} totalCount={totalQuestions} />
 
-      <Paper elevation={2} sx={{ px:3, py:0.5, display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom: "1px solid", borderColor:"divider" }}>
-        <Typography variant="subtitle2" fontWeight="bold">Part {currentExamPartIndex + 1} / {allExamsFlat.length}</Typography>
-        <Box sx={{ display:"flex", gap:1 }}>
-          <Button variant="outlined" size="small" onClick={navigateToPreviousPart} disabled={currentExamPartIndex===0 || (currentExamPartIndex>0 && isSectionLockedForReturn(allExamsFlat[currentExamPartIndex-1].examType))}>Previous Part</Button>
-          <Button variant="outlined" size="small" onClick={navigateToNextPart} disabled={currentExamPartIndex===allExamsFlat.length-1}>Next Part</Button>
-        </Box>
-      </Paper>
+      {/*<Paper elevation={2} sx={{ px:3, py:0.5, display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom: "1px solid", borderColor:"divider" }}>*/}
+      {/*  <Typography variant="subtitle2" fontWeight="bold">Part {currentExamPartIndex + 1} / {allExamsFlat.length}</Typography>*/}
+      {/*  <Box sx={{ display:"flex", gap:1 }}>*/}
+      {/*    <Button variant="outlined" size="small" onClick={navigateToPreviousPart} disabled={currentExamPartIndex===0 || (currentExamPartIndex>0 && isSectionLockedForReturn(allExamsFlat[currentExamPartIndex-1].examType))}>Previous Part</Button>*/}
+      {/*    <Button variant="outlined" size="small" onClick={navigateToNextPart} disabled={currentExamPartIndex===allExamsFlat.length-1}>Next Part</Button>*/}
+      {/*  </Box>*/}
+      {/*</Paper>*/}
 
       {isReading ? (
         <Box sx={{ flexGrow:1, display:"flex", flexDirection:{ xs:"column", md:"row" }, overflow:"hidden", height:"calc(100vh - 120px)" }}>
-          <Box ref={leftPanelRef} onScroll={handleLeftScroll} sx={{ width:{ xs:"100%", md:"50%"}, height:{ xs:"40%", md:"100%"}, overflow:"auto", borderRight:{ md:"1px solid"}, borderBottom:{ xs:"1px solid", md:"none"}, borderColor:"divider", p:3 }}>
-            <Paper elevation={2} sx={{ p:1.5, mb:3, bgcolor: ExamTypeColors[currentExamPart.examType as keyof typeof ExamTypeColors] || "#607d8b", color:"white", position:"sticky", top:0, zIndex:10, borderRadius:2 }}>
-              {currentExamPart.title ? <Box sx={{ fontSize:"0.875rem", "& img":{ maxWidth:"100%" } }} dangerouslySetInnerHTML={{ __html: currentExamPart.title }} /> : <Typography variant="subtitle2">{`${currentExamPart.examType} - Part ${currentExamPartIndex+1}`}</Typography>}
-              <Typography variant="caption" sx={{ mt:1, opacity:.9 }}>Questions {getGlobalQuestionOffset + 1} - {getGlobalQuestionOffset + currentExamPart.questions.length} • {partAnswered}/{partTotal} answered</Typography>
+          <Box ref={leftPanelRef} onScroll={handleLeftScroll} sx={{ width:{ xs:"100%", md:"50%"}, height:{ xs:"40%", md:"100%"}, overflow:"auto", borderRight:{ md:"1px solid"}, borderBottom:{ xs:"1px solid", md:"none"}, borderColor:"divider", p: 1 }}>
+            <Paper elevation={2} sx={{ p:1, mb:1.5, bgcolor: ExamTypeColors[currentExamPart.examType as keyof typeof ExamTypeColors] || "#607d8b", color:"white", position:"sticky", top:0, zIndex:10, borderRadius:2 }}>
+              {currentExamPart.title ? <Box sx={{ fontSize:"0.85rem", "& img":{ maxWidth:"100%" } }} dangerouslySetInnerHTML={{ __html: currentExamPart.title }} /> : <Typography variant="subtitle2">{`${currentExamPart.examType} - Part ${currentExamPartIndex+1}`}</Typography>}
+              <Typography variant="caption" sx={{ mt:0.5, opacity:.9 }}>Questions {getGlobalQuestionOffset + 1} - {getGlobalQuestionOffset + currentExamPart.questions.length} • {partAnswered}/{partTotal} answered</Typography>
             </Paper>
 
             {currentExamPart.description && (
-              <Paper elevation={1} sx={{ p:3 }}>
-                <Typography variant="caption" sx={{ mb:2, display: "block" }}>Instructions / Passage</Typography>
-                <Box sx={{ fontSize:"0.875rem", lineHeight:1.7, "& img":{ maxWidth:"100%" } }} dangerouslySetInnerHTML={{ __html: currentExamPart.description }} />
+              <Paper elevation={1} sx={{ p: 1 }}>
+                <Typography variant="caption" sx={{ mb:1, display: "block" }}>Instructions / Passage</Typography>
+                <Box sx={{ fontSize:"0.85rem", lineHeight:1.6, "& img":{ maxWidth:"100%" } }} dangerouslySetInnerHTML={{ __html: currentExamPart.description }} />
               </Paper>
             )}
           </Box>
 
           <Box ref={rightPanelRef} onScroll={handleRightScroll} sx={{ width:{ xs:"100%", md:"50%"}, height:{ xs:"60%", md:"100%"}, overflow:"auto", p:0 }}>
-            <Box sx={{ p:3 }}>
+            <Box sx={{ p: 1 }}>
               {currentExamPart.questions.map((question: any, index: number) => {
                 const globalQuestionNumber = getGlobalQuestionOffset + index + 1;
                 return (
-                  <Paper key={question.id} elevation={1} sx={{ p:3, mb:3 }}>
-                    <Typography variant="caption" sx={{ mb:2, color:"primary.main", display: "block" }}>Question {globalQuestionNumber}</Typography>
+                  <Paper key={question.id} elevation={1} sx={{ p: 1, mb:1.5 }}>
+                    <Typography variant="caption" sx={{ mb:1, color:"primary.main", display: "block" }}>Question {globalQuestionNumber}</Typography>
                     <QuestionCard
                       session={session}
                       currentExam={currentExamPart}
@@ -496,19 +496,19 @@ export default function RealExamPage() {
         </Box>
       ) : (
         <Box ref={rightPanelRef} onScroll={handleRightScroll} sx={{ flexGrow:1, overflow:"auto", height:"calc(100vh - 120px)", bgcolor:"background.default" }}>
-          <Box sx={{ p:3, maxWidth: 1200, mx: "auto" }}>
-            <Paper elevation={2} sx={{ p:3, mb:3, bgcolor: ExamTypeColors[currentExamPart.examType as keyof typeof ExamTypeColors] || "#607d8b", color:"white", position:"sticky", top:0, zIndex:10, borderRadius:2 }}>
+          <Box sx={{ p: 1, maxWidth: 1200, mx: "auto" }}>
+            <Paper elevation={2} sx={{ p: 1, mb:1.5, bgcolor: ExamTypeColors[currentExamPart.examType as keyof typeof ExamTypeColors] || "#607d8b", color:"white", position:"sticky", top:0, zIndex:10, borderRadius:2 }}>
               {currentExamPart.title ? (
-                <Box sx={{ fontSize:"0.875rem", "& img":{ maxWidth:"100%" } }} dangerouslySetInnerHTML={{ __html: currentExamPart.title }} />
+                <Box sx={{ fontSize:"0.85rem", "& img":{ maxWidth:"100%" } }} dangerouslySetInnerHTML={{ __html: currentExamPart.title }} />
               ) : (
                 <Typography variant="subtitle2">{`${currentExamPart.examType} - Part ${currentExamPartIndex+1}`}</Typography>
               )}
-              <Typography variant="caption" sx={{ mt:1, opacity:.9 }}>Questions {getGlobalQuestionOffset + 1} - {getGlobalQuestionOffset + currentExamPart.questions.length} • {partAnswered}/{partTotal} answered</Typography>
+              <Typography variant="caption" sx={{ mt:0.5, opacity:.9 }}>Questions {getGlobalQuestionOffset + 1} - {getGlobalQuestionOffset + currentExamPart.questions.length} • {partAnswered}/{partTotal} answered</Typography>
             </Paper>
 
             {currentExamPart.examType === "LISTENING" && currentExamPart.audioFile && (
-              <Paper elevation={1} sx={{ p:3, mb:3 }}>
-                <Typography variant="caption" sx={{ mb:2, display: "block" }}>Listening Audio</Typography>
+              <Paper elevation={1} sx={{ p: 1, mb:1.5 }}>
+                <Typography variant="caption" sx={{ mb:1, display: "block" }}>Listening Audio</Typography>
                 {(() => {
                   const raw = currentExamPart.audioFile as string;
                   const audioSrc = raw.startsWith("http")
@@ -527,17 +527,17 @@ export default function RealExamPage() {
             )}
 
             {currentExamPart.description && (
-              <Paper elevation={1} sx={{ p:3, mb:3 }}>
-                <Typography variant="caption" sx={{ mb:2, display: "block" }}>Instructions</Typography>
-                <Box sx={{ fontSize:"0.875rem", lineHeight:1.7, "& img":{ maxWidth:"100%" } }} dangerouslySetInnerHTML={{ __html: currentExamPart.description }} />
+              <Paper elevation={1} sx={{ p: 1, mb:1.5 }}>
+                <Typography variant="caption" sx={{ mb:1, display: "block" }}>Instructions</Typography>
+                <Box sx={{ fontSize:"0.85rem", lineHeight:1.6, "& img":{ maxWidth:"100%" } }} dangerouslySetInnerHTML={{ __html: currentExamPart.description }} />
               </Paper>
             )}
 
             {currentExamPart.questions.map((question: any, index: number) => {
               const globalQuestionNumber = getGlobalQuestionOffset + index + 1;
               return (
-                <Paper key={question.id} elevation={1} sx={{ p:3, mb:3 }}>
-                  <Typography variant="caption" sx={{ mb:2, color:"primary.main", display: "block" }}>Question {globalQuestionNumber}</Typography>
+                <Paper key={question.id} elevation={1} sx={{ p: 1, mb:1.5 }}>
+                  <Typography variant="caption" sx={{ mb:1, color:"primary.main", display: "block" }}>Question {globalQuestionNumber}</Typography>
                   <QuestionCard
                     session={session}
                     currentExam={currentExamPart}
@@ -555,10 +555,10 @@ export default function RealExamPage() {
         </Box>
       )}
 
-      <Paper elevation={2} sx={{ p:1, borderTop:"1px solid", borderColor:"divider" }}>
+      <Paper elevation={2} sx={{ p:0.5, borderTop:"1px solid", borderColor:"divider" }}>
         <Box sx={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-          <Button variant="contained" onClick={navigateToPreviousPart} disabled={currentExamPartIndex===0 || (currentExamPartIndex>0 && isSectionLockedForReturn(allExamsFlat[currentExamPartIndex-1].examType))}>← Previous Part</Button>
-          <Box sx={{ display:"flex", gap:1, overflowX:"auto" }}>
+          <Button variant="contained" size="small" onClick={navigateToPreviousPart} disabled={currentExamPartIndex===0 || (currentExamPartIndex>0 && isSectionLockedForReturn(allExamsFlat[currentExamPartIndex-1].examType))}>← Previous Part</Button>
+          <Box sx={{ display:"flex", gap:0.5, overflowX:"auto" }}>
             {allExamsFlat.map((exam, index) => {
               const Icon = ExamTypeIcons[exam.examType as keyof typeof ExamTypeIcons];
               const isCurrent = index === currentExamPartIndex;
@@ -582,9 +582,9 @@ export default function RealExamPage() {
             })}
           </Box>
           {currentExamPartIndex === allExamsFlat.length - 1 ? (
-            <Button variant="contained" size="large" color="success" onClick={handleSubmitAllAnswers} disabled={isSubmitting}>{isSubmitting ? "Submitting..." : "Submit All"}</Button>
+            <Button variant="contained" size="medium" color="success" onClick={handleSubmitAllAnswers} disabled={isSubmitting}>{isSubmitting ? "Submitting..." : "Submit All"}</Button>
           ) : (
-            <Button variant="contained" onClick={navigateToNextPart}>Next Part →</Button>
+            <Button variant="contained" size="small" onClick={navigateToNextPart}>Next Part →</Button>
           )}
         </Box>
       </Paper>
@@ -653,7 +653,7 @@ export default function RealExamPage() {
             <Alert severity="error" sx={{ mt:2 }}>{submissionDialog.message}</Alert>
           )}
         </DialogContent>
-        <DialogActions sx={{ p:3, gap:1 }}>
+        <DialogActions sx={{ p: 1.5, gap:1 }}>
           <Button onClick={() => router.push("/exam/room")} variant="outlined" fullWidth>Về phòng thi</Button>
           {submissionDialog.success && (
             <Button onClick={handleGradingRequest} variant="contained" fullWidth startIcon={<School />}>Yêu cầu chấm điểm</Button>

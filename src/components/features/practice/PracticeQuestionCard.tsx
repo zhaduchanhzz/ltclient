@@ -133,13 +133,13 @@ export default function PracticeQuestionCard({
   }, [audioURL]);
 
   return (
-    <Card sx={{ mb: 2 }}>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
+    <Card sx={{ mb: 0.75 }}>
+      <CardContent sx={{ p: { xs: 0.75, md: 1 } }}>
+        <Typography variant="subtitle1" sx={{ mb: 0.5, fontWeight: 600 }}>
           Question {index + 1}
         </Typography>
 
-        <Typography variant="body1" paragraph sx={{ whiteSpace: "pre-wrap" }}>
+        <Typography variant="body2" sx={{ whiteSpace: "pre-wrap", mb: 0.75, fontSize: "0.95rem" }}>
           {question.questionText}
         </Typography>
 
@@ -155,8 +155,9 @@ export default function PracticeQuestionCard({
                   <FormControlLabel
                     key={answer.id}
                     value={answer.id.toString()}
-                    control={<Radio />}
+                    control={<Radio size="small" />}
                     label={answer.answerText}
+                    sx={{ my: 0.25, "& .MuiFormControlLabel-label": { fontSize: "0.9rem" } }}
                   />
                 ))}
               </RadioGroup>
@@ -168,25 +169,27 @@ export default function PracticeQuestionCard({
           <TextField
             fullWidth
             multiline
-            rows={10}
+            rows={6}
+            size="small"
             variant="outlined"
             placeholder="Write your answer here..."
             value={writingText}
             onChange={handleWritingChange}
-            sx={{ mt: 2 }}
+            sx={{ mt: 0.75 }}
           />
         )}
 
         {/* Speaking Questions */}
         {examType === "SPEAKING" && (
-          <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-            <Box sx={{ display: "flex", gap: 2 }}>
+          <Box sx={{ mt: 0.75, display: "flex", flexDirection: "column", gap: 0.75 }}>
+            <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
               {!isRecording ? (
                 <Button
                   variant="contained"
                   startIcon={<Mic />}
                   onClick={startRecording}
                   color="primary"
+                  size="small"
                 >
                   Start Recording
                 </Button>
@@ -196,6 +199,7 @@ export default function PracticeQuestionCard({
                   startIcon={<Stop />}
                   onClick={stopRecording}
                   color="error"
+                  size="small"
                 >
                   Stop Recording
                 </Button>
@@ -206,6 +210,7 @@ export default function PracticeQuestionCard({
                   variant="outlined"
                   startIcon={<PlayArrow />}
                   onClick={playAudio}
+                  size="small"
                 >
                   Play Recording
                 </Button>
@@ -213,13 +218,13 @@ export default function PracticeQuestionCard({
             </Box>
 
             {isRecording && (
-              <Typography variant="body2" color="error">
+              <Typography variant="caption" color="error">
                 Recording in progress...
               </Typography>
             )}
 
             {audioURL && !isRecording && (
-              <Typography variant="body2" color="success.main">
+              <Typography variant="caption" color="success.main">
                 Recording completed
               </Typography>
             )}

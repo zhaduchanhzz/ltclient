@@ -10,7 +10,6 @@ import {
   FormControl,
   FormControlLabel,
   FormGroup,
-  Paper,
   Radio,
   RadioGroup,
   Stack,
@@ -207,47 +206,47 @@ export default function QuestionCard({
     switch (currentExamType) {
       case "LISTENING":
         return (
-          <Box sx={{ mb: 3 }}>
+          <Box sx={{ mb: 1 }}>
             <Box
-              sx={{ mb: 2, fontSize: "1rem", "& img": { maxWidth: "100%", height: "auto" } }}
+              sx={{
+                mb: 0.75,
+                fontSize: "0.9rem",
+                "& img": { maxWidth: "100%", height: "auto" },
+              }}
               dangerouslySetInnerHTML={{ __html: currentQuestion.questionText }}
             />
-            {/* {audioSrc && (
-              <Box sx={{ mb: 2 }}>
-                <audio controls style={{ width: "100%" }}>
-                  <source src={audioSrc} type="audio/mp3" />
-                  Trình duyệt của bạn không hỗ trợ phát âm thanh.
-                </audio>
-              </Box>
-            )} */}
+            {/* audio area kept commented */}
           </Box>
         );
 
       case "WRITING":
         return (
-          <Box sx={{ mb: 3 }}>
+          <Box sx={{ mb: 1 }}>
             <Box
-              sx={{ mb: 2, fontSize: "1rem", "& img": { maxWidth: "100%", height: "auto" } }}
+              sx={{
+                mb: 0.75,
+                fontSize: "0.9rem",
+                "& img": { maxWidth: "100%", height: "auto" },
+              }}
               dangerouslySetInnerHTML={{ __html: currentQuestion.questionText }}
             />
             <TextField
               multiline
-              rows={8}
+              rows={6}
               fullWidth
               variant="outlined"
+              size="small"
               placeholder="Write your response here..."
               value={writingText}
               onChange={handleWritingChange}
               sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: 2,
-                },
+                "& .MuiOutlinedInput-root": { borderRadius: 2 },
               }}
             />
             <Typography
               variant="caption"
               color="text.secondary"
-              sx={{ mt: 1, display: "block" }}
+              sx={{ mt: 0.5, display: "block" }}
             >
               Write your paragraph addressing the given topic. Minimum 250 words
               recommended.
@@ -257,19 +256,31 @@ export default function QuestionCard({
 
       case "SPEAKING":
         return (
-          <Box sx={{ mb: 3 }}>
+          <Box sx={{ mb: 1 }}>
             <Box
-              sx={{ mb: 2, fontSize: "1rem", "& img": { maxWidth: "100%", height: "auto" } }}
+              sx={{
+                mb: 0.75,
+                fontSize: "0.9rem",
+                "& img": { maxWidth: "100%", height: "auto" },
+              }}
               dangerouslySetInnerHTML={{ __html: currentQuestion.questionText }}
             />
-            <Paper elevation={2} sx={{ p: 3, textAlign: "center" }}>
-              <Typography variant="body1" sx={{ mb: 3 }}>
+            <Box
+              sx={{
+                p: 1,
+                textAlign: "center",
+                border: "1px solid",
+                borderColor: "divider",
+                borderRadius: 1,
+              }}
+            >
+              <Typography variant="body2" sx={{ mb: 1 }}>
                 Record your spoken response to the question above
               </Typography>
 
               <Stack
                 direction="row"
-                spacing={2}
+                spacing={0.75}
                 justifyContent="center"
                 alignItems="center"
               >
@@ -278,16 +289,21 @@ export default function QuestionCard({
                   color={isRecording ? "error" : "primary"}
                   onClick={isRecording ? stopRecording : startRecording}
                   startIcon={isRecording ? <Stop /> : <Mic />}
-                  size="large"
-                  sx={{ minWidth: 120 }}
+                  size="small"
+                  sx={{ minWidth: 96 }}
                   disabled={isUploading}
                 >
-                  {isUploading ? "Uploading..." : isRecording ? "Stop" : "Record"}
+                  {isUploading
+                    ? "Uploading..."
+                    : isRecording
+                      ? "Stop"
+                      : "Record"}
                 </Button>
 
                 {audioURL && (
                   <Button
                     variant="outlined"
+                    size="small"
                     startIcon={<PlayArrow />}
                     onClick={() => {
                       const audio = new Audio(audioURL);
@@ -300,7 +316,7 @@ export default function QuestionCard({
               </Stack>
 
               {audioURL && (
-                <Box sx={{ mt: 2 }}>
+                <Box sx={{ mt: 0.75 }}>
                   <Typography variant="caption" color="success.main">
                     {session.answers[currentQuestion.id]?.[0]
                       ? "✓ Audio available for review (will be submitted when you navigate)"
@@ -308,14 +324,18 @@ export default function QuestionCard({
                   </Typography>
                 </Box>
               )}
-            </Paper>
+            </Box>
           </Box>
         );
 
       default:
         return (
           <Box
-            sx={{ mb: 3, fontSize: "1rem", "& img": { maxWidth: "100%", height: "auto" } }}
+            sx={{
+              mb: 1,
+              fontSize: "0.9rem",
+              "& img": { maxWidth: "100%", height: "auto" },
+            }}
             dangerouslySetInnerHTML={{ __html: currentQuestion.questionText }}
           />
         );
@@ -323,53 +343,36 @@ export default function QuestionCard({
   };
 
   const renderAnswerOptions = () => {
-    // For WRITING and SPEAKING, we don't show multiple choice options
-    if (currentExamType === "WRITING" || currentExamType === "SPEAKING") {
-      return null;
-    }
+    if (currentExamType === "WRITING" || currentExamType === "SPEAKING") return null;
+
+    const labelSx = {
+      width: "100%",
+      m: 0,
+      px: 0.5,
+      py: 0.25,
+      mb: 0.5,
+      border: "1px solid",
+      borderRadius: 1,
+      transition: "all 0.15s",
+      cursor: "pointer",
+      "& .MuiFormControlLabel-label": { fontSize: "0.85rem", lineHeight: 1.25 },
+      "&:hover": { bgcolor: "action.hover", borderColor: "primary.light" },
+    } as const;
 
     return (
       <FormControl component="fieldset" sx={{ width: "100%" }}>
         {currentExamType === "READING" || currentExamType === "LISTENING" ? (
-          // Radio buttons for single answer questions
           <RadioGroup
             value={session.answers[currentQuestion.id]?.[0] || ""}
-            onChange={(e) =>
-              onAnswerChange(currentQuestion.id, parseInt(e.target.value))
-            }
+            onChange={(e) => onAnswerChange(currentQuestion.id, parseInt(e.target.value))}
           >
-            {currentQuestion.answers.map((answer: any, index: number) => (
-              <Paper
-                key={answer.id}
-                elevation={
-                  session.answers[currentQuestion.id]?.includes(
-                    answer.id.toString(),
-                  )
-                    ? 2
-                    : 0
-                }
-                sx={{
-                  p: 1,
-                  mb: 2,
-                  border: "2px solid",
-                  borderColor: session.answers[currentQuestion.id]?.includes(
-                    answer.id.toString(),
-                  )
-                    ? "primary.main"
-                    : "divider",
-                  borderRadius: 2,
-                  transition: "all 0.2s",
-                  cursor: "pointer",
-                  "&:hover": {
-                    borderColor: "primary.light",
-                    bgcolor: "action.hover",
-                  },
-                }}
-                onClick={() => onAnswerChange(currentQuestion.id, answer.id)}
-              >
+            {currentQuestion.answers.map((answer: any, index: number) => {
+              const selected = !!session.answers[currentQuestion.id]?.includes(answer.id.toString());
+              return (
                 <FormControlLabel
+                  key={answer.id}
                   value={answer.id.toString()}
-                  control={<Radio />}
+                  control={<Radio size="small" />}
                   label={
                     <Box component="span">
                       <strong>{String.fromCharCode(65 + index)}.</strong>{" "}
@@ -380,59 +383,25 @@ export default function QuestionCard({
                       />
                     </Box>
                   }
-                  sx={{ width: "100%", m: 0 }}
+                  sx={{
+                    ...labelSx,
+                    borderColor: selected ? "primary.main" : "divider",
+                  }}
                 />
-              </Paper>
-            ))}
+              );
+            })}
           </RadioGroup>
         ) : (
-          // Checkboxes for multiple answer questions (if any other types need them)
           <FormGroup>
-            {currentQuestion.answers.map((answer: any, index: number) => (
-              <Paper
-                key={answer.id}
-                elevation={
-                  session.answers[currentQuestion.id]?.includes(
-                    answer.id.toString(),
-                  )
-                    ? 2
-                    : 0
-                }
-                sx={{
-                  p: 1,
-                  mb: 2,
-                  border: "2px solid",
-                  borderColor: session.answers[currentQuestion.id]?.includes(
-                    answer.id.toString(),
-                  )
-                    ? "primary.main"
-                    : "divider",
-                  borderRadius: 2,
-                  transition: "all 0.2s",
-                  cursor: "pointer",
-                  "&:hover": {
-                    borderColor: "primary.light",
-                    bgcolor: "action.hover",
-                  },
-                }}
-                onClick={() =>
-                  onAnswerChange(
-                    currentQuestion.id,
-                    answer.id,
-                    !session.answers[currentQuestion.id]?.includes(
-                      answer.id.toString(),
-                    ),
-                  )
-                }
-              >
+            {currentQuestion.answers.map((answer: any, index: number) => {
+              const checked = !!session.answers[currentQuestion.id]?.includes(answer.id.toString());
+              return (
                 <FormControlLabel
+                  key={answer.id}
                   control={
                     <Checkbox
-                      checked={
-                        session.answers[currentQuestion.id]?.includes(
-                          answer.id.toString(),
-                        ) || false
-                      }
+                      size="small"
+                      checked={checked}
                       onChange={(e) =>
                         onAnswerChange(
                           currentQuestion.id,
@@ -452,10 +421,13 @@ export default function QuestionCard({
                       />
                     </Box>
                   }
-                  sx={{ width: "100%", m: 0 }}
+                  sx={{
+                    ...labelSx,
+                    borderColor: checked ? "primary.main" : "divider",
+                  }}
                 />
-              </Paper>
-            ))}
+              );
+            })}
           </FormGroup>
         )}
       </FormControl>
@@ -464,43 +436,13 @@ export default function QuestionCard({
 
   return (
     <>
-      {/* Progress Card */}
-      <Card
-        sx={{
-          mb: 3,
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-          color: "white",
-        }}
-        elevation={2}
-      >
-        {/* <CardContent>
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            alignItems={{ xs: "flex-start", sm: "center" }}
-            justifyContent="space-between"
-            spacing={{ xs: 2, sm: 0 }}
-            sx={{ mb: 2 }}
-          >
-            <Typography variant="h6" fontWeight="bold">
-              {questionNumber ? (
-                <>Câu hỏi {questionNumber}</>
-              ) : (
-                <>Câu hỏi {session.currentQuestionIndex + 1} trên{" "}
-                {currentExam.questions.length}</>
-              )}
-            </Typography>
-          </Stack>
-        </CardContent> */}
-      </Card>
-
       {/* Question Card */}
-      <Card elevation={3} sx={{ mb: 3 }}>
-        <CardContent sx={{ p: { xs: 2, md: 4 } }}>
+      <Card elevation={1} sx={{ mb: 1 }}>
+        <CardContent
+          sx={{ padding: "0 !important", marginBottom: "0 !important" }}
+        >
           {renderQuestionContent()}
-
-          <Divider sx={{ mb: 3 }} />
-
-          {/* Answer Options */}
+          <Divider sx={{ mb: 0.5 }} />
           {renderAnswerOptions()}
         </CardContent>
       </Card>
