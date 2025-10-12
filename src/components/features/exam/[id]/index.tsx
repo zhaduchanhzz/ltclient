@@ -31,8 +31,8 @@ import {
   Slide,
   Stack,
   Typography,
-  Zoom,
   Chip,
+  Zoom,
 } from "@mui/material";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ExamHeader from "./components/ExamHeader";
@@ -798,7 +798,7 @@ export default function ExamPage() {
         elevation={2}
         sx={{
           px: 3,
-          py: 1.5,
+          py: 0.5,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -807,8 +807,8 @@ export default function ExamPage() {
           borderColor: "divider",
         }}
       >
-        <Typography variant="h6" fontWeight="bold">
-          Part {currentExamPartIndex + 1} of {allExamsFlat.length}
+        <Typography variant="subtitle2" fontWeight="bold">
+          Part {currentExamPartIndex + 1} / {allExamsFlat.length}
         </Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
@@ -833,14 +833,14 @@ export default function ExamPage() {
 
       {/* Layout */}
       {isReading ? (
-        // Two-Panel Layout for READING (unchanged)
+        // Two-Panel Layout for READING (aligned to real exam UI)
         <Box
           sx={{
             flexGrow: 1,
             display: "flex",
             flexDirection: { xs: "column", md: "row" },
             overflow: "hidden",
-            height: "calc(100vh - 120px)", // Adjust based on header height
+            height: "calc(100vh - 120px)",
           }}
         >
           {/* Left Panel - Title & Content */}
@@ -854,7 +854,6 @@ export default function ExamPage() {
               borderRight: { md: "1px solid" },
               borderBottom: { xs: "1px solid", md: "none" },
               borderColor: "divider",
-              bgcolor: "background.paper",
               p: 3,
             }}
           >
@@ -862,12 +861,12 @@ export default function ExamPage() {
             <Paper
               elevation={2}
               sx={{
-                p: 3,
+                p: 1.5,
                 mb: 3,
                 bgcolor:
                   ExamTypeColors[
                     currentExamPart.examType as keyof typeof ExamTypeColors
-                  ] || "#grey",
+                  ] || "#607d8b",
                 color: "white",
                 position: "sticky",
                 top: 0,
@@ -876,67 +875,50 @@ export default function ExamPage() {
               }}
             >
               {currentExamPart.title ? (
-                <Box
-                  sx={{ fontSize: "1rem", "& img": { maxWidth: "100%", height: "auto" } }}
-                  dangerouslySetInnerHTML={{ __html: currentExamPart.title }}
-                />
+                <Box sx={{ fontSize: "0.875rem", "& img": { maxWidth: "100%" } }} dangerouslySetInnerHTML={{ __html: currentExamPart.title }} />
               ) : (
-                <Typography sx={{ fontSize: "1rem" }}>
-                  {`${currentExamPart.examType} - Part ${currentExamPartIndex + 1}`}
-                </Typography>
+                <Typography variant="subtitle2">{`${currentExamPart.examType} - Part ${currentExamPartIndex + 1}`}</Typography>
               )}
-              <Typography variant="body2" sx={{ mt: 1, opacity: 0.9 }}>
-                Questions {getGlobalQuestionOffset + 1} - {" "}
-                {getGlobalQuestionOffset + currentExamPart.questions.length} •
-                {partAnswered} of {partTotal} answered
+              <Typography variant="caption" sx={{ mt: 1, opacity: 0.9 }}>
+                Questions {getGlobalQuestionOffset + 1} - {getGlobalQuestionOffset + currentExamPart.questions.length} • {partAnswered}/{partTotal} answered
               </Typography>
             </Paper>
 
             {/* Listening media (if available) */}
             {currentExamPart.examType === "LISTENING" && currentExamPart.audioFile && (
-              <Paper elevation={1} sx={{ p: 3, mb: 3 }}>
-                <Typography sx={{ mb: 2, fontSize: "1rem" }}>
+              <Paper elevation={1} sx={{ p: 1.5, mb: 3 }}>
+                <Typography variant="caption" sx={{ mb: 2, display: "block" }}>
                   Listening Audio
                 </Typography>
-                <Stack spacing={2}>
-                  <audio controls style={{ width: "100%" }}>
-                    <source src={ApiServerURL + API_PATH.DOWNLOAD_FILE + currentExamPart.audioFile} />
-                    Your browser does not support the audio element.
-                  </audio>
-                </Stack>
+                {(() => {
+                  const raw = currentExamPart.audioFile as string;
+                  const audioSrc = raw.startsWith("http")
+                    ? raw
+                    : raw.startsWith("/audio/")
+                      ? `${ApiServerURL}${raw}`
+                      : `${ApiServerURL}${API_PATH.DOWNLOAD_FILE}${raw}`;
+                  return (
+                    <audio controls style={{ width: "100%" }}>
+                      <source src={audioSrc} />
+                      Your browser does not support the audio element.
+                    </audio>
+                  );
+                })()}
               </Paper>
             )}
 
             {/* Part Description / Content */}
             {currentExamPart.description && (
               <Paper elevation={1} sx={{ p: 3 }}>
-                <Typography sx={{ mb: 2, fontSize: "1rem" }}>
-                  Instructions / Reading Passage
+                <Typography variant="caption" sx={{ mb: 2, display: "block" }}>
+                  Instructions / Passage
                 </Typography>
                 <Box
-                  sx={{
-                    lineHeight: 1.8,
-                    "& img": { maxWidth: "100%", height: "auto" },
-                    "& blockquote": { borderLeft: "4px solid", borderLeftColor: "divider", pl: 2, ml: 0 },
-                  }}
+                  sx={{ fontSize: "0.875rem", lineHeight: 1.7, "& img": { maxWidth: "100%" } }}
                   dangerouslySetInnerHTML={{ __html: currentExamPart.description }}
                 />
               </Paper>
             )}
-
-            {/* Additional content area for reading passages if needed */}
-            {currentExamPart.examType === "READING" &&
-              !currentExamPart.description && (
-                <Paper elevation={1} sx={{ p: 3 }}>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    textAlign="center"
-                  >
-                    Reading passage will appear here when available
-                  </Typography>
-                </Paper>
-              )}
           </Box>
 
           {/* Right Panel - Questions */}
@@ -947,33 +929,15 @@ export default function ExamPage() {
               width: { xs: "100%", md: "50%" },
               height: { xs: "60%", md: "100%" },
               overflow: "auto",
-              bgcolor: "background.default",
               p: 0,
             }}
           >
             <Box sx={{ p: 3 }}>
-              {/* Questions for current exam part */}
               {currentExamPart.questions.map((question: any, index: number) => {
                 const globalQuestionNumber = getGlobalQuestionOffset + index + 1;
-
                 return (
-                  <Paper
-                    key={`question-${question.id}`}
-                    id={`question-${index}`}
-                    elevation={1}
-                    sx={{
-                      p: 3,
-                      mb: 3,
-                      bgcolor: "background.paper",
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        mb: 2,
-                        color: "primary.main",
-                        fontSize: "1rem",
-                      }}
-                    >
+                  <Paper key={`question-${question.id}`} elevation={1} sx={{ p: 3, mb: 3 }}>
+                    <Typography variant="caption" sx={{ mb: 2, color: "primary.main", display: "block" }}>
                       Question {globalQuestionNumber}
                     </Typography>
                     <QuestionCard
@@ -993,7 +957,7 @@ export default function ExamPage() {
           </Box>
         </Box>
       ) : (
-        // Full-width single panel for LISTENING / SPEAKING / WRITING
+        // Full-width single panel for LISTENING / SPEAKING / WRITING (aligned to real exam UI)
         <Box
           ref={rightPanelRef}
           onScroll={handleRightScroll}
@@ -1005,7 +969,6 @@ export default function ExamPage() {
           }}
         >
           <Box sx={{ p: 3, maxWidth: 1200, mx: "auto" }}>
-            {/* Part Header - Sticky within scroll */}
             <Paper
               elevation={2}
               sx={{
@@ -1023,47 +986,47 @@ export default function ExamPage() {
               }}
             >
               {currentExamPart.title ? (
-                <Box
-                  sx={{ fontSize: "1rem", "& img": { maxWidth: "100%", height: "auto" } }}
-                  dangerouslySetInnerHTML={{ __html: currentExamPart.title }}
-                />
+                <Box sx={{ fontSize: "0.875rem", "& img": { maxWidth: "100%" } }} dangerouslySetInnerHTML={{ __html: currentExamPart.title }} />
               ) : (
-                <Typography sx={{ fontSize: "1rem" }}>
-                  {`${currentExamPart.examType} - Part ${currentExamPartIndex + 1}`}
-                </Typography>
+                <Typography variant="subtitle2">{`${currentExamPart.examType} - Part ${currentExamPartIndex + 1}`}</Typography>
               )}
-              <Typography variant="body2" sx={{ mt: 1, opacity: 0.9 }}>
-                Questions {getGlobalQuestionOffset + 1} - {" "}
-                {getGlobalQuestionOffset + currentExamPart.questions.length} •
-                {partAnswered} of {partTotal} answered
+              <Typography variant="caption" sx={{ mt: 1, opacity: 0.9 }}>
+                Questions {getGlobalQuestionOffset + 1} - {getGlobalQuestionOffset + currentExamPart.questions.length} • {partAnswered}/{partTotal} answered
               </Typography>
             </Paper>
 
-            {/* Listening media (if any) */}
             {currentExamPart.examType === "LISTENING" && currentExamPart.audioFile && (
               <Paper elevation={1} sx={{ p: 3, mb: 3 }}>
-                <Typography sx={{ mb: 2, fontSize: "1rem" }}>Listening Audio</Typography>
-                <audio controls style={{ width: "100%" }}>
-                  <source src={ApiServerURL + API_PATH.DOWNLOAD_FILE + currentExamPart.audioFile} />
-                  Your browser does not support the audio element.
-                </audio>
+                <Typography variant="caption" sx={{ mb: 2, display: "block" }}>Listening Audio</Typography>
+                {(() => {
+                  const raw = currentExamPart.audioFile as string;
+                  const audioSrc = raw.startsWith("http")
+                    ? raw
+                    : raw.startsWith("/audio/")
+                      ? `${ApiServerURL}${raw}`
+                      : `${ApiServerURL}${API_PATH.DOWNLOAD_FILE}${raw}`;
+                  return (
+                    <audio controls style={{ width: "100%" }}>
+                      <source src={audioSrc} />
+                      Your browser does not support the audio element.
+                    </audio>
+                  );
+                })()}
               </Paper>
             )}
 
-            {/* Description / Instructions */}
             {currentExamPart.description && (
               <Paper elevation={1} sx={{ p: 3, mb: 3 }}>
-                <Typography sx={{ mb: 2, fontSize: "1rem" }}>Instructions</Typography>
+                <Typography variant="caption" sx={{ mb: 2, display: "block" }}>Instructions</Typography>
                 <Box sx={{ lineHeight: 1.8, "& img": { maxWidth: "100%" } }} dangerouslySetInnerHTML={{ __html: currentExamPart.description }} />
               </Paper>
             )}
 
-            {/* Questions list */}
             {currentExamPart.questions.map((question: any, index: number) => {
               const globalQuestionNumber = getGlobalQuestionOffset + index + 1;
               return (
                 <Paper key={`question-${question.id}`} elevation={1} sx={{ p: 3, mb: 3, bgcolor: "background.paper" }}>
-                  <Typography sx={{ mb: 2, color: "primary.main", fontSize: "1rem" }}>
+                  <Typography variant="caption" sx={{ mb: 2, color: "primary.main", display: "block" }}>
                     Question {globalQuestionNumber}
                   </Typography>
                   <QuestionCard
@@ -1086,43 +1049,23 @@ export default function ExamPage() {
       {/* Navigation and Submit Button - Full width at bottom */}
       <Paper
         elevation={2}
-        sx={{
-          p: 3,
-          width: "100%",
-          bgcolor: "background.paper",
-          borderTop: "1px solid",
-          borderColor: "divider",
-        }}
+        sx={{ p: 1, width: "100%", bgcolor: "background.paper", borderTop: "1px solid", borderColor: "divider" }}
       >
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <Button
-            variant="contained"
-            onClick={navigateToPreviousPart}
-            disabled={currentExamPartIndex === 0}
-          >
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <Button variant="contained" onClick={navigateToPreviousPart} disabled={currentExamPartIndex === 0}>
             ← Previous Part
           </Button>
 
           <Box sx={{ display: "flex", gap: 1, overflowX: "auto" }}>
             {allExamsFlat.map((exam, index) => {
-              const Icon =
-                ExamTypeIcons[exam.examType as keyof typeof ExamTypeIcons];
+              const Icon = ExamTypeIcons[exam.examType as keyof typeof ExamTypeIcons];
               const isCurrentPart = index === currentExamPartIndex;
               let questionsInPart = 0;
               let answeredInPart = 0;
 
               exam.questions.forEach((q: any) => {
                 questionsInPart++;
-
-                if (session.answers[q.id]?.length > 0) {
-                  answeredInPart++;
-                }
+                if (session.answers[q.id]?.length > 0) answeredInPart++;
               });
 
               return (
@@ -1132,8 +1075,8 @@ export default function ExamPage() {
                   color={isCurrentPart ? "primary" : "inherit"}
                   onClick={() => navigateToPart(index)}
                   startIcon={<Icon />}
-                  sx={{ whiteSpace: "nowrap" }}
                   size="small"
+                  sx={{ whiteSpace: "nowrap" }}
                 >
                   {`Part ${index + 1} (${answeredInPart}/${questionsInPart})`}
                 </Button>
@@ -1142,20 +1085,11 @@ export default function ExamPage() {
           </Box>
 
           {currentExamPartIndex === allExamsFlat.length - 1 ? (
-            <Button
-              variant="contained"
-              size="large"
-              color="success"
-              onClick={handleSubmitAllAnswers}
-              disabled={isSubmitting}
-              sx={{ px: 4 }}
-            >
-              {isSubmitting ? "Submitting..." : "Submit All Answers"}
+            <Button variant="contained" size="large" color="success" onClick={handleSubmitAllAnswers} disabled={isSubmitting}>
+              {isSubmitting ? "Submitting..." : "Submit All"}
             </Button>
           ) : (
-            <Button variant="contained" onClick={navigateToNextPart}>
-              Next Part →
-            </Button>
+            <Button variant="contained" onClick={navigateToNextPart}>Next Part →</Button>
           )}
         </Box>
       </Paper>

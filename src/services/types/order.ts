@@ -5,7 +5,7 @@ export interface Order {
   vipPackageId: number;
   vipPackageName: string;
   price: number;
-  status: "SUCCESS" | "FAILED";
+  status: "PENDING" | "SUCCESS" | "FAILED";
   createdAt: string;
   updatedAt: string;
   isCombinePack: boolean;

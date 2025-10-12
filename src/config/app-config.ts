@@ -52,8 +52,8 @@ export const AppConfig = {
 };
 
 export const EXAM_TIME_LIMITS = {
-  LISTENING: 47,
-  READING: 1,
-  WRITING: 1,
-  SPEAKING: 12,
+  LISTENING: 60,
+  READING: 60,
+  WRITING: 60,
+  SPEAKING: 60,
 };

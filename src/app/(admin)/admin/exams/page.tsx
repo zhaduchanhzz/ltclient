@@ -652,10 +652,20 @@ const ExamsPage = () => {
                         {formData.audioFile}
                       </Typography>
 
-                      <audio controls style={{ height: 30 }}>
-                        <source src={ApiServerURL + API_PATH.DOWNLOAD_FILE + formData.audioFile} type="audio/mpeg" />
-                        Trình duyệt của bạn không hỗ trợ audio.
-                      </audio>
+                      {(() => {
+                        const raw = String(formData.audioFile);
+                        const audioSrc = raw.startsWith("http")
+                          ? raw
+                          : raw.startsWith("/audio/")
+                            ? `${ApiServerURL}${raw}`
+                            : `${ApiServerURL}${API_PATH.DOWNLOAD_FILE}${raw}`;
+                        return (
+                          <audio controls style={{ height: 30 }}>
+                            <source src={audioSrc} type="audio/mpeg" />
+                            Trình duyệt của bạn không hỗ trợ audio.
+                          </audio>
+                        );
+                      })()}
                     </Stack>
                   )}
                 </Stack>
@@ -672,14 +682,6 @@ const ExamsPage = () => {
                 alignItems="center"
               >
                 <Typography variant="h6">Câu hỏi</Typography>
-                <Button
-                  variant="outlined"
-                  startIcon={<AddIcon />}
-                  onClick={addQuestion}
-                  size="small"
-                >
-                  Thêm câu hỏi
-                </Button>
               </Stack>
 
               {formData.questions.map((question, questionIndex) => (
@@ -804,6 +806,14 @@ const ExamsPage = () => {
           </Stack>
         </DialogContent>
         <DialogActions>
+          <Button
+            variant="outlined"
+            startIcon={<AddIcon />}
+            onClick={addQuestion}
+            size="small"
+          >
+            Thêm câu hỏi
+          </Button>
           <Button onClick={handleCloseDialog}>Hủy</Button>
           <Button variant="contained" onClick={handleSubmit}>
             {isEditMode ? "Cập nhật" : "Tạo đề thi"}

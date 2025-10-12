@@ -68,7 +68,7 @@ export const useUpdateOrderMutation = () => {
     mutationFn: (data: {
       id: string;
       vipPackageId: number;
-      status: "SUCCESS" | "FAILED";
+      status: "SUCCESS" | "FAILED" | "PENDING";
     }) => {
       return HttpClient.put<typeof data, CommonResponse<Order>>(
         `${API_PATH.ORDERS}/${data.id}`,

@@ -202,12 +202,16 @@ export function useExamLogic() {
   ): SimulationExam[] => {
     try {
       return apiExams.map((exam) => {
+        // Prefer exam-level audioFile, fallback to first question audioFile if backend provided it there
+        const audioFromApi = (exam as any).audioFile || (exam as any)?.questions?.[0]?.audioFile;
+
         return {
           id: parseInt(exam.id),
           examType: exam.examType,
           title: exam.title,
           description: exam.description,
           isNeedVip: exam.isNeedVip, // Now correctly handles boolean
+          audioFile: exam.examType === "LISTENING" && audioFromApi ? String(audioFromApi) : undefined,
           questions: exam.questions.map((question) => ({
             id: parseInt(question.id),
             questionText: question.questionText,
@@ -217,7 +221,7 @@ export function useExamLogic() {
               isCorrect: answer.isCorrect || false,
             })),
           })),
-        };
+        } as SimulationExam;
       });
     } catch (error) {
       console.error("Error converting exam data:", error);

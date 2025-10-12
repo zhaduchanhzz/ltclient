@@ -13,5 +13,7 @@ export type Payment = {
 export type SepayCreateQrResponse = {
   qrImageUrl: string;
   accountNumber: string;
+  amount: string;
   bankName: string;
+  orderId: string;
 };

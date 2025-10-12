@@ -42,6 +42,7 @@ export default function ExamHeader({
       sx={{
         background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
         color: "white",
+        height: 64,
       }}
     >
       <Toolbar>

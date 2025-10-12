@@ -54,7 +54,7 @@ import { useState } from "react";
 interface OrderFormData {
   userId?: number;
   vipPackageId: number;
-  status: "SUCCESS" | "FAILED";
+  status: "SUCCESS" | "FAILED" | "PENDING";
 }
 
 const OrdersPage = () => {
@@ -129,7 +129,7 @@ const OrdersPage = () => {
       setFormData({
         userId: undefined, // Don't need userId for edit
         vipPackageId: order.vipPackageId,
-        status: order.status,
+        status: order.status ?? "PENDING",
       });
       setSelectedOrder(order);
     } else {

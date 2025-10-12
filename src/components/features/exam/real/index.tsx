@@ -15,6 +15,7 @@ import {
   Mic,
   PlayArrow,
   Quiz,
+  School,
 } from "@mui/icons-material";
 import {
   Alert,
@@ -28,13 +29,13 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Divider,
   Grid2,
   Paper,
   Slide,
   Stack,
   Typography,
   Chip,
+  Divider,
 } from "@mui/material";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useExamLogic } from "../[id]/hooks/useExamLogic";
@@ -43,7 +44,7 @@ import QuestionCard from "../[id]/components/QuestionCard";
 import { API_PATH } from "@/consts/api-path";
 import { ApiServerURL } from "@/utils/config";
 import { useAppContextHandle } from "@/contexts/AppContext";
-import { useTakeExamMutation } from "@/services/apis/exam";
+import { useTakeExamMutation, useGradingRequestMutation } from "@/services/apis/exam";
 import { EXAM_TIME_LIMITS } from "@/config/app-config";
 
 const ExamTypeIcons = {
@@ -85,6 +86,7 @@ export default function RealExamPage() {
 
   const { updateAppState } = useAppContextHandle();
   const { mutateAsync: takeExam } = useTakeExamMutation();
+  const gradingRequestMutation = useGradingRequestMutation();
 
   const [currentExamPartIndex, setCurrentExamPartIndex] = useState(0);
   const leftPanelRef = useRef<HTMLDivElement | null>(null);
@@ -143,6 +145,50 @@ export default function RealExamPage() {
     return { answered, total };
   };
   const { answered: totalAnswered, total: totalQuestions } = calculateAllAnswered();
+
+  // Calculate results by type similar to test exam UI
+  const examResultsByType = useMemo(() => {
+    if (!session || !allExams) return {} as Record<string, { correct: number; total: number; percentage?: number; status: string }>;
+    const results: Record<string, { correct: number; total: number; percentage?: number; status: string }> = {};
+
+    examTypes.forEach((type) => {
+      const typeExams = allExams.filter((e) => e.examType === type);
+      let correct = 0;
+      let total = 0;
+      let status = "Completed";
+
+      typeExams.forEach((exam) => {
+        exam.questions.forEach((q) => {
+          total++;
+          const userAnswers = session.answers[q.id] || [];
+          if (type === "LISTENING" || type === "READING") {
+            const correctIds = q.answers.filter((a) => a.isCorrect).map((a) => a.id.toString());
+            const aSet = new Set(userAnswers);
+            const cSet = new Set(correctIds);
+            const isCorrect = aSet.size === cSet.size && [...aSet].every((id) => cSet.has(id));
+            if (isCorrect) correct++;
+          } else {
+            if (userAnswers.length > 0) correct++;
+            status = "Pending Grading";
+          }
+        });
+      });
+
+      const percentage = total > 0 && (type === "LISTENING" || type === "READING") ? Math.round((correct / total) * 100) : undefined;
+      results[type] = { correct, total, percentage, status };
+    });
+
+    return results;
+  }, [session, allExams, examTypes]);
+
+  const grandTotal = useMemo(() => {
+    const init = { answered: 0, total: 0 };
+    return Object.values(examResultsByType).reduce((acc, r) => {
+      acc.answered += r.correct;
+      acc.total += r.total;
+      return acc;
+    }, init);
+  }, [examResultsByType]);
 
   // Navigation functions
   const navigateToPreviousPart = () => {
@@ -207,18 +253,24 @@ export default function RealExamPage() {
   };
   // ===== end added logic =====
 
-  // Ensure current part stays within the active exam section when section changes (e.g., time expired)
+  // Ensure we don't stay on an expired/completed section; allow forward navigation otherwise
   useEffect(() => {
     if (!session) return;
-    const activeType = session.currentExamType;
-    const activeIndex = allExamsFlat.findIndex((p) => p.examType === activeType);
-    if (activeIndex !== -1) {
-      const currentPartType = currentExamPart?.examType;
-      if (currentPartType !== activeType) {
-        setCurrentExamPartIndex(activeIndex);
+    const currentType = currentExamPart?.examType;
+
+    // If current viewed section is locked (expired/completed), redirect to an allowed one
+    if (currentType && isSectionLockedForReturn(currentType)) {
+      // Prefer active section if available and not locked
+      let targetIndex = allExamsFlat.findIndex((p) => p.examType === session.currentExamType);
+      if (targetIndex === -1 || isPartDisabled(targetIndex)) {
+        // Fallback: first non-locked part
+        targetIndex = allExamsFlat.findIndex((p) => !isSectionLockedForReturn(p.examType));
+      }
+      if (targetIndex !== -1 && targetIndex !== currentExamPartIndex) {
+        setCurrentExamPartIndex(targetIndex);
       }
     }
-  }, [session?.currentExamType, allExamsFlat, currentExamPart?.examType]);
+  }, [session?.currentExamType, sectionStatus, allExamsFlat, currentExamPart?.examType, currentExamPartIndex]);
 
   // Restore scroll per part
   useEffect(() => {
@@ -283,8 +335,28 @@ export default function RealExamPage() {
     }
   };
 
+  // Grading request for WRITING/SPEAKING like test exam
+  const handleGradingRequest = async () => {
+    if (!session?.termId || !allExams) return;
+    const gradable = allExams.filter((e) => e.examType === "WRITING" || e.examType === "SPEAKING");
+    if (gradable.length === 0) {
+      updateAppState({ appAlertInfo: { message: "Không có phần thi nào cần chấm điểm.", severity: "info" } });
+      return;
+    }
+    try {
+      const payload: Array<{ termId: number; examType: "WRITING" | "SPEAKING" }> = [];
+      if (gradable.some((g) => g.examType === "WRITING")) payload.push({ termId: session.termId, examType: "WRITING" });
+      if (gradable.some((g) => g.examType === "SPEAKING")) payload.push({ termId: session.termId, examType: "SPEAKING" });
+      await gradingRequestMutation.mutateAsync(payload as any);
+      updateAppState({ appAlertInfo: { message: "Đã gửi yêu cầu chấm điểm!", severity: "success" } });
+      router.push("/");
+    } catch {
+      updateAppState({ appAlertInfo: { message: "Gửi yêu cầu chấm điểm thất bại. Vui lòng thử lại.", severity: "error" } });
+    }
+  };
+
   // Loading / error states
-  if (isLoading) return <Container sx={{ display: "flex", justifyContent: "center", p: 4 }}><Typography>Loading exam...</Typography></Container>;
+  if (isLoading) return <Container sx={{ display: "flex", justifyContent: "center", p: 4 }}><Typography variant="caption">Loading exam...</Typography></Container>;
 
   if (examExpired) {
     // If this is the real exam route, allow user to create a new exam rather than just error
@@ -295,10 +367,10 @@ export default function RealExamPage() {
             <Avatar sx={{ width: 72, height: 72, mx: "auto", mb: 2, bgcolor: "primary.main" }}>
               <AccessTime sx={{ fontSize: 38 }} />
             </Avatar>
-            <Typography variant="h4" fontWeight="bold" gutterBottom>
+            <Typography variant="h6" fontWeight="bold" gutterBottom>
               Bắt đầu bài thi thật
             </Typography>
-            <Typography variant="body1" sx={{ mb: 3 }}>
+            <Typography variant="caption" sx={{ mb: 3, display: "block" }}>
               Nhấn nút bên dưới để nhận đề thi. Sau khi hết thời gian của một kỹ năng, bạn sẽ không thể quay lại kỹ năng đó.
             </Typography>
             <Stack direction="row" spacing={2} justifyContent="center">
@@ -314,8 +386,8 @@ export default function RealExamPage() {
       <Container maxWidth="md" sx={{ py: 4 }}>
         <Paper sx={{ p: 4, textAlign: "center", background: "linear-gradient(135deg, #f44336 0%, #e91e63 100%)", color: "white", borderRadius: 3 }}>
           <Avatar sx={{ width: 80, height: 80, mx: "auto", mb: 2, bgcolor: "rgba(255,255,255,0.2)" }}><AccessTime sx={{ fontSize: 40 }} /></Avatar>
-          <Typography variant="h4" fontWeight="bold" gutterBottom>Exam Not Available</Typography>
-          <Typography variant="body1" sx={{ mb: 3 }}>Không tìm thấy dữ liệu đề thi. Vui lòng tạo bài thi mới.</Typography>
+          <Typography variant="h6" fontWeight="bold" gutterBottom>Exam Not Available</Typography>
+          <Typography variant="caption" sx={{ mb: 3, display: "block" }}>Không tìm thấy dữ liệu đề thi. Vui lòng tạo bài thi mới.</Typography>
           <Button variant="contained" onClick={() => router.push("/exam/room")}>Quay lại phòng thi</Button>
         </Paper>
       </Container>
@@ -330,17 +402,17 @@ export default function RealExamPage() {
         <Slide direction="up" in mountOnEnter unmountOnExit>
           <Paper sx={{ p: 4, textAlign: "center", background: "linear-gradient(135deg,#0f2027 0%,#203a43 50%,#2c5364 100%)", color: "white", borderRadius: 3 }}>
             <Avatar sx={{ width: 80, height: 80, mx: "auto", mb: 2, bgcolor: "rgba(255,255,255,0.15)" }}><Quiz sx={{ fontSize: 40 }} /></Avatar>
-            <Typography variant="h4" fontWeight="bold" gutterBottom>VSTEP REAL EXAM</Typography>
-            <Typography variant="h6" sx={{ mb: 4, opacity: .9 }}>Bài thi thật - không thể quay lại phần trước sau khi hết thời gian.</Typography>
+            <Typography variant="h6" fontWeight="bold" gutterBottom>VSTEP REAL EXAM</Typography>
+            <Typography variant="caption" sx={{ mb: 4, opacity: .9, display: "block" }}>Bài thi thật - không thể quay lại phần trước sau khi hết thời gian.</Typography>
             <Grid2 container spacing={3} sx={{ mb: 4 }}>
               <Grid2 size={{ xs:12, sm:6 }}>
                 <Card sx={{ bgcolor: "rgba(255,255,255,0.1)", backdropFilter: "blur(6px)" }}>
                   <CardContent>
                     <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
                       <AccessTime />
-                      <Typography variant="subtitle1">Tổng thời gian</Typography>
+                      <Typography variant="caption">Tổng thời gian</Typography>
                     </Stack>
-                    <Typography variant="h4" fontWeight="bold">{Object.values(EXAM_TIME_LIMITS).reduce((a, b) => a + b, 0)} phút</Typography>
+                    <Typography variant="subtitle1" fontWeight="bold">{Object.values(EXAM_TIME_LIMITS).reduce((a, b) => a + b, 0)} phút</Typography>
                   </CardContent>
                 </Card>
               </Grid2>
@@ -349,9 +421,9 @@ export default function RealExamPage() {
                   <CardContent>
                     <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
                       <Assignment />
-                      <Typography variant="subtitle1">Số phần thi</Typography>
+                      <Typography variant="caption">Số phần thi</Typography>
                     </Stack>
-                    <Typography variant="h4" fontWeight="bold">{allExams.length}</Typography>
+                    <Typography variant="subtitle1" fontWeight="bold">{allExams.length}</Typography>
                   </CardContent>
                 </Card>
               </Grid2>
@@ -375,8 +447,8 @@ export default function RealExamPage() {
     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
       <ExamHeader session={session} currentSectionTimeRemaining={currentSectionTimeRemaining} answeredCount={totalAnswered} totalCount={totalQuestions} />
 
-      <Paper elevation={2} sx={{ px:3, py:1.5, display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom: "1px solid", borderColor:"divider" }}>
-        <Typography variant="h6" fontWeight="bold">Part {currentExamPartIndex + 1} / {allExamsFlat.length}</Typography>
+      <Paper elevation={2} sx={{ px:3, py:0.5, display:"flex", alignItems:"center", justifyContent:"space-between", borderBottom: "1px solid", borderColor:"divider" }}>
+        <Typography variant="subtitle2" fontWeight="bold">Part {currentExamPartIndex + 1} / {allExamsFlat.length}</Typography>
         <Box sx={{ display:"flex", gap:1 }}>
           <Button variant="outlined" size="small" onClick={navigateToPreviousPart} disabled={currentExamPartIndex===0 || (currentExamPartIndex>0 && isSectionLockedForReturn(allExamsFlat[currentExamPartIndex-1].examType))}>Previous Part</Button>
           <Button variant="outlined" size="small" onClick={navigateToNextPart} disabled={currentExamPartIndex===allExamsFlat.length-1}>Next Part</Button>
@@ -386,25 +458,15 @@ export default function RealExamPage() {
       {isReading ? (
         <Box sx={{ flexGrow:1, display:"flex", flexDirection:{ xs:"column", md:"row" }, overflow:"hidden", height:"calc(100vh - 120px)" }}>
           <Box ref={leftPanelRef} onScroll={handleLeftScroll} sx={{ width:{ xs:"100%", md:"50%"}, height:{ xs:"40%", md:"100%"}, overflow:"auto", borderRight:{ md:"1px solid"}, borderBottom:{ xs:"1px solid", md:"none"}, borderColor:"divider", p:3 }}>
-            <Paper elevation={2} sx={{ p:3, mb:3, bgcolor: ExamTypeColors[currentExamPart.examType as keyof typeof ExamTypeColors] || "#607d8b", color:"white", position:"sticky", top:0, zIndex:10, borderRadius:2 }}>
-              {currentExamPart.title ? <Box sx={{ fontSize:"1rem", "& img":{ maxWidth:"100%" } }} dangerouslySetInnerHTML={{ __html: currentExamPart.title }} /> : <Typography>{`${currentExamPart.examType} - Part ${currentExamPartIndex+1}`}</Typography>}
-              <Typography variant="body2" sx={{ mt:1, opacity:.9 }}>Questions {getGlobalQuestionOffset + 1} - {getGlobalQuestionOffset + currentExamPart.questions.length} • {partAnswered}/{partTotal} answered</Typography>
+            <Paper elevation={2} sx={{ p:1.5, mb:3, bgcolor: ExamTypeColors[currentExamPart.examType as keyof typeof ExamTypeColors] || "#607d8b", color:"white", position:"sticky", top:0, zIndex:10, borderRadius:2 }}>
+              {currentExamPart.title ? <Box sx={{ fontSize:"0.875rem", "& img":{ maxWidth:"100%" } }} dangerouslySetInnerHTML={{ __html: currentExamPart.title }} /> : <Typography variant="subtitle2">{`${currentExamPart.examType} - Part ${currentExamPartIndex+1}`}</Typography>}
+              <Typography variant="caption" sx={{ mt:1, opacity:.9 }}>Questions {getGlobalQuestionOffset + 1} - {getGlobalQuestionOffset + currentExamPart.questions.length} • {partAnswered}/{partTotal} answered</Typography>
             </Paper>
-
-            {currentExamPart.examType === "LISTENING" && currentExamPart.audioFile && (
-              <Paper elevation={1} sx={{ p:3, mb:3 }}>
-                <Typography sx={{ mb:2 }}>Listening Audio</Typography>
-                <audio controls style={{ width:"100%" }}>
-                  <source src={ApiServerURL + API_PATH.DOWNLOAD_FILE + currentExamPart.audioFile} />
-                  Your browser does not support the audio element.
-                </audio>
-              </Paper>
-            )}
 
             {currentExamPart.description && (
               <Paper elevation={1} sx={{ p:3 }}>
-                <Typography sx={{ mb:2 }}>Instructions / Passage</Typography>
-                <Box sx={{ lineHeight:1.8, "& img":{ maxWidth:"100%" } }} dangerouslySetInnerHTML={{ __html: currentExamPart.description }} />
+                <Typography variant="caption" sx={{ mb:2, display: "block" }}>Instructions / Passage</Typography>
+                <Box sx={{ fontSize:"0.875rem", lineHeight:1.7, "& img":{ maxWidth:"100%" } }} dangerouslySetInnerHTML={{ __html: currentExamPart.description }} />
               </Paper>
             )}
           </Box>
@@ -415,7 +477,7 @@ export default function RealExamPage() {
                 const globalQuestionNumber = getGlobalQuestionOffset + index + 1;
                 return (
                   <Paper key={question.id} elevation={1} sx={{ p:3, mb:3 }}>
-                    <Typography sx={{ mb:2, color:"primary.main" }}>Question {globalQuestionNumber}</Typography>
+                    <Typography variant="caption" sx={{ mb:2, color:"primary.main", display: "block" }}>Question {globalQuestionNumber}</Typography>
                     <QuestionCard
                       session={session}
                       currentExam={currentExamPart}
@@ -437,27 +499,37 @@ export default function RealExamPage() {
           <Box sx={{ p:3, maxWidth: 1200, mx: "auto" }}>
             <Paper elevation={2} sx={{ p:3, mb:3, bgcolor: ExamTypeColors[currentExamPart.examType as keyof typeof ExamTypeColors] || "#607d8b", color:"white", position:"sticky", top:0, zIndex:10, borderRadius:2 }}>
               {currentExamPart.title ? (
-                <Box sx={{ fontSize:"1rem", "& img":{ maxWidth:"100%" } }} dangerouslySetInnerHTML={{ __html: currentExamPart.title }} />
+                <Box sx={{ fontSize:"0.875rem", "& img":{ maxWidth:"100%" } }} dangerouslySetInnerHTML={{ __html: currentExamPart.title }} />
               ) : (
-                <Typography>{`${currentExamPart.examType} - Part ${currentExamPartIndex+1}`}</Typography>
+                <Typography variant="subtitle2">{`${currentExamPart.examType} - Part ${currentExamPartIndex+1}`}</Typography>
               )}
-              <Typography variant="body2" sx={{ mt:1, opacity:.9 }}>Questions {getGlobalQuestionOffset + 1} - {getGlobalQuestionOffset + currentExamPart.questions.length} • {partAnswered}/{partTotal} answered</Typography>
+              <Typography variant="caption" sx={{ mt:1, opacity:.9 }}>Questions {getGlobalQuestionOffset + 1} - {getGlobalQuestionOffset + currentExamPart.questions.length} • {partAnswered}/{partTotal} answered</Typography>
             </Paper>
 
             {currentExamPart.examType === "LISTENING" && currentExamPart.audioFile && (
               <Paper elevation={1} sx={{ p:3, mb:3 }}>
-                <Typography sx={{ mb:2 }}>Listening Audio</Typography>
-                <audio controls style={{ width:"100%" }}>
-                  <source src={ApiServerURL + API_PATH.DOWNLOAD_FILE + currentExamPart.audioFile} />
-                  Your browser does not support the audio element.
-                </audio>
+                <Typography variant="caption" sx={{ mb:2, display: "block" }}>Listening Audio</Typography>
+                {(() => {
+                  const raw = currentExamPart.audioFile as string;
+                  const audioSrc = raw.startsWith("http")
+                    ? raw
+                    : raw.startsWith("/audio/")
+                      ? `${ApiServerURL}${raw}`
+                      : `${ApiServerURL}${API_PATH.DOWNLOAD_FILE}${raw}`;
+                  return (
+                    <audio controls style={{ width:"100%" }}>
+                      <source src={audioSrc} />
+                      Your browser does not support the audio element.
+                    </audio>
+                  );
+                })()}
               </Paper>
             )}
 
             {currentExamPart.description && (
               <Paper elevation={1} sx={{ p:3, mb:3 }}>
-                <Typography sx={{ mb:2 }}>Instructions</Typography>
-                <Box sx={{ lineHeight:1.8, "& img":{ maxWidth:"100%" } }} dangerouslySetInnerHTML={{ __html: currentExamPart.description }} />
+                <Typography variant="caption" sx={{ mb:2, display: "block" }}>Instructions</Typography>
+                <Box sx={{ fontSize:"0.875rem", lineHeight:1.7, "& img":{ maxWidth:"100%" } }} dangerouslySetInnerHTML={{ __html: currentExamPart.description }} />
               </Paper>
             )}
 
@@ -465,7 +537,7 @@ export default function RealExamPage() {
               const globalQuestionNumber = getGlobalQuestionOffset + index + 1;
               return (
                 <Paper key={question.id} elevation={1} sx={{ p:3, mb:3 }}>
-                  <Typography sx={{ mb:2, color:"primary.main" }}>Question {globalQuestionNumber}</Typography>
+                  <Typography variant="caption" sx={{ mb:2, color:"primary.main", display: "block" }}>Question {globalQuestionNumber}</Typography>
                   <QuestionCard
                     session={session}
                     currentExam={currentExamPart}
@@ -483,7 +555,7 @@ export default function RealExamPage() {
         </Box>
       )}
 
-      <Paper elevation={2} sx={{ p:3, borderTop:"1px solid", borderColor:"divider" }}>
+      <Paper elevation={2} sx={{ p:1, borderTop:"1px solid", borderColor:"divider" }}>
         <Box sx={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
           <Button variant="contained" onClick={navigateToPreviousPart} disabled={currentExamPartIndex===0 || (currentExamPartIndex>0 && isSectionLockedForReturn(allExamsFlat[currentExamPartIndex-1].examType))}>← Previous Part</Button>
           <Box sx={{ display:"flex", gap:1, overflowX:"auto" }}>
@@ -517,7 +589,7 @@ export default function RealExamPage() {
         </Box>
       </Paper>
 
-      <Dialog open={submissionDialog.open} onClose={() => setSubmissionDialog({ ...submissionDialog, open:false })} maxWidth="sm" fullWidth>
+      <Dialog open={submissionDialog.open} onClose={() => setSubmissionDialog({ ...submissionDialog, open:false })} maxWidth="md" fullWidth>
         <DialogTitle>
           <Box sx={{ display:"flex", alignItems:"center", gap:1 }}>
             {submissionDialog.success ? <CheckCircle color="success" /> : <AccessTime color="error" />}
@@ -530,10 +602,15 @@ export default function RealExamPage() {
               <Paper variant="outlined" sx={{ p:2, borderRadius:2 }}>
                 <Stack direction={{ xs:"column", sm:"row" }} spacing={2} alignItems={{ xs:"start", sm:"center" }} justifyContent="space-between">
                   <Box>
-                    <Typography variant="subtitle2" color="text.secondary">Tiến độ tổng</Typography>
+                    <Typography variant="subtitle2" color="text.secondary">Mã bài thi</Typography>
+                    <Typography variant="h6" fontWeight={700}>{session?.termId}</Typography>
+                  </Box>
+                  <Divider flexItem orientation="vertical" sx={{ display: { xs: "none", sm: "block" } }} />
+                  <Box>
+                    <Typography variant="subtitle2" color="text.secondary">Tổng tiến độ</Typography>
                     <Stack direction="row" spacing={1} alignItems="center">
-                      <Typography variant="h6" fontWeight={700}>{totalAnswered}/{totalQuestions}</Typography>
-                      <Chip size="small" label={`${totalQuestions ? Math.round((totalAnswered/totalQuestions)*100) : 0}%`} color={totalQuestions ? (Math.round((totalAnswered/totalQuestions)*100) >= 70 ? "success" : "warning") : "default"} />
+                      <Typography variant="h6" fontWeight={700}>{grandTotal.answered}/{grandTotal.total}</Typography>
+                      <Chip size="small" label={`${grandTotal.total ? Math.round((grandTotal.answered/grandTotal.total)*100) : 0}%`} color={grandTotal.total ? (Math.round((grandTotal.answered/grandTotal.total)*100) >= 70 ? "success" : "warning") : "default"} />
                     </Stack>
                   </Box>
                 </Stack>
@@ -542,19 +619,11 @@ export default function RealExamPage() {
               <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Kết quả theo kỹ năng</Typography>
               <Grid2 container spacing={2}>
                 {examTypes.map((examType) => {
-                  const parts = examsByType[examType] || [];
-                  let total = 0; let answered = 0;
-                  parts.forEach((exam: any) => {
-                    exam.questions.forEach((q: any) => {
-                      total++;
-                      if (session.answers[q.id]?.length) answered++;
-                    });
-                  });
                   const Icon = ExamTypeIcons[examType as keyof typeof ExamTypeIcons] || Quiz;
                   const color = ExamTypeColors[examType as keyof typeof ExamTypeColors] || "#1976d2";
                   const isAuto = examType === "LISTENING" || examType === "READING";
-                  const percent = total ? Math.round((answered/total)*100) : 0;
-
+                  const r = examResultsByType[examType] || { correct: 0, total: 0 };
+                  const percent = r.total > 0 && isAuto ? Math.round((r.correct/r.total)*100) : undefined;
                   return (
                     <Grid2 key={examType} size={{ xs:12, sm:6 }}>
                       <Paper variant="outlined" sx={{ p:2, borderRadius:2, borderLeft: `4px solid ${color}` }}>
@@ -564,10 +633,10 @@ export default function RealExamPage() {
                           <Chip size="small" variant="outlined" color={isAuto ? "success" : "default"} label={isAuto ? "Chấm tự động" : "Chấm thủ công"} sx={{ ml: "auto" }} />
                         </Stack>
                         <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
-                          <Typography variant="h5" fontWeight={800} color={isAuto ? (percent >= 70 ? "success.main" : percent >= 50 ? "warning.main" : "error.main") : "text.primary"}>
-                            {answered}/{total}
+                          <Typography variant="h5" fontWeight={800} color={isAuto ? (percent! >= 70 ? "success.main" : percent! >= 50 ? "warning.main" : "error.main") : "text.primary"}>
+                            {r.correct}/{r.total}
                           </Typography>
-                          {isAuto && <Chip size="small" color={percent >= 70 ? "success" : percent >= 50 ? "warning" : "error"} label={`${percent}% đúng`} />}
+                          {isAuto && <Chip size="small" color={percent! >= 70 ? "success" : percent! >= 50 ? "warning" : "error"} label={`${percent}% đúng`} />}
                           {!isAuto && <Typography variant="body2" color="text.secondary">Đang chờ chấm điểm chi tiết</Typography>}
                         </Stack>
                       </Paper>
@@ -575,15 +644,19 @@ export default function RealExamPage() {
                   );
                 })}
               </Grid2>
+
+              <Paper variant="outlined" sx={{ p:2, borderRadius:2 }}>
+                <Typography variant="body2">• Các phần thi Nghe/Đọc đã được chấm tự động • Các phần thi Viết/Nói cần gửi yêu cầu chấm điểm để nhận phản hồi chi tiết</Typography>
+              </Paper>
             </Stack>
           ) : (
             <Alert severity="error" sx={{ mt:2 }}>{submissionDialog.message}</Alert>
           )}
         </DialogContent>
         <DialogActions sx={{ p:3, gap:1 }}>
-          <Button onClick={() => router.push("/exam/room")} variant="outlined" fullWidth>Quay lại phòng thi</Button>
+          <Button onClick={() => router.push("/exam/room")} variant="outlined" fullWidth>Về phòng thi</Button>
           {submissionDialog.success && (
-            <Button onClick={() => router.push("/")} variant="contained" fullWidth>Bảng điều khiển</Button>
+            <Button onClick={handleGradingRequest} variant="contained" fullWidth startIcon={<School />}>Yêu cầu chấm điểm</Button>
           )}
         </DialogActions>
       </Dialog>

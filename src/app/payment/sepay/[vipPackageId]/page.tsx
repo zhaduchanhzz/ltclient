@@ -2,17 +2,12 @@
 
 import { useAuthContext } from "@/contexts/AuthContext";
 import { createSepayQr } from "@/services/apis/payment";
+import type { SepayCreateQrResponse } from "@/services/types/payment";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-
-// New response shape from API
-
-type SepayCreateQrData = {
-  qrImageUrl: string;
-  accountNumber: string;
-  bankName: string;
-};
+import { Alert, Box, Button, Paper, Typography } from "@mui/material";
+import { useGetOrderByIdQuery } from "@/services/apis/order";
 
 export default function SepayQrPage() {
   const { isAuthenticated, userInfo } = useAuthContext();
@@ -21,7 +16,7 @@ export default function SepayQrPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<SepayCreateQrData | null>(null);
+  const [result, setResult] = useState<SepayCreateQrResponse | null>(null);
 
   const vipPackageId = useMemo(() => {
     const raw = params?.vipPackageId;
@@ -31,10 +26,6 @@ export default function SepayQrPage() {
   }, [params]);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/login");
-      return;
-    }
 
     if (!userInfo?.id || !vipPackageId || Number.isNaN(vipPackageId)) {
       setError("Thiếu thông tin người dùng hoặc gói VIP không hợp lệ.");
@@ -51,12 +42,14 @@ export default function SepayQrPage() {
           vipPackageId: Number(vipPackageId),
         });
 
+
         // Validate minimal fields
         if (!data.qrImageUrl || !data.accountNumber || !data.bankName) {
-          throw new Error("Dữ liệu trả về không hợp lệ.");
+          setError("Dữ liệu trả về không hợp lệ.");
+          return;
         }
 
-        setResult(data as SepayCreateQrData);
+        setResult(data);
       } catch (e: any) {
         console.error(e);
         setError(e?.message || "Đã xảy ra lỗi khi tạo QR thanh toán.");
@@ -70,7 +63,6 @@ export default function SepayQrPage() {
 
   const copyAccount = async () => {
     if (!result?.accountNumber) {
-
       return;
     }
 
@@ -82,95 +74,107 @@ export default function SepayQrPage() {
     }
   };
 
-  return (
-    <div style={{ maxWidth: 560, margin: "32px auto", padding: 16 }}>
-      <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 12 }}>
-        Thanh toán qua Sepay
-      </h1>
+  const formatAmount = (v?: string) => {
+    if (!v) return "";
+    const num = Number(v);
+    if (Number.isNaN(num)) return v;
 
+    try {
+      return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(num);
+    } catch {
+      return `${num.toLocaleString("vi-VN")} ₫`;
+    }
+  };
+
+  // Start order status polling once we have an orderId
+  const orderId = result?.orderId || "";
+  const { data: orderResp, refetch: refetchOrder } = useGetOrderByIdQuery(orderId, Boolean(orderId));
+  const orderStatus = orderResp?.data?.status;
+
+  useEffect(() => {
+    if (!orderId) return;
+    if (orderStatus === "SUCCESS") return; // stop polling when success
+    const id = window.setInterval(() => {
+      refetchOrder();
+    }, 10000); // poll every 10 seconds
+    return () => window.clearInterval(id);
+  }, [orderId, orderStatus, refetchOrder]);
+
+  const isPaid = orderStatus === "SUCCESS";
+
+  return (
+    <Box sx={{ maxWidth: 560, mx: "auto", my: 4, p: 2 }}>
       {loading && (
-        <div style={{ padding: "12px 0" }}>Đang tạo mã QR, vui lòng chờ…</div>
+        <Typography variant="body2" color="text.secondary" sx={{ py: 1.5 }}>
+          Đang tạo mã QR, vui lòng chờ…
+        </Typography>
       )}
 
       {error && (
-        <div
-          style={{
-            background: "#fee2e2",
-            color: "#b91c1c",
-            padding: 12,
-            borderRadius: 8,
-            marginBottom: 12,
-          }}
-        >
-          {error}
-        </div>
+        <Alert severity="error" sx={{ mb: 1.5 }}>{error}</Alert>
       )}
 
       {!loading && !error && result && (
-        <div style={{ display: "grid", gap: 16 }}>
-          <div style={{ textAlign: "center" }}>
-            <Image
-              src={result.qrImageUrl}
-              alt={`QR ${result.bankName}`}
-              width={280}
-              height={280}
-              style={{ objectFit: "contain" }}
-              unoptimized
-              priority
-            />
-            <div style={{ color: "#666", marginTop: 8 }}>
-              Quét mã để thanh toán bằng ứng dụng ngân hàng.
-            </div>
-          </div>
+        <Box sx={{ display: "grid", gap: 2 }}>
+          {isPaid ? (
+            <Alert severity="success">
+              Thanh toán thành công cho đơn hàng {orderId}. Cảm ơn bạn!
+            </Alert>
+          ) : (
+            <>
+              <Box sx={{ textAlign: "center" }}>
+                <Image
+                  src={result.qrImageUrl}
+                  alt={`QR ${result.bankName}`}
+                  width={280}
+                  height={280}
+                  style={{ objectFit: "contain" }}
+                  unoptimized
+                  priority
+                />
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  Quét mã để thanh toán bằng ứng dụng ngân hàng.
+                </Typography>
+              </Box>
 
-          <div
-            style={{
-              background: "#f9fafb",
-              border: "1px solid #e5e7eb",
-              borderRadius: 8,
-              padding: 12,
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <div style={{ color: "#6b7280" }}>Ngân hàng</div>
-              <div style={{ fontWeight: 700 }}>{result.bankName}</div>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginTop: 8,
-              }}
-            >
-              <div style={{ color: "#6b7280" }}>Số tài khoản</div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{ fontWeight: 700 }}>{result.accountNumber}</div>
-                <button
-                  onClick={copyAccount}
-                  style={{
-                    background: "#111827",
-                    color: "#fff",
-                    border: 0,
-                    borderRadius: 6,
-                    padding: "6px 10px",
-                    cursor: "pointer",
-                    fontWeight: 600,
-                    fontSize: 12,
-                  }}
-                >
-                  Sao chép
-                </button>
-              </div>
-            </div>
-          </div>
+              <Paper variant="outlined" sx={{ p: 1.5 }}>
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                  <Typography variant="body2" color="text.secondary">Ngân hàng</Typography>
+                  <Typography fontWeight={700}>{result.bankName}</Typography>
+                </Box>
 
-          <div style={{ fontSize: 12, color: "#6b7280" }}>
-            Nếu bạn gặp vấn đề khi quét mã, hãy thử lại sau vài phút hoặc liên
-            hệ hỗ trợ.
-          </div>
-        </div>
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 1 }}>
+                  <Typography variant="body2" color="text.secondary">Số tài khoản</Typography>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Typography fontWeight={700}>{result.accountNumber}</Typography>
+                    <Button onClick={copyAccount} size="small" variant="contained">
+                      Sao chép
+                    </Button>
+                  </Box>
+                </Box>
+
+                {result.amount && (
+                  <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
+                    <Typography variant="body2" color="text.secondary">Số tiền</Typography>
+                    <Typography fontWeight={700}>{formatAmount(result.amount)}</Typography>
+                  </Box>
+                )}
+
+                {orderId && (
+                  <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
+                    <Typography variant="body2" color="text.secondary">Mã đơn hàng</Typography>
+                    <Typography sx={{ fontFamily: "monospace" }}>{orderId}</Typography>
+                  </Box>
+                )}
+              </Paper>
+
+              <Typography variant="caption" color="text.secondary">
+                Nếu bạn gặp vấn đề khi quét mã, hãy thử lại sau vài phút hoặc liên hệ hỗ trợ.
+              </Typography>
+            </>
+          )}
+        </Box>
       )}
-    </div>
+    </Box>
   );
 }

@@ -34,9 +34,9 @@ export const createSepayQr = async (
   try {
     const response = await HttpClient.post<
       { userId: number; vipPackageId: number },
-      CommonResponse<SepayCreateQrResponse>
+      SepayCreateQrResponse
     >(API_PATH.PAYMENT_SEPAY_CREATE_QR, payload);
-    return response.data;
+    return response;
   } catch (error) {
     throw error;
   }
