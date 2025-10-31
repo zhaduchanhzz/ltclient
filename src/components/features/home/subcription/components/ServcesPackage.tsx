@@ -113,7 +113,7 @@ const ServcesPackage = ({ id }: ServcesPackageProps) => {
                           <span
                             dangerouslySetInnerHTML={{
                               __html: t.replace(
-                                /(Thí sinh tự học|Người thi lại VSTEP|Writing & Speaking|trước khi thi thật|4 kỹ năng|điểm mạnh & điểm yếu)/g,
+                                /(Thí sinh tự học|Người thi lại VSTEP|Writing & Speaking|trước khi thi mô phỏng|4 kỹ năng|điểm mạnh & điểm yếu)/g,
                                 "<i>$1</i>",
                               ),
                             }}

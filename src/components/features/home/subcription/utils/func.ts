@@ -9,13 +9,13 @@ export const features = [
     icon: CollectionsBookmarkIcon, // Replace with your icon component or image path
     title: "Ngân hàng đề thi phong phú & bám sát thực tế",
     description:
-      "Kho đề thi cập nhật liên tục, bám sát định dạng VSTEP, giúp bạn làm quen với đề thi thật.",
+      "Kho đề thi cập nhật liên tục, bám sát định dạng VSTEP, giúp bạn làm quen với đề thi mô phỏng.",
   },
   {
     icon: HourglassEmptyIcon, // Replace with your icon component or image path
     title: "Thi thử theo thời gian thực",
     description:
-      "Giao diện thi giống kỳ thi thật, giúp bạn làm quen với áp lực thời gian.",
+      "Giao diện thi giống kỳ thi mô phỏng, giúp bạn làm quen với áp lực thời gian.",
   },
   {
     icon: BarChartIcon, // Replace with your icon component or image path

@@ -6,9 +6,11 @@ import BasicTypography from "@/components/base/MaterialUI-Basic/Typography";
 import PracticeQuestionCard from "./PracticeQuestionCard";
 import { APP_ROUTE } from "@/consts/app-route";
 import { useExamDetailQuery } from "@/services/apis/exam";
-import { CircularProgress, Container, useTheme } from "@mui/material";
+import { CircularProgress, Container, Paper, Typography, Box, useTheme } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { useState, useMemo } from "react";
+import { ApiServerURL } from "@/utils/config";
+import { API_PATH } from "@/consts/api-path";
 
 type PracticeExamProps = {
   examId: string;
@@ -134,10 +136,22 @@ const PracticeExam = ({ examId }: PracticeExamProps) => {
     );
   }
 
+  // Resolve audio src similar to real exam
+  const resolveAudioSrc = (raw?: string) => {
+    if (!raw) return undefined;
+    if (raw.startsWith("http")) return raw;
+    if (raw.startsWith("/audio/")) return `${ApiServerURL}${raw}`;
+    return `${ApiServerURL}${API_PATH.DOWNLOAD_FILE}${raw}`;
+  };
+
+  const isReading = examData.examType === "READING";
+  const isListening = examData.examType === "LISTENING";
+
   return (
     <Container>
       <BasicBox sx={{ mt: 3 }}>
-        <BasicStack spacing={3}>
+        <BasicStack spacing={2}>
+          {/* Header */}
           <BasicStack direction="row" alignItems="center" spacing={2}>
             <BasicTypography variant="h4" fontWeight="bold">
               {getExamTypeName(examData.examType)} Exam - ID: {examId}
@@ -159,49 +173,96 @@ const PracticeExam = ({ examId }: PracticeExamProps) => {
             )}
           </BasicStack>
 
-          {/* Display exam title if available */}
-          {examData.title && (
-            <BasicBox
-              sx={{
-                p: 2,
-                bgcolor: theme.palette.background.paper,
-                borderRadius: 1,
-                border: `1px solid ${theme.palette.divider}`,
-              }}
-            >
-              <BasicTypography variant="body1">
-                <strong>Title:</strong> {examData.title}
-              </BasicTypography>
-            </BasicBox>
+          {/* Listening audio + instructions */}
+          {isListening && (
+            <BasicStack spacing={1}>
+              {/* Audio player if available */}
+              {resolveAudioSrc((examData as any).audioFile) && (
+                <Paper sx={{ p: 1, border: `1px solid ${theme.palette.divider}` }}>
+                  <Typography variant="caption" sx={{ mb: 1, display: "block" }}>
+                    Listening Audio
+                  </Typography>
+                  <audio controls style={{ width: "100%" }}>
+                    <source src={resolveAudioSrc((examData as any).audioFile)} />
+                    Your browser does not support the audio element.
+                  </audio>
+                </Paper>
+              )}
+
+              {/* Instructions/description */}
+              {examData.description && (
+                <Paper sx={{ p: 1, border: `1px solid ${theme.palette.divider}` }}>
+                  <Typography variant="caption" sx={{ mb: 1, display: "block" }}>
+                    Instructions
+                  </Typography>
+                  <Box sx={{ fontSize: "0.95rem", lineHeight: 1.6, "& img": { maxWidth: "100%" } }}
+                       dangerouslySetInnerHTML={{ __html: examData.description }} />
+                </Paper>
+              )}
+            </BasicStack>
           )}
 
-          {/* Display questions */}
-          {examData.questions.map((question: any, index: number) => (
-            <PracticeQuestionCard
-              key={question.id || index}
-              question={question}
-              index={index}
-              examType={
-                examData.examType as
-                  | "LISTENING"
-                  | "READING"
-                  | "WRITING"
-                  | "SPEAKING"
-              }
-              onAnswerChange={(answer) =>
-                handleAnswerChange(question.id || index, answer)
-              }
-            />
-          ))}
+          {/* Reading split layout (passage left, questions right) */}
+          {isReading ? (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+              <Box sx={{ width: "100%" }}>
+                {examData.title && (
+                  <Paper sx={{ p: 1, mb: 1, bgcolor: theme.palette.primary.main, color: theme.palette.primary.contrastText }}>
+                    <Box sx={{ fontSize: "0.95rem", "& img": { maxWidth: "100%" } }}
+                         dangerouslySetInnerHTML={{ __html: examData.title }} />
+                  </Paper>
+                )}
+                {examData.description && (
+                  <Paper sx={{ p: 1, border: `1px solid ${theme.palette.divider}` }}>
+                    <Typography variant="caption" sx={{ mb: 1, display: "block" }}>
+                      Passage / Instructions
+                    </Typography>
+                    <Box sx={{ fontSize: "0.95rem", lineHeight: 1.6, "& img": { maxWidth: "100%" } }}
+                         dangerouslySetInnerHTML={{ __html: examData.description }} />
+                  </Paper>
+                )}
+              </Box>
+
+              <Box sx={{ width: "100%" }}>
+                <BasicStack spacing={1.5}>
+                  {examData.questions.map((question: any, index: number) => (
+                    <Paper key={question.id || index} sx={{ p: 1, border: `1px solid ${theme.palette.divider}` }}>
+                      <Typography variant="caption" sx={{ mb: 1, color: theme.palette.primary.main, display: "block" }}>
+                        Question {index + 1}
+                      </Typography>
+                      <PracticeQuestionCard
+                        question={question}
+                        index={index}
+                        examType={examData.examType as "LISTENING" | "READING" | "WRITING" | "SPEAKING"}
+                        onAnswerChange={(answer) => handleAnswerChange(question.id || index, answer)}
+                      />
+                    </Paper>
+                  ))}
+                </BasicStack>
+              </Box>
+            </Box>
+          ) : (
+            // Default layout (Listening/Writing/Speaking): questions list
+            <BasicStack spacing={1.5}>
+              {examData.questions.map((question: any, index: number) => (
+                <Paper key={question.id || index} sx={{ p: 1, border: `1px solid ${theme.palette.divider}` }}>
+                  <Typography variant="caption" sx={{ mb: 1, color: theme.palette.primary.main, display: "block" }}>
+                    Question {index + 1}
+                  </Typography>
+                  <PracticeQuestionCard
+                    question={question}
+                    index={index}
+                    examType={examData.examType as "LISTENING" | "READING" | "WRITING" | "SPEAKING"}
+                    onAnswerChange={(answer) => handleAnswerChange(question.id || index, answer)}
+                  />
+                </Paper>
+              ))}
+            </BasicStack>
+          )}
 
           {/* Submit button */}
           <BasicBox sx={{ display: "flex", justifyContent: "center", py: 3 }}>
-            <BasicButton
-              variant="contained"
-              size="large"
-              onClick={handleSubmit}
-              // disabled={examData.isNeedVip === "true"}
-            >
+            <BasicButton variant="contained" size="large" onClick={handleSubmit}>
               Nộp bài
             </BasicButton>
           </BasicBox>

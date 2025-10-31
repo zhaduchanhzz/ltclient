@@ -368,7 +368,7 @@ export default function RealExamPage() {
               <AccessTime sx={{ fontSize: 38 }} />
             </Avatar>
             <Typography variant="h6" fontWeight="bold" gutterBottom>
-              Bắt đầu bài thi thật
+              Bắt đầu bài thi mô phỏng
             </Typography>
             <Typography variant="caption" sx={{ mb: 3, display: "block" }}>
               Nhấn nút bên dưới để nhận đề thi. Sau khi hết thời gian của một kỹ năng, bạn sẽ không thể quay lại kỹ năng đó.
@@ -403,7 +403,7 @@ export default function RealExamPage() {
           <Paper sx={{ p: 4, textAlign: "center", background: "linear-gradient(135deg,#0f2027 0%,#203a43 50%,#2c5364 100%)", color: "white", borderRadius: 3 }}>
             <Avatar sx={{ width: 80, height: 80, mx: "auto", mb: 2, bgcolor: "rgba(255,255,255,0.15)" }}><Quiz sx={{ fontSize: 40 }} /></Avatar>
             <Typography variant="h6" fontWeight="bold" gutterBottom>VSTEP REAL EXAM</Typography>
-            <Typography variant="caption" sx={{ mb: 4, opacity: .9, display: "block" }}>Bài thi thật - không thể quay lại phần trước sau khi hết thời gian.</Typography>
+            <Typography variant="caption" sx={{ mb: 4, opacity: .9, display: "block" }}>Bài thi mô phỏng - không thể quay lại phần trước sau khi hết thời gian.</Typography>
             <Grid2 container spacing={3} sx={{ mb: 4 }}>
               <Grid2 size={{ xs:12, sm:6 }}>
                 <Card sx={{ bgcolor: "rgba(255,255,255,0.1)", backdropFilter: "blur(6px)" }}>

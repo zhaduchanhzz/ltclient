@@ -22,7 +22,7 @@ export const subscriptionPackages = [
     ],
     target: [
       "Thí sinh muốn cải thiện kỹ năng Writing & Speaking.",
-      "Cần đánh giá trình độ trước khi thi thật.",
+      "Cần đánh giá trình độ trước khi thi mô phỏng.",
     ],
     button: "🔥 Gửi bài ngay – Nâng điểm nhanh 🔥",
   },

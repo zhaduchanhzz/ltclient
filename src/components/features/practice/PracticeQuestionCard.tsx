@@ -139,9 +139,12 @@ export default function PracticeQuestionCard({
           Question {index + 1}
         </Typography>
 
-        <Typography variant="body2" sx={{ whiteSpace: "pre-wrap", mb: 0.75, fontSize: "0.95rem" }}>
-          {question.questionText}
-        </Typography>
+        <Typography
+          variant="body1"
+          paragraph
+          sx={{ whiteSpace: "pre-wrap" }}
+          dangerouslySetInnerHTML={{ __html: question.questionText }}
+        />
 
         {/* Multiple Choice Questions (LISTENING/READING) */}
         {(examType === "LISTENING" || examType === "READING") &&
