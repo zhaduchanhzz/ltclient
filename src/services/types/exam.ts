@@ -293,6 +293,7 @@ export type PracticeExam = {
 export type ExamByType = {
   examType: "LISTENING" | "READING" | "WRITING" | "SPEAKING";
   exams: PracticeExam[];
+  count: number;
 };
 
 export type ListExamByTypeResponse = ExamByType[];

@@ -40,16 +40,15 @@ const SelectTopic = (_: SelectTopicProps) => {
     }[] = [];
 
     data.data.forEach((examTypeData) => {
-      // Only include exams that match the current route's exam type
       if (!currentType || examTypeData.examType === currentType) {
-        examTypeData.exams.forEach((exam) => {
+        for (let i = 1; i <= examTypeData.count; i++) {
           exams.push({
-            id: exam.id,
-            title: exam.title,
+            id: i,
+            title: `${examTypeData.examType} Test ${i}`,
             examType: examTypeData.examType,
-            isNeedVip: exam.isNeedVip,
+            isNeedVip: false, // gán mặc định hoặc thay theo logic riêng
           });
-        });
+        }
       }
     });
 

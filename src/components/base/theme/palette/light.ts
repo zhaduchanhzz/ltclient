@@ -42,7 +42,9 @@ export const lightPalette: PaletteOptions = {
   },
   text: {
     primary: "#292f36", // Primary text color
-    secondary: "#fff", // Secondary text color
+    // Using a readable secondary color for light mode (previously #fff caused white text on white backgrounds)
+    // Match MUI's default approach: a semi-transparent black for de-emphasis while preserving contrast.
+    secondary: "rgba(0, 0, 0, 0.6)", // Secondary text color (improved for light mode readability)
     disabled: "#bdbdbd", // Disabled text color
   },
   action: {

@@ -6,7 +6,7 @@ export const API_PATH = {
   PACKAGE: "/vip-packages",
   ORDERS: "/orders",
   EXAMS: "/exams",
-  EXAMS_LIST_BY_TYPE: "/exams/listExamByType",
+  EXAMS_LIST_BY_TYPE: "/exams/count",
   EXAM_SCHEDULES: "/exam-schedules",
   EXAM_SCHEDULES_RECENT: "/exam-schedules/recent",
   EXAM_SCHEDULES_FILTER: "/exam-schedules/filter",

@@ -7,6 +7,7 @@ import PracticeQuestionCard from "./PracticeQuestionCard";
 import { APP_ROUTE } from "@/consts/app-route";
 import { useExamDetailQuery } from "@/services/apis/exam";
 import { CircularProgress, Container, Paper, Typography, Box, useTheme } from "@mui/material";
+import ExclusiveAudio from "@/components/common/ExclusiveAudio";
 import { useRouter } from "next/navigation";
 import { useState, useMemo } from "react";
 import { ApiServerURL } from "@/utils/config";
@@ -182,10 +183,11 @@ const PracticeExam = ({ examId }: PracticeExamProps) => {
                   <Typography variant="caption" sx={{ mb: 1, display: "block" }}>
                     Listening Audio
                   </Typography>
-                  <audio controls style={{ width: "100%" }}>
-                    <source src={resolveAudioSrc((examData as any).audioFile)} />
-                    Your browser does not support the audio element.
-                  </audio>
+                  <ExclusiveAudio
+                    group="practice-listening"
+                    src={resolveAudioSrc((examData as any).audioFile)!}
+                    style={{ width: "100%" }}
+                  />
                 </Paper>
               )}
 
@@ -195,8 +197,10 @@ const PracticeExam = ({ examId }: PracticeExamProps) => {
                   <Typography variant="caption" sx={{ mb: 1, display: "block" }}>
                     Instructions
                   </Typography>
-                  <Box sx={{ fontSize: "0.95rem", lineHeight: 1.6, "& img": { maxWidth: "100%" } }}
-                       dangerouslySetInnerHTML={{ __html: examData.description }} />
+                  <Box
+                    sx={{ fontSize: "0.95rem", lineHeight: 1.6, "& img": { maxWidth: "100%" } }}
+                    dangerouslySetInnerHTML={{ __html: examData.description }}
+                  />
                 </Paper>
               )}
             </BasicStack>
@@ -208,8 +212,10 @@ const PracticeExam = ({ examId }: PracticeExamProps) => {
               <Box sx={{ width: "100%" }}>
                 {examData.title && (
                   <Paper sx={{ p: 1, mb: 1, bgcolor: theme.palette.primary.main, color: theme.palette.primary.contrastText }}>
-                    <Box sx={{ fontSize: "0.95rem", "& img": { maxWidth: "100%" } }}
-                         dangerouslySetInnerHTML={{ __html: examData.title }} />
+                    <Box
+                      sx={{ fontSize: "0.95rem", "& img": { maxWidth: "100%" } }}
+                      dangerouslySetInnerHTML={{ __html: examData.title }}
+                    />
                   </Paper>
                 )}
                 {examData.description && (
@@ -217,8 +223,10 @@ const PracticeExam = ({ examId }: PracticeExamProps) => {
                     <Typography variant="caption" sx={{ mb: 1, display: "block" }}>
                       Passage / Instructions
                     </Typography>
-                    <Box sx={{ fontSize: "0.95rem", lineHeight: 1.6, "& img": { maxWidth: "100%" } }}
-                         dangerouslySetInnerHTML={{ __html: examData.description }} />
+                    <Box
+                      sx={{ fontSize: "0.95rem", lineHeight: 1.6, "& img": { maxWidth: "100%" } }}
+                      dangerouslySetInnerHTML={{ __html: examData.description }}
+                    />
                   </Paper>
                 )}
               </Box>

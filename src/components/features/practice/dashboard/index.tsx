@@ -38,7 +38,7 @@ const PracticeDashBoard = (_: PracticeDashBoardProps) => {
 
     data.data.forEach((examType) => {
       if (counts[examType.examType] !== undefined) {
-        counts[examType.examType] = examType.exams.length;
+        counts[examType.examType] = examType.count;
       }
     });
 

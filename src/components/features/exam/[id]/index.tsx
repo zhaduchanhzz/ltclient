@@ -42,6 +42,7 @@ import { API_PATH } from "@/consts/api-path";
 import { ApiServerURL } from "@/utils/config";
 import { useAppContextHandle } from "@/contexts/AppContext";
 import { EXAM_TIME_LIMITS } from "@/config/app-config";
+import ExclusiveAudio from "@/components/common/ExclusiveAudio";
 
 const ExamTypeIcons = {
   LISTENING: Headphones,
@@ -898,10 +899,7 @@ export default function ExamPage() {
                       ? `${ApiServerURL}${raw}`
                       : `${ApiServerURL}${API_PATH.DOWNLOAD_FILE}${raw}`;
                   return (
-                    <audio controls style={{ width: "100%" }}>
-                      <source src={audioSrc} />
-                      Your browser does not support the audio element.
-                    </audio>
+                    <ExclusiveAudio group="simulation-listening" src={audioSrc} style={{ width: "100%" }} />
                   );
                 })()}
               </Paper>
@@ -1006,10 +1004,7 @@ export default function ExamPage() {
                       ? `${ApiServerURL}${raw}`
                       : `${ApiServerURL}${API_PATH.DOWNLOAD_FILE}${raw}`;
                   return (
-                    <audio controls style={{ width: "100%" }}>
-                      <source src={audioSrc} />
-                      Your browser does not support the audio element.
-                    </audio>
+                    <ExclusiveAudio group="simulation-listening" src={audioSrc} style={{ width: "100%" }} />
                   );
                 })()}
               </Paper>
