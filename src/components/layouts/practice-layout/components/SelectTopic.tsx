@@ -4,7 +4,7 @@ import BasicGrid from "@/components/base/MaterialUI-Basic/Grid";
 import BasicStack from "@/components/base/MaterialUI-Basic/Stack";
 import BasicTypography from "@/components/base/MaterialUI-Basic/Typography";
 import { APP_ROUTE } from "@/consts/app-route";
-import { useListExamsByTypeQuery } from "@/services/apis/exam";
+import { useListExamsByTypeQueryOne } from "@/services/apis/exam";
 import { CircularProgress, Divider } from "@mui/material";
 import { usePathname, useRouter } from "next/navigation";
 import { useMemo } from "react";
@@ -15,9 +15,6 @@ const SelectTopic = (_: SelectTopicProps) => {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Fetch all exams
-  const { data, isLoading, error } = useListExamsByTypeQuery(true);
-
   // Determine current exam type based on pathname
   const getCurrentExamType = () => {
     if (pathname.includes(APP_ROUTE.PRACTICE_LISTENING)) return "LISTENING";
@@ -27,33 +24,16 @@ const SelectTopic = (_: SelectTopicProps) => {
     return null;
   };
 
-  // Get filtered exam IDs based on current route
+  const { data, isLoading, error } = useListExamsByTypeQueryOne(true, getCurrentExamType() || "");
+
   const filteredExams = useMemo(() => {
     if (!data?.data) return [];
-
     const currentType = getCurrentExamType();
-    const exams: {
-      id: number;
-      title?: string;
-      examType: string;
-      isNeedVip?: boolean | null;
-    }[] = [];
-
-    data.data.forEach((examTypeData) => {
-      if (!currentType || examTypeData.examType === currentType) {
-        for (let i = 1; i <= examTypeData.count; i++) {
-          exams.push({
-            id: i,
-            title: `${examTypeData.examType} Test ${i}`,
-            examType: examTypeData.examType,
-            isNeedVip: false, // gán mặc định hoặc thay theo logic riêng
-          });
-        }
-      }
-    });
-
-    // Sort by ID
-    return exams.sort((a, b) => a.id - b.id);
+    return (
+      data.data
+        .filter((exam: any) => !currentType || exam.examType === currentType)
+        .sort((a: any, b: any) => a.id - b.id)
+    );
   }, [data, pathname]);
 
   const navigateQuestionPage = (examId: number) => () => {
@@ -86,7 +66,7 @@ const SelectTopic = (_: SelectTopicProps) => {
             </BasicTypography>
           </BasicBox>
         ) : (
-          filteredExams.map((exam) => (
+          filteredExams.map((exam: any) => (
             <BasicBox key={exam.id} sx={{ display: "inline-block" }}>
               {/* <Tooltip
                 title={

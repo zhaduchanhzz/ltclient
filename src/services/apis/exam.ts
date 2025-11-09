@@ -194,6 +194,18 @@ export const useListExamsByTypeQuery = (enabled = false) => {
   });
 };
 
+export const useListExamsByTypeQueryOne = (enabled = false ,type: string) => {
+  return useQuery({
+    queryKey: [API_PATH.EXAMS_BY_TYPE],
+    queryFn: () => {
+      return HttpClient.get<null, CommonResponse<ListExamByTypeResponse>>(
+        API_PATH.EXAMS_BY_TYPE, { params: { listExamByType: type } },
+      );
+    },
+    enabled,
+  });
+};
+
 // Fetch grading requests via new search API with status and optional keyword
 export const usePendingGradingRequestsQuery = (
   params: { status?: string; keyword?: string },
